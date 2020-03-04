@@ -1,0 +1,15 @@
+camel:
+  server-port: 5000
+  springboot:
+    main-run-controller: true
+  dataformat:
+    json-jackson:
+      auto-discover-object-mapper: true
+
+bpmn:
+  flows:
+    payment-transfer: "PaymentTest3"
+
+zeebe:
+  broker:
+    contactpoint: "127.0.0.1:26500"

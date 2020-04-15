@@ -2,6 +2,7 @@ package org.mifos.connector.channel.zeebe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.zeebe.client.ZeebeClient;
+import org.json.JSONObject;
 import org.mifos.phee.common.mojaloop.dto.ErrorInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,12 +34,12 @@ public class ZeebeWorkers {
 
                     Object errorInfoVariable = job.getVariablesAsMap().get(ERROR_INFORMATION);
                     if (errorInfoVariable != null) {
-                        ErrorInformation errorInformation = objectMapper.readValue((String) errorInfoVariable, ErrorInformation.class);
-                        short errorCode = errorInformation.getErrorCode();
+                        JSONObject errorInformation = new JSONObject((String)errorInfoVariable).getJSONObject("errorInformation");
+                        int errorCode = Integer.parseInt(errorInformation.getString("errorCode"));
                         logger.error("Error occurred with code: {} type: {} message: {}",
                                 errorCode,
                                 fromCode(errorCode).name(),
-                                errorInformation.getErrorDescription());
+                                errorInformation.getString("errorDescription"));
                     }
 
                     client.newCompleteCommand(job.getKey())

@@ -33,14 +33,13 @@ public class ZeebeProcessStarter {
         variables.put(CamelProperties.ORIGIN_DATE, Instant.now().toEpochMilli());
         variablesLambda.accept(variables);
 
-        WorkflowInstanceEvent instance = zeebeClient.newCreateInstanceCommand()
+        zeebeClient.newCreateInstanceCommand()
                 .bpmnProcessId(workflowId)
                 .latestVersion()
                 .variables(variables)
-                .send()
-                .join();
+                .send();
 
-        logger.debug("zeebee workflow instance {} of type {} created with transactionId {}", instance.getWorkflowInstanceKey(), workflowId, transactionId);
+        logger.info("zeebee workflow instance from process {} started with transactionId {}", workflowId, transactionId);
     }
 
     // TODO generate proper cluster-safe transaction id

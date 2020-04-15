@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 
 import static org.mifos.connector.channel.camel.config.CamelProperties.ERROR_INFORMATION;
+import static org.mifos.phee.common.mojaloop.type.ErrorCode.fromCode;
 
 @Component
 public class ZeebeWorkers {
@@ -33,7 +34,11 @@ public class ZeebeWorkers {
                     Object errorInfoVariable = job.getVariablesAsMap().get(ERROR_INFORMATION);
                     if (errorInfoVariable != null) {
                         ErrorInformation errorInformation = objectMapper.readValue((String) errorInfoVariable, ErrorInformation.class);
-                        logger.error("Error occurred with code: {} message: {}", errorInformation.getErrorCode(), errorInformation.getErrorDescription());
+                        short errorCode = errorInformation.getErrorCode();
+                        logger.error("Error occurred with code: {} type: {} message: {}",
+                                errorCode,
+                                fromCode(errorCode).name(),
+                                errorInformation.getErrorDescription());
                     }
 
                     client.newCompleteCommand(job.getKey())

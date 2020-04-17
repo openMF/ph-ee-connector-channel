@@ -1,17 +1,19 @@
 package org.mifos.connector.channel.zeebe;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.zeebe.client.ZeebeClient;
 import org.json.JSONObject;
-import org.mifos.phee.common.mojaloop.dto.ErrorInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import static java.util.Comparator.naturalOrder;
 import static org.mifos.connector.channel.camel.config.CamelProperties.ERROR_INFORMATION;
+import static org.mifos.connector.channel.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.phee.common.mojaloop.type.ErrorCode.fromCode;
 
 @Component
@@ -21,9 +23,6 @@ public class ZeebeWorkers {
 
     @Autowired
     private ZeebeClient zeebeClient;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @PostConstruct
     public void setupWorkers() {
@@ -46,7 +45,7 @@ public class ZeebeWorkers {
                             .send();
                 })
                 .name("send-error-to-channel")
-                .maxJobsActive(10)
+                .maxJobsActive(33)
                 .open();
 
         zeebeClient.newWorker()
@@ -57,18 +56,29 @@ public class ZeebeWorkers {
                             .send();
                 })
                 .name("send-success-to-channel")
-                .maxJobsActive(10)
+                .maxJobsActive(33)
                 .open();
 
         zeebeClient.newWorker()
                 .jobType("send-unknown-to-channel")
                 .handler((client, job) -> {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+
+                    Map<String, Object> variables = job.getVariablesAsMap();
+                    logger.info("Transfer {} response did not arrive after {} retries, operator decision required! Variables:\n{}",
+                            variables.get(TRANSACTION_ID),
+                            3, // TODO externalize bpmn expression variables
+                            variables.keySet().stream()
+                            .sorted(naturalOrder())
+                            .map(k -> k + " -- " + variables.get(k))
+                            .collect(Collectors.joining("\n"))
+                    );
+
                     client.newCompleteCommand(job.getKey())
                             .send();
                 })
                 .name("send-unknown-to-channel")
-                .maxJobsActive(10)
+                .maxJobsActive(33)
                 .open();
     }
 }

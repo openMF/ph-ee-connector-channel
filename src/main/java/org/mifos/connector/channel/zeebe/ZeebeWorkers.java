@@ -14,11 +14,13 @@ import java.util.stream.Collectors;
 import static java.util.Comparator.naturalOrder;
 import static org.mifos.connector.channel.camel.config.CamelProperties.ERROR_INFORMATION;
 import static org.mifos.connector.channel.camel.config.CamelProperties.TRANSACTION_ID;
+import static org.mifos.connector.channel.zeebe.ZeebeClientConfiguration.ZEEBE_CLIENT_THREADS;
 import static org.mifos.phee.common.mojaloop.type.ErrorCode.fromCode;
 
 @Component
 public class ZeebeWorkers {
 
+    private static final int ZEEBE_WORKERS = 5;
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -45,7 +47,7 @@ public class ZeebeWorkers {
                             .send();
                 })
                 .name("send-error-to-channel")
-                .maxJobsActive(33)
+                .maxJobsActive(ZEEBE_CLIENT_THREADS / ZEEBE_WORKERS)
                 .open();
 
         zeebeClient.newWorker()
@@ -56,7 +58,29 @@ public class ZeebeWorkers {
                             .send();
                 })
                 .name("send-success-to-channel")
-                .maxJobsActive(33)
+                .maxJobsActive(ZEEBE_CLIENT_THREADS / ZEEBE_WORKERS)
+                .open();
+
+        zeebeClient.newWorker()
+                .jobType("notify-operator")
+                .handler((client, job) -> {
+                    logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+                    client.newCompleteCommand(job.getKey())
+                            .send();
+                })
+                .name("notify-operator")
+                .maxJobsActive(ZEEBE_CLIENT_THREADS / ZEEBE_WORKERS)
+                .open();
+
+        zeebeClient.newWorker()
+                .jobType("notify-ams-failure")
+                .handler((client, job) -> {
+                    logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+                    client.newCompleteCommand(job.getKey())
+                            .send();
+                })
+                .name("notify-ams-failure")
+                .maxJobsActive(ZEEBE_CLIENT_THREADS / ZEEBE_WORKERS)
                 .open();
 
         zeebeClient.newWorker()
@@ -78,7 +102,7 @@ public class ZeebeWorkers {
                             .send();
                 })
                 .name("send-unknown-to-channel")
-                .maxJobsActive(33)
+                .maxJobsActive(ZEEBE_CLIENT_THREADS / ZEEBE_WORKERS)
                 .open();
     }
 }

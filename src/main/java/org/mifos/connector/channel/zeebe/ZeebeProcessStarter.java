@@ -33,11 +33,13 @@ public class ZeebeProcessStarter {
         variables.put(CamelProperties.ORIGIN_DATE, Instant.now().toEpochMilli());
         variablesLambda.accept(variables);
 
-        zeebeClient.newCreateInstanceCommand()
+        // TODO if successful transfer response arrives in X timeout return it otherwise do callback
+        WorkflowInstanceEvent join = zeebeClient.newCreateInstanceCommand()
                 .bpmnProcessId(workflowId)
                 .latestVersion()
                 .variables(variables)
-                .send();
+                .send()
+                .join();
 
         logger.info("zeebee workflow instance from process {} started with transactionId {}", workflowId, transactionId);
     }

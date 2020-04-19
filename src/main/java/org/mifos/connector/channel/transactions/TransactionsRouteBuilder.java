@@ -14,9 +14,9 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mifos.connector.channel.camel.config.CamelProperties.IS_MANUAL_RECOVERED;
 import static org.mifos.connector.channel.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.connector.channel.camel.config.CamelProperties.TRANSFER_STATE;
+import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
 
 @Component
 public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
@@ -51,11 +51,10 @@ public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
                     request.keys().forEachRemaining(k -> {
                         variables.put(k, request.get(k));
                     });
-                    variables.put(IS_MANUAL_RECOVERED, true);
                     variables.put(TRANSFER_STATE, TransferState.COMMITTED.name());
 
                     zeebeClient.newPublishMessageCommand()
-                            .messageName("operator-manual-recovery")
+                            .messageName(OPERATOR_MANUAL_RECOVERY)
                             .correlationKey(e.getIn().getHeader(TRANSACTION_ID, String.class))
                             .timeToLive(Duration.ofMillis(30000))
                             .variables(variables)

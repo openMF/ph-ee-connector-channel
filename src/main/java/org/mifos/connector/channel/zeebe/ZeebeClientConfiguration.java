@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ZeebeClientConfiguration {
 
+    public static final int ZEEBE_CLIENT_THREADS = 100;
+
     @Value("${zeebe.broker.contactpoint}")
     private String zeebeBrokerContactpoint;
 
@@ -16,7 +18,7 @@ public class ZeebeClientConfiguration {
         return ZeebeClient.newClientBuilder()
                 .brokerContactPoint(zeebeBrokerContactpoint)
                 .usePlaintext()
-                .numJobWorkerExecutionThreads(100)
+                .numJobWorkerExecutionThreads(ZEEBE_CLIENT_THREADS)
                 .build();
     }
 }

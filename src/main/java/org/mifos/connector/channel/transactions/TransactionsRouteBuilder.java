@@ -51,7 +51,6 @@ public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
                     request.keys().forEachRemaining(k -> {
                         variables.put(k, request.get(k));
                     });
-                    variables.put(TRANSFER_STATE, TransferState.COMMITTED.name());
 
                     zeebeClient.newPublishMessageCommand()
                             .messageName(OPERATOR_MANUAL_RECOVERY)

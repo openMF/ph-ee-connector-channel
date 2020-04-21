@@ -57,7 +57,8 @@ public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
                             .correlationKey(e.getIn().getHeader(TRANSACTION_ID, String.class))
                             .timeToLive(Duration.ofMillis(30000))
                             .variables(variables)
-                            .send();
+                            .send()
+                            .join();
                 });
 
         from("rest:POST:/channel/job/resolve")
@@ -74,14 +75,17 @@ public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     zeebeClient.newSetVariablesCommand(incident.getLong("elementInstanceKey"))
                             .variables(newVariables)
-                            .send();
+                            .send()
+                            .join();
 
                     zeebeClient.newUpdateRetriesCommand(incident.getLong("jobKey"))
                             .retries(incident.getInt("newRetries"))
-                            .send();
+                            .send()
+                            .join();
 
                     zeebeClient.newResolveIncidentCommand(incident.getLong("key"))
-                            .send();
+                            .send()
+                            .join();
                 });
 
         from("rest:POST:/channel/workflow/resolve")
@@ -98,10 +102,12 @@ public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     zeebeClient.newSetVariablesCommand(incident.getLong("elementInstanceKey"))
                             .variables(newVariables)
-                            .send();
+                            .send()
+                            .join();
 
                     zeebeClient.newResolveIncidentCommand(incident.getLong("key"))
-                            .send();
+                            .send()
+                            .join();
                 });
     }
 }

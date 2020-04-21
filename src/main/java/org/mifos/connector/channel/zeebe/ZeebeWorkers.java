@@ -44,7 +44,8 @@ public class ZeebeWorkers {
                     }
 
                     client.newCompleteCommand(job.getKey())
-                            .send();
+                            .send()
+                            .join();
                 })
                 .name("send-error-to-channel")
                 .maxJobsActive(ZEEBE_CLIENT_THREADS / ZEEBE_WORKERS)
@@ -55,7 +56,8 @@ public class ZeebeWorkers {
                 .handler((client, job) -> {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                     client.newCompleteCommand(job.getKey())
-                            .send();
+                            .send()
+                            .join();
                 })
                 .name("send-success-to-channel")
                 .maxJobsActive(ZEEBE_CLIENT_THREADS / ZEEBE_WORKERS)
@@ -66,7 +68,8 @@ public class ZeebeWorkers {
                 .handler((client, job) -> {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                     client.newCompleteCommand(job.getKey())
-                            .send();
+                            .send()
+                            .join();
                 })
                 .name("notify-operator")
                 .maxJobsActive(ZEEBE_CLIENT_THREADS / ZEEBE_WORKERS)
@@ -77,7 +80,8 @@ public class ZeebeWorkers {
                 .handler((client, job) -> {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                     client.newCompleteCommand(job.getKey())
-                            .send();
+                            .send()
+                            .join();
                 })
                 .name("notify-ams-failure")
                 .maxJobsActive(ZEEBE_CLIENT_THREADS / ZEEBE_WORKERS)
@@ -99,7 +103,8 @@ public class ZeebeWorkers {
                     );
 
                     client.newCompleteCommand(job.getKey())
-                            .send();
+                            .send()
+                            .join();
                 })
                 .name("send-unknown-to-channel")
                 .maxJobsActive(ZEEBE_CLIENT_THREADS / ZEEBE_WORKERS)

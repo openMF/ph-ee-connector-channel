@@ -38,7 +38,7 @@ public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
     public void configure() {
         from("rest:POST:/channel/transactions")
                 .id("inbound-payment-request")
-                .log(LoggingLevel.INFO, "## channel -> hub inbound payment request")
+                .log(LoggingLevel.INFO, "## CHANNEL -> PAYER inbound payment request")
                 .process(exchange -> zeebeProcessStarter.startZeebeWorkflow(paymentTransferFlow, exchange.getIn().getBody(String.class), variables -> {
                 }));
 

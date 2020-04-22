@@ -8,7 +8,7 @@ camel:
 
 bpmn:
   flows:
-    payment-transfer: "PaymentTest3"
+    payment-transfer: "PayerFundTransfer-DFSPID"
 
 zeebe:
   broker:

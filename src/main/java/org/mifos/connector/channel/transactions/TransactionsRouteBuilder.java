@@ -4,8 +4,9 @@ import io.zeebe.client.ZeebeClient;
 import org.apache.camel.LoggingLevel;
 import org.json.JSONObject;
 import org.mifos.connector.channel.zeebe.ZeebeProcessStarter;
-import org.mifos.phee.common.camel.ErrorHandlerRouteBuilder;
-import org.mifos.phee.common.mojaloop.type.TransferState;
+import org.mifos.connector.common.camel.AuthProcessor;
+import org.mifos.connector.common.camel.AuthProperties;
+import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -15,23 +16,25 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.mifos.connector.channel.camel.config.CamelProperties.TRANSACTION_ID;
-import static org.mifos.connector.channel.camel.config.CamelProperties.TRANSFER_STATE;
 import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
 
 @Component
 public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
 
-    @Value("${bpmn.flows.payment-transfer}")
     private String paymentTransferFlow;
-
-    @Autowired
     private ZeebeProcessStarter zeebeProcessStarter;
-
-    @Autowired
     private ZeebeClient zeebeClient;
 
-    public TransactionsRouteBuilder() {
+    public TransactionsRouteBuilder(@Value("${bpmn.flows.payment-transfer}") String paymentTransferFlow,
+                                    ZeebeClient zeebeClient,
+                                    ZeebeProcessStarter zeebeProcessStarter,
+                                    @Autowired(required = false) AuthProcessor authProcessor,
+                                    @Autowired(required = false) AuthProperties authProperties) {
+        super(authProcessor, authProperties);
         super.configure();
+        this.paymentTransferFlow = paymentTransferFlow;
+        this.zeebeProcessStarter = zeebeProcessStarter;
+        this.zeebeClient = zeebeClient;
     }
 
     @Override

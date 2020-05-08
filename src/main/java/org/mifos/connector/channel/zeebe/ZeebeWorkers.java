@@ -15,7 +15,7 @@ import static java.util.Comparator.naturalOrder;
 import static org.mifos.connector.channel.camel.config.CamelProperties.ERROR_INFORMATION;
 import static org.mifos.connector.channel.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeClientConfiguration.ZEEBE_CLIENT_THREADS;
-import static org.mifos.phee.common.mojaloop.type.ErrorCode.fromCode;
+import static org.mifos.connector.common.mojaloop.type.ErrorCode.fromCode;
 
 @Component
 public class ZeebeWorkers {

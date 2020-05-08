@@ -13,3 +13,11 @@ bpmn:
 zeebe:
   broker:
     contactpoint: "ph-ee-zeebe:26500"
+
+rest:
+  authorization:
+    enabled: false
+    host: http://localhost:8080
+    settings:
+      - endpoint: rest:POST:/channel/transactions
+        authority: ALL_FUNCTIONS

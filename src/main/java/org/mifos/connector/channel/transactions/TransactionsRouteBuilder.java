@@ -59,7 +59,11 @@ public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
                     transactionType.setInitiator(PAYER);
                     transactionType.setInitiatorType(CONSUMER);
                     transactionType.setScenario(WITHDRAWAL);
-                    zeebeProcessStarter.startZeebeWorkflow(paymentTransferFlow, exchange.getIn().getBody(String.class), transactionType,null);
+
+                    Map<String, Object> extraVariables = new HashMap<>();
+                    extraVariables.put(IS_RTP_REQUEST, false);
+
+                    zeebeProcessStarter.startZeebeWorkflow(paymentTransferFlow, exchange.getIn().getBody(String.class), transactionType,extraVariables);
                 });
 
         from("rest:POST:/channel/transactionRequest")

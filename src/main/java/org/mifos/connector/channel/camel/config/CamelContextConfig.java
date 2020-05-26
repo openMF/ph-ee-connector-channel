@@ -23,6 +23,7 @@ public class CamelContextConfig {
                 camelContext.setTracing(false);
                 camelContext.setMessageHistory(false);
                 camelContext.setStreamCaching(true);
+                camelContext.disableJMX();
 
                 RestConfiguration rest = new RestConfiguration();
                 camelContext.setRestConfiguration(rest);

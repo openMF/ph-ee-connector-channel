@@ -9,8 +9,13 @@ camel:
 bpmn:
   flows:
     payment-transfer: "PayerFundTransfer-DFSPID"
+    payment-request: "PayeePaymentRequest-DFSPID"
 
 zeebe:
+  client:
+    max-execution-threads: 100
+    number-of-workers: 5
+    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
   broker:
     contactpoint: "ph-ee-zeebe:26500"
 
@@ -19,5 +24,13 @@ rest:
     enabled: false
     host: http://localhost:8080
     settings:
-      - endpoint: rest:POST:/channel/transactions
+      - endpoint: rest:POST:/channel/transfer
+        authority: ALL_FUNCTIONS
+      - endpoint: rest:POST:/channel/transactionRequest
+        authority: ALL_FUNCTIONS
+      - endpoint: rest:POST:/channel/transaction/{transactionId}/resolve
+        authority: ALL_FUNCTIONS
+      - endpoint: rest:POST:/channel/job/resolve
+        authority: ALL_FUNCTIONS
+      - endpoint: rest:POST:/channel/workflow/resolve
         authority: ALL_FUNCTIONS

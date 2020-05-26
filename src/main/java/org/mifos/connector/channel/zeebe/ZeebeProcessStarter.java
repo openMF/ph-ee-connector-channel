@@ -16,11 +16,6 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Consumer;
-
-import static org.mifos.connector.common.mojaloop.type.InitiatorType.CONSUMER;
-import static org.mifos.connector.common.mojaloop.type.Scenario.WITHDRAWAL;
-import static org.mifos.connector.common.mojaloop.type.TransactionRole.PAYER;
 
 /**
  * Start a Zeebe workflow
@@ -35,22 +30,20 @@ public class ZeebeProcessStarter {
     @Autowired
     private ObjectMapper objectMapper;
 
-    public void startZeebeWorkflow(String workflowId, String request, Consumer<Map<String, Object>> variablesLambda) throws JsonProcessingException {
+    public void startZeebeWorkflow(String workflowId, String request, TransactionType transactionType, Map<String, Object> extraVariables) throws JsonProcessingException {
         String transactionId = generateTransactionId();
 
         Map<String, Object> variables = new HashMap<>();
         variables.put(CamelProperties.TRANSACTION_ID, transactionId);
 
         TransactionChannelRequestDTO channelRequest = objectMapper.readValue(request, TransactionChannelRequestDTO.class);
-        TransactionType transactionType = new TransactionType();
-        transactionType.setInitiator(PAYER);
-        transactionType.setInitiatorType(CONSUMER);
-        transactionType.setScenario(WITHDRAWAL);
         channelRequest.setTransactionType(transactionType);
 
-        variables.put(CamelProperties.TRANSACTION_REQUEST, objectMapper.writeValueAsString(channelRequest));
+        variables.put(CamelProperties.CHANNEL_REQUEST, objectMapper.writeValueAsString(channelRequest));
         variables.put(CamelProperties.ORIGIN_DATE, Instant.now().toEpochMilli());
-        variablesLambda.accept(variables);
+        if(extraVariables != null) {
+            variables.putAll(extraVariables);
+        }
 
         // TODO if successful transfer response arrives in X timeout return it otherwise do callback
         WorkflowInstanceEvent join = zeebeClient.newCreateInstanceCommand()

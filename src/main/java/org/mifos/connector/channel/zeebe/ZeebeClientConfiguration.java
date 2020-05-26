@@ -8,17 +8,18 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ZeebeClientConfiguration {
 
-    public static final int ZEEBE_CLIENT_THREADS = 100;
-
     @Value("${zeebe.broker.contactpoint}")
     private String zeebeBrokerContactpoint;
+
+    @Value("${zeebe.client.max-execution-threads}")
+    private int zeebeClientMaxThreads;
 
     @Bean
     public ZeebeClient setup() {
         return ZeebeClient.newClientBuilder()
                 .brokerContactPoint(zeebeBrokerContactpoint)
                 .usePlaintext()
-                .numJobWorkerExecutionThreads(ZEEBE_CLIENT_THREADS)
+                .numJobWorkerExecutionThreads(zeebeClientMaxThreads)
                 .build();
     }
 }

@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -14,7 +15,6 @@ import java.util.stream.Collectors;
 import static java.util.Comparator.naturalOrder;
 import static org.mifos.connector.channel.camel.config.CamelProperties.ERROR_INFORMATION;
 import static org.mifos.connector.channel.camel.config.CamelProperties.TRANSACTION_ID;
-import static org.mifos.connector.channel.zeebe.ZeebeClientConfiguration.ZEEBE_CLIENT_THREADS;
 import static org.mifos.connector.common.mojaloop.type.ErrorCode.fromCode;
 
 @Component
@@ -25,6 +25,9 @@ public class ZeebeWorkers {
 
     @Autowired
     private ZeebeClient zeebeClient;
+
+    @Value("${zeebe.client.evenly-allocated-max-jobs}")
+    private int workerMaxJobs;
 
     @PostConstruct
     public void setupWorkers() {
@@ -48,7 +51,7 @@ public class ZeebeWorkers {
                             .join();
                 })
                 .name("send-error-to-channel")
-                .maxJobsActive(ZEEBE_CLIENT_THREADS / ZEEBE_WORKERS)
+                .maxJobsActive(workerMaxJobs)
                 .open();
 
         zeebeClient.newWorker()
@@ -60,7 +63,7 @@ public class ZeebeWorkers {
                             .join();
                 })
                 .name("send-success-to-channel")
-                .maxJobsActive(ZEEBE_CLIENT_THREADS / ZEEBE_WORKERS)
+                .maxJobsActive(workerMaxJobs)
                 .open();
 
         zeebeClient.newWorker()
@@ -72,7 +75,7 @@ public class ZeebeWorkers {
                             .join();
                 })
                 .name("notify-operator")
-                .maxJobsActive(ZEEBE_CLIENT_THREADS / ZEEBE_WORKERS)
+                .maxJobsActive(workerMaxJobs)
                 .open();
 
         zeebeClient.newWorker()
@@ -84,7 +87,7 @@ public class ZeebeWorkers {
                             .join();
                 })
                 .name("notify-ams-failure")
-                .maxJobsActive(ZEEBE_CLIENT_THREADS / ZEEBE_WORKERS)
+                .maxJobsActive(workerMaxJobs)
                 .open();
 
         zeebeClient.newWorker()
@@ -107,7 +110,7 @@ public class ZeebeWorkers {
                             .join();
                 })
                 .name("send-unknown-to-channel")
-                .maxJobsActive(ZEEBE_CLIENT_THREADS / ZEEBE_WORKERS)
+                .maxJobsActive(workerMaxJobs)
                 .open();
     }
 }

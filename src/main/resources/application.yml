@@ -23,14 +23,3 @@ rest:
   authorization:
     enabled: false
     host: http://localhost:8080
-    settings:
-      - endpoint: rest:POST:/channel/transfer
-        authority: ALL_FUNCTIONS
-      - endpoint: rest:POST:/channel/transactionRequest
-        authority: ALL_FUNCTIONS
-      - endpoint: rest:POST:/channel/transaction/{transactionId}/resolve
-        authority: ALL_FUNCTIONS
-      - endpoint: rest:POST:/channel/job/resolve
-        authority: ALL_FUNCTIONS
-      - endpoint: rest:POST:/channel/workflow/resolve
-        authority: ALL_FUNCTIONS

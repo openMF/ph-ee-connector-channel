@@ -9,7 +9,7 @@ camel:
 bpmn:
   flows:
     payment-transfer: "PayerFundTransfer-DFSPID"
-    payment-request: "PayeePaymentRequest-DFSPID"
+    transaction-request: "PayeeTransactionRequest-DFSPID"
 
 zeebe:
   client:

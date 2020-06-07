@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.mifos.connector.channel.camel.config.CamelProperties.TRANSACTION_ID;
-import static org.mifos.connector.channel.zeebe.ZeebeExpressionVariables.AUTH_RETRIES_LEFT;
 import static org.mifos.connector.channel.zeebe.ZeebeExpressionVariables.IS_AUTHORISATION_REQUIRED;
 import static org.mifos.connector.channel.zeebe.ZeebeExpressionVariables.IS_RTP_REQUEST;
 import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
@@ -31,12 +30,12 @@ import static org.mifos.connector.common.mojaloop.type.TransactionRole.PAYER;
 public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
 
     private String paymentTransferFlow;
-    private String paymentRequestFlow;
+    private String transactionRequestFlow;
     private ZeebeProcessStarter zeebeProcessStarter;
     private ZeebeClient zeebeClient;
 
     public TransactionsRouteBuilder(@Value("${bpmn.flows.payment-transfer}") String paymentTransferFlow,
-                                    @Value("${bpmn.flows.payment-request}") String paymentRequestFlow,
+                                    @Value("${bpmn.flows.transaction-request}") String transactionRequestFlow,
                                     ZeebeClient zeebeClient,
                                     ZeebeProcessStarter zeebeProcessStarter,
                                     @Autowired(required = false) AuthProcessor authProcessor,
@@ -44,7 +43,7 @@ public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
         super(authProcessor, authProperties);
         super.configure();
         this.paymentTransferFlow = paymentTransferFlow;
-        this.paymentRequestFlow = paymentRequestFlow;
+        this.transactionRequestFlow = transactionRequestFlow;
         this.zeebeProcessStarter = zeebeProcessStarter;
         this.zeebeClient = zeebeClient;
     }
@@ -79,7 +78,7 @@ public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
                     variables.put(IS_RTP_REQUEST, true);
 //                    variables.put(AUTH_RETRIES_LEFT, 3); // TODO if auth enabled
                     variables.put(IS_AUTHORISATION_REQUIRED, false); // TODO how to decide?
-                    zeebeProcessStarter.startZeebeWorkflow(paymentRequestFlow, exchange.getIn().getBody(String.class), transactionType, variables);
+                    zeebeProcessStarter.startZeebeWorkflow(transactionRequestFlow, exchange.getIn().getBody(String.class), transactionType, variables);
                 });
 
         from("rest:POST:/channel/transaction/{" + TRANSACTION_ID + "}/resolve")

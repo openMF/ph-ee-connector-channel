@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.mifos.connector.channel.camel.config.CamelProperties.AUTH_TYPE;
 import static org.mifos.connector.channel.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeExpressionVariables.IS_AUTHORISATION_REQUIRED;
 import static org.mifos.connector.channel.zeebe.ZeebeExpressionVariables.IS_RTP_REQUEST;
@@ -62,7 +63,10 @@ public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
                     Map<String, Object> extraVariables = new HashMap<>();
                     extraVariables.put(IS_RTP_REQUEST, false);
 
-                    zeebeProcessStarter.startZeebeWorkflow(paymentTransferFlow, exchange.getIn().getBody(String.class), transactionType,extraVariables);
+                    zeebeProcessStarter.startZeebeWorkflow(paymentTransferFlow.replace("{tenant}", exchange.getIn().getHeader("Platform-TenantId", String.class)),
+                            exchange.getIn().getBody(String.class),
+                            transactionType,
+                            extraVariables);
                 });
 
         from("rest:POST:/channel/transactionRequest")
@@ -78,7 +82,11 @@ public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
                     variables.put(IS_RTP_REQUEST, true);
 //                    variables.put(AUTH_RETRIES_LEFT, 3); // TODO if auth enabled
                     variables.put(IS_AUTHORISATION_REQUIRED, false); // TODO how to decide?
-                    zeebeProcessStarter.startZeebeWorkflow(transactionRequestFlow, exchange.getIn().getBody(String.class), transactionType, variables);
+                    variables.put(AUTH_TYPE, "NONE");
+                    zeebeProcessStarter.startZeebeWorkflow(transactionRequestFlow.replace("{tenant}", exchange.getIn().getHeader("Platform-TenantId", String.class)),
+                            exchange.getIn().getBody(String.class),
+                            transactionType,
+                            variables);
                 });
 
         from("rest:POST:/channel/transaction/{" + TRANSACTION_ID + "}/resolve")

@@ -20,7 +20,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class TransactionChannelRequestDTO {
-
     private String clientRefId;
     private Party payer, payee;
     private AmountType amountType;

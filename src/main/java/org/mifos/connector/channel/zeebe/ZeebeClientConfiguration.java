@@ -39,7 +39,7 @@ public class ZeebeClientConfiguration {
                 .audience("4ae8d42c-5f02-4e18-b4d4-f4d3d92fc824.zeebe.camunda.io")
                 .clientId("ruU.ptno_wct_PXW~ngW4Pp0A0QWw.E1")
                 .clientSecret("is20pecUw4p_9s3DakWcayYPdDn.GhWfmkm7jtznSErP.ed1iR.z.Qg97EBVz~Pc")
-                .authorizationServerUrl("https://login.cloud.camunda.io/oauth/token")
+                // .authorizationServerUrl("https://login.cloud.camunda.io/oauth/token")
                 .build();
 
         return ZeebeClient.newClientBuilder()

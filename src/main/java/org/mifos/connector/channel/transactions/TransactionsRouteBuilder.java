@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.mifos.connector.channel.camel.config.CamelProperties.AUTH_TYPE;
@@ -23,7 +24,6 @@ import static org.mifos.connector.channel.zeebe.ZeebeExpressionVariables.IS_RTP_
 import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
 import static org.mifos.connector.common.mojaloop.type.InitiatorType.CONSUMER;
 import static org.mifos.connector.common.mojaloop.type.Scenario.TRANSFER;
-import static org.mifos.connector.common.mojaloop.type.Scenario.WITHDRAWAL;
 import static org.mifos.connector.common.mojaloop.type.TransactionRole.PAYEE;
 import static org.mifos.connector.common.mojaloop.type.TransactionRole.PAYER;
 
@@ -34,8 +34,10 @@ public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
     private String transactionRequestFlow;
     private ZeebeProcessStarter zeebeProcessStarter;
     private ZeebeClient zeebeClient;
+    private List<String> dfspIds;
 
-    public TransactionsRouteBuilder(@Value("${bpmn.flows.payment-transfer}") String paymentTransferFlow,
+    public TransactionsRouteBuilder(@Value("#{'${dfspids}'.split(',')}") List<String> dfspIds,
+                                    @Value("${bpmn.flows.payment-transfer}") String paymentTransferFlow,
                                     @Value("${bpmn.flows.transaction-request}") String transactionRequestFlow,
                                     ZeebeClient zeebeClient,
                                     ZeebeProcessStarter zeebeProcessStarter,
@@ -47,6 +49,7 @@ public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
         this.transactionRequestFlow = transactionRequestFlow;
         this.zeebeProcessStarter = zeebeProcessStarter;
         this.zeebeClient = zeebeClient;
+        this.dfspIds = dfspIds;
     }
 
     @Override
@@ -58,12 +61,18 @@ public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
                     TransactionType transactionType = new TransactionType();
                     transactionType.setInitiator(PAYER);
                     transactionType.setInitiatorType(CONSUMER);
-                    transactionType.setScenario(WITHDRAWAL);
+                    transactionType.setScenario(TRANSFER);
 
                     Map<String, Object> extraVariables = new HashMap<>();
                     extraVariables.put(IS_RTP_REQUEST, false);
 
-                    zeebeProcessStarter.startZeebeWorkflow(paymentTransferFlow.replace("{tenant}", exchange.getIn().getHeader("Platform-TenantId", String.class)),
+                    String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
+                    if (tenantId == null || !dfspIds.contains(tenantId)) {
+                        throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
+                    }
+                    String tenantSpecificBpmn = paymentTransferFlow.replace("{tenant}", tenantId);
+
+                    zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             exchange.getIn().getBody(String.class),
                             transactionType,
                             extraVariables);
@@ -83,7 +92,14 @@ public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
 //                    variables.put(AUTH_RETRIES_LEFT, 3); // TODO if auth enabled
                     variables.put(IS_AUTHORISATION_REQUIRED, false); // TODO how to decide?
                     variables.put(AUTH_TYPE, "NONE");
-                    zeebeProcessStarter.startZeebeWorkflow(transactionRequestFlow.replace("{tenant}", exchange.getIn().getHeader("Platform-TenantId", String.class)),
+
+                    String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
+                    if (tenantId == null || !dfspIds.contains(tenantId)) {
+                        throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
+                    }
+                    String tenantSpecificBpmn = transactionRequestFlow.replace("{tenant}", tenantId);
+
+                    zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             exchange.getIn().getBody(String.class),
                             transactionType,
                             variables);

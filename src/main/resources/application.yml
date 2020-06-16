@@ -8,8 +8,8 @@ camel:
 
 bpmn:
   flows:
-    payment-transfer: "PayerFundTransfer-DFSPID"
-    transaction-request: "PayeeTransactionRequest-DFSPID"
+    payment-transfer: "PayerFundTransfer-{tenant}"
+    transaction-request: "PayeeTransactionRequest-{tenant}"
 
 zeebe:
   client:

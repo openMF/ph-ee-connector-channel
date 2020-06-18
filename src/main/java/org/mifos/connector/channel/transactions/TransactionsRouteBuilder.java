@@ -21,6 +21,7 @@ import static org.mifos.connector.channel.camel.config.CamelProperties.AUTH_TYPE
 import static org.mifos.connector.channel.camel.config.CamelProperties.TRANSACTION_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeExpressionVariables.IS_AUTHORISATION_REQUIRED;
 import static org.mifos.connector.channel.zeebe.ZeebeExpressionVariables.IS_RTP_REQUEST;
+import static org.mifos.connector.channel.zeebe.ZeebeExpressionVariables.TENANT_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
 import static org.mifos.connector.common.mojaloop.type.InitiatorType.CONSUMER;
 import static org.mifos.connector.common.mojaloop.type.Scenario.TRANSFER;
@@ -70,6 +71,7 @@ public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
                     if (tenantId == null || !dfspIds.contains(tenantId)) {
                         throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
                     }
+                    extraVariables.put(TENANT_ID, tenantId);
                     String tenantSpecificBpmn = paymentTransferFlow.replace("{tenant}", tenantId);
 
                     zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
@@ -97,6 +99,7 @@ public class TransactionsRouteBuilder extends ErrorHandlerRouteBuilder {
                     if (tenantId == null || !dfspIds.contains(tenantId)) {
                         throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
                     }
+                    variables.put(TENANT_ID, tenantId);
                     String tenantSpecificBpmn = transactionRequestFlow.replace("{tenant}", tenantId);
 
                     zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,

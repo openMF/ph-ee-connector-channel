@@ -1,12 +1,7 @@
 package org.mifos.connector.channel.zeebe;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.zeebe.client.ZeebeClient;
 import io.zeebe.client.api.response.WorkflowInstanceEvent;
-import org.mifos.connector.channel.camel.config.CamelProperties;
-import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
-import org.mifos.connector.common.mojaloop.dto.TransactionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,20 +22,13 @@ public class ZeebeProcessStarter {
     @Autowired
     private ZeebeClient zeebeClient;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    public void startZeebeWorkflow(String workflowId, String request, TransactionType transactionType, Map<String, Object> extraVariables) throws JsonProcessingException {
+    public String startZeebeWorkflow(String workflowId, String request, Map<String, Object> extraVariables) {
         String transactionId = generateTransactionId();
 
         Map<String, Object> variables = new HashMap<>();
-        variables.put(CamelProperties.TRANSACTION_ID, transactionId);
-
-        TransactionChannelRequestDTO channelRequest = objectMapper.readValue(request, TransactionChannelRequestDTO.class);
-        channelRequest.setTransactionType(transactionType);
-
-        variables.put(CamelProperties.CHANNEL_REQUEST, objectMapper.writeValueAsString(channelRequest));
-        variables.put(CamelProperties.ORIGIN_DATE, Instant.now().toEpochMilli());
+        variables.put(ZeebeVariables.TRANSACTION_ID, transactionId);
+        variables.put(ZeebeVariables.CHANNEL_REQUEST, request);
+        variables.put(ZeebeVariables.ORIGIN_DATE, Instant.now().toEpochMilli());
         if(extraVariables != null) {
             variables.putAll(extraVariables);
         }
@@ -54,6 +42,7 @@ public class ZeebeProcessStarter {
                 .join();
 
         logger.info("zeebee workflow instance from process {} started with transactionId {}", workflowId, transactionId);
+        return transactionId;
     }
 
     // TODO generate proper cluster-safe transaction id

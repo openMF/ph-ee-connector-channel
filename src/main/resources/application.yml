@@ -6,10 +6,13 @@ camel:
     json-jackson:
       auto-discover-object-mapper: true
 
+dfspids: "DFSPID"
+
 bpmn:
   flows:
-    payment-transfer: "PayerFundTransfer-{tenant}"
-    transaction-request: "PayeeTransactionRequest-{tenant}"
+    payment-transfer: "PayerFundTransfer-{dfspid}"
+    transaction-request: "PayeeTransactionRequest-{dfspid}"
+    party-registration: "PartyRegistration-{dfspid}"
 
 zeebe:
   client:

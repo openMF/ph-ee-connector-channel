@@ -13,8 +13,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.naturalOrder;
-import static org.mifos.connector.channel.camel.config.CamelProperties.ERROR_INFORMATION;
-import static org.mifos.connector.channel.camel.config.CamelProperties.TRANSACTION_ID;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.ERROR_INFORMATION;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.common.mojaloop.type.ErrorCode.fromCode;
 
 @Component

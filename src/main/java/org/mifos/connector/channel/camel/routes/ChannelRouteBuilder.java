@@ -179,8 +179,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                         JSONObject transfer = contents.getJSONObject(0);
                         long workflowInstanceKey = transfer.getLong("workflowInstanceKey");
                         String status = transfer.getString("status");
-                        long completedAt = transfer.getLong("completedAt");
-                        response.setCompletedTimestamp(LocalDateTime.ofInstant(Instant.ofEpochMilli(completedAt), ZoneId.systemDefault()));
+                        Object completedAt = transfer.get("completedAt");
+                        response.setCompletedTimestamp(completedAt == null ? null : LocalDateTime.ofInstant(Instant.ofEpochMilli((long)completedAt), ZoneId.systemDefault()));
                         response.setTransactionId(transactionId);
                         response.setTransferState("COMPLETED".equals(status) ? TransferState.COMMITTED : TransferState.RECEIVED);
 

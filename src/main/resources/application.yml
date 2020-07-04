@@ -28,7 +28,7 @@ rest:
     host: http://localhost:8080
 
 operations:
-  url: "http://med-operations.mifos.io/oauth/token"
+  url: "http://med-operations.mifos.io/api/v1"
 
 identity:
   url: "http://med-identity.mifos.io/oauth/token"

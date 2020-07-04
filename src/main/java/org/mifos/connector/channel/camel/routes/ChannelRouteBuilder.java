@@ -156,14 +156,16 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             "Basic " + getEncoder().encodeToString((client.getClientId()+":"+client.getClientSecret()).getBytes()));
 
                     HttpEntity<String> entity = new HttpEntity<>(null, httpHeaders);
-                    ResponseEntity<String> exchange = restTemplate.exchange(identityUrl+"?grant_type=client_credentials", HttpMethod.GET, entity, String.class);
+                    ResponseEntity<String> exchange = restTemplate.exchange(identityUrl+"?grant_type=client_credentials", HttpMethod.POST, entity, String.class);
                     String token = new JSONObject(exchange.getBody()).getString("access_token");
 
                     String transactionId = e.getIn().getHeader("transactionId", String.class);
 
-                    httpHeaders.set("Authorization", "Bearer " + token);
+                    httpHeaders.remove("Authorization");
+                    httpHeaders.add("Authorization", "Bearer " + token);
+                    entity = new HttpEntity<>(null, httpHeaders);
                     exchange = restTemplate.exchange(operationsUrl+"/transfers?page=0&size=20&transactionId="+transactionId, HttpMethod.GET, entity, String.class);
-                    JSONArray contents = new JSONObject(exchange.getBody()).getJSONArray("contents");
+                    JSONArray contents = new JSONObject(exchange.getBody()).getJSONArray("content");
 
                     TransactionStatusResponseDTO response = new TransactionStatusResponseDTO();
                     if(contents.length() != 1) {
@@ -174,7 +176,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                         response.setTransferId(null);
                     } else {
                         JSONObject transfer = contents.getJSONObject(0);
-                        String workflowInstanceKey = transfer.getString("workflowInstanceKey");
+                        long workflowInstanceKey = transfer.getLong("workflowInstanceKey");
                         String status = transfer.getString("status");
                         long completedAt = transfer.getLong("completedAt");
                         response.setCompletedTimestamp(LocalDateTime.ofInstant(Instant.ofEpochMilli(completedAt), ZoneId.systemDefault()));
@@ -184,10 +186,11 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                         exchange = restTemplate.exchange(operationsUrl+"/transaction/"+workflowInstanceKey, HttpMethod.GET, entity, String.class);
                         JSONArray variables = new JSONObject(exchange.getBody()).getJSONArray("variables");
                         String transferCode = getVariableValue(variables.iterator(), "transferCode");
-                        response.setTransferId(transferCode);
+                        response.setTransferId(transferCode.replace("\"", ""));
 
                         String channelRequest = getVariableValue(variables.iterator(), "channelRequest");
-                        JSONObject channelRequestJson = new JSONObject(channelRequest);
+                        JSONObject channelRequestJson = new JSONObject(channelRequest.substring(1, channelRequest.length()-1)
+                                                                                    .replace("\\\"", "\""));
                         response.setClientRefId(channelRequestJson.getString("clientRefId"));
                     }
 

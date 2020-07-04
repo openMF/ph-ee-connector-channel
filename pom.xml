@@ -10,13 +10,13 @@
 		<version>2.2.2.RELEASE</version>
 		<relativePath/>
 	</parent>
-	
+
 	<groupId>org.mifos</groupId>
 	<artifactId>ph-ee-connector-channel</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 
 	<properties>
-		<camel.version>3.0.0</camel.version>
+		<camel.version>3.4.0</camel.version>
 		<compiler-plugin.version>3.8.1</compiler-plugin.version>
 
 		<maven.compiler.parameters>true</maven.compiler.parameters>
@@ -38,6 +38,7 @@
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
+			<version>5.2.2.RELEASE</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.camel</groupId>

@@ -186,12 +186,16 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                         exchange = restTemplate.exchange(operationsUrl+"/transaction/"+workflowInstanceKey, HttpMethod.GET, entity, String.class);
                         JSONArray variables = new JSONObject(exchange.getBody()).getJSONArray("variables");
                         String transferCode = getVariableValue(variables.iterator(), "transferCode");
-                        response.setTransferId(transferCode.replace("\"", ""));
+                        response.setTransferId(transferCode == null ? null : transferCode.replace("\"", ""));
 
                         String channelRequest = getVariableValue(variables.iterator(), "channelRequest");
-                        JSONObject channelRequestJson = new JSONObject(channelRequest.substring(1, channelRequest.length()-1)
-                                                                                    .replace("\\\"", "\""));
-                        response.setClientRefId(channelRequestJson.getString("clientRefId"));
+                        if(channelRequest != null) {
+                            JSONObject channelRequestJson = new JSONObject(channelRequest.substring(1, channelRequest.length() - 1)
+                                    .replace("\\\"", "\""));
+                            response.setClientRefId(channelRequestJson.getString("clientRefId"));
+                        } else {
+                            response.setClientRefId("000000");
+                        }
                     }
 
                     e.getIn().setBody(objectMapper.writeValueAsString(response));

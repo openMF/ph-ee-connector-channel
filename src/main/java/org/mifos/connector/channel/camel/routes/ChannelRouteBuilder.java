@@ -144,6 +144,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
         from("rest:GET:/channel/transfer/{transactionId}")
                 .id("transfer-details")
+                .log(LoggingLevel.INFO, "## CHANNEL -> inbound transferDetail request for ${header.transactionId}")
                 .process(e -> {
                     String tenantId = e.getIn().getHeader("Platform-TenantId", String.class);
                     if (tenantId == null || !dfspIds.contains(tenantId)) {

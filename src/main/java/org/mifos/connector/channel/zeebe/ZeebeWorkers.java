@@ -20,7 +20,6 @@ import static org.mifos.connector.common.mojaloop.type.ErrorCode.fromCode;
 @Component
 public class ZeebeWorkers {
 
-    private static final int ZEEBE_WORKERS = 5;
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired

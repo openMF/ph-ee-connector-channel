@@ -259,5 +259,32 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             .send()
                             .join();
                 });
+
+        from("rest:POST:/channel/gsma/transfer")
+                .id("gsma-payer-transfer")
+                .log(LoggingLevel.INFO, "## CHANNEL -> GSMA PAYER initiated transfer")
+                .unmarshal().json(JsonLibrary.Jackson, TransactionChannelRequestDTO.class)
+                .to("bean-validator:request")
+                .process(exchange -> {
+                    TransactionType transactionType = new TransactionType();
+                    transactionType.setInitiator(PAYER);
+                    transactionType.setInitiatorType(CONSUMER);
+                    transactionType.setScenario(TRANSFER);
+
+                    Map<String, Object> extraVariables = new HashMap<>();
+
+                    String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
+                    extraVariables.put(TENANT_ID, tenantId);
+
+                    TransactionChannelRequestDTO channelRequest = exchange.getIn().getBody(TransactionChannelRequestDTO.class);
+                    channelRequest.setTransactionType(transactionType);
+
+                    String transactionId = zeebeProcessStarter.startZeebeWorkflow("gsma_p2p_base",
+                            objectMapper.writeValueAsString(channelRequest),
+                            extraVariables);
+                    JSONObject response = new JSONObject();
+                    response.put("transactionId", transactionId);
+                    exchange.getIn().setBody(response.toString());
+                });
     }
 }

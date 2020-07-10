@@ -16,19 +16,17 @@ import org.mifos.connector.common.camel.AuthProcessor;
 import org.mifos.connector.common.camel.AuthProperties;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.RegisterAliasRequestDTO;
-import org.mifos.connector.common.channel.dto.TransactionStatusResponseDTO;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
+import org.mifos.connector.common.channel.dto.TransactionStatusResponseDTO;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
 import org.mifos.connector.common.mojaloop.type.TransferState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -37,9 +35,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.temporal.TemporalAccessor;
-import java.util.Arrays;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -50,14 +45,14 @@ import static java.util.Base64.getEncoder;
 import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.stream.StreamSupport.stream;
 import static org.mifos.connector.channel.camel.config.CamelProperties.AUTH_TYPE;
+import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.ACCOUNT;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID_TYPE;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_AUTHORISATION_REQUIRED;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_RTP_REQUEST;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID_TYPE;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.TENANT_ID;
-import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.common.mojaloop.type.InitiatorType.CONSUMER;
 import static org.mifos.connector.common.mojaloop.type.Scenario.TRANSFER;
 import static org.mifos.connector.common.mojaloop.type.TransactionRole.PAYEE;
@@ -84,7 +79,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                @Value("${bpmn.flows.payment-transfer}") String paymentTransferFlow,
                                @Value("${bpmn.flows.transaction-request}") String transactionRequestFlow,
                                @Value("${bpmn.flows.party-registration}") String partyRegistration,
-                               @Value("${identity.url}") String identityUrl,
+                               @Value("${rest.authorization.host}") String identityUrl,
                                @Value("${operations.url}") String operationsUrl,
                                ZeebeClient zeebeClient,
                                ZeebeProcessStarter zeebeProcessStarter,
@@ -154,10 +149,10 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     HttpHeaders httpHeaders = new HttpHeaders();
                     httpHeaders.add("Platform-TenantId", tenantId);
                     httpHeaders.add("Authorization",
-                            "Basic " + getEncoder().encodeToString((client.getClientId()+":"+client.getClientSecret()).getBytes()));
+                            "Basic " + getEncoder().encodeToString((client.getClientId() + ":" + client.getClientSecret()).getBytes()));
 
                     HttpEntity<String> entity = new HttpEntity<>(null, httpHeaders);
-                    ResponseEntity<String> exchange = restTemplate.exchange(identityUrl+"?grant_type=client_credentials", HttpMethod.POST, entity, String.class);
+                    ResponseEntity<String> exchange = restTemplate.exchange(identityUrl + "/oauth/token?grant_type=client_credentials", HttpMethod.POST, entity, String.class);
                     String token = new JSONObject(exchange.getBody()).getString("access_token");
 
                     String transactionId = e.getIn().getHeader("transactionId", String.class);
@@ -165,11 +160,11 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     httpHeaders.remove("Authorization");
                     httpHeaders.add("Authorization", "Bearer " + token);
                     entity = new HttpEntity<>(null, httpHeaders);
-                    exchange = restTemplate.exchange(operationsUrl+"/transfers?page=0&size=20&transactionId="+transactionId, HttpMethod.GET, entity, String.class);
+                    exchange = restTemplate.exchange(operationsUrl + "/transfers?page=0&size=20&transactionId=" + transactionId, HttpMethod.GET, entity, String.class);
                     JSONArray contents = new JSONObject(exchange.getBody()).getJSONArray("content");
 
                     TransactionStatusResponseDTO response = new TransactionStatusResponseDTO();
-                    if(contents.length() != 1) {
+                    if (contents.length() != 1) {
                         response.setClientRefId("000000");
                         response.setCompletedTimestamp(null);
                         response.setTransactionId(transactionId);
@@ -179,17 +174,17 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                         JSONObject transfer = contents.getJSONObject(0);
                         long workflowInstanceKey = transfer.getLong("workflowInstanceKey");
                         String status = transfer.getString("status");
-                        response.setCompletedTimestamp(transfer.isNull("completedAt")  ? null : LocalDateTime.ofInstant(Instant.ofEpochMilli(transfer.getLong("completedAt")), ZoneId.systemDefault()));
+                        response.setCompletedTimestamp(transfer.isNull("completedAt") ? null : LocalDateTime.ofInstant(Instant.ofEpochMilli(transfer.getLong("completedAt")), ZoneId.systemDefault()));
                         response.setTransactionId(transactionId);
                         response.setTransferState("COMPLETED".equals(status) ? TransferState.COMMITTED : TransferState.RECEIVED);
 
-                        exchange = restTemplate.exchange(operationsUrl+"/transaction/"+workflowInstanceKey, HttpMethod.GET, entity, String.class);
+                        exchange = restTemplate.exchange(operationsUrl + "/transaction/" + workflowInstanceKey, HttpMethod.GET, entity, String.class);
                         JSONArray variables = new JSONObject(exchange.getBody()).getJSONArray("variables");
                         String transferCode = getVariableValue(variables.iterator(), "transferCode");
                         response.setTransferId(transferCode == null ? null : transferCode.replace("\"", ""));
 
                         String channelRequest = getVariableValue(variables.iterator(), "channelRequest");
-                        if(channelRequest != null) {
+                        if (channelRequest != null) {
                             JSONObject channelRequestJson = new JSONObject(channelRequest.substring(1, channelRequest.length() - 1)
                                     .replace("\\\"", "\""));
                             response.setClientRefId(channelRequestJson.getString("clientRefId"));

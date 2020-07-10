@@ -1,0 +1,12 @@
+operations:
+  url: "http://bb-operations.mifos.io/api/v1"
+
+identity:
+  channel:
+    clients:
+      - clientId: channel-tn03
+        clientSecret: p1234
+        tenant: tn03
+      - clientId: channel-tn04
+        clientSecret: p1234
+        tenant: tn04

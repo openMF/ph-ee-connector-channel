@@ -1,0 +1,13 @@
+operations:
+  url: "http://large-operations.mifos.io/api/v1"
+
+identity:
+  url: "http://large-identity.mifos.io/oauth/token"
+  channel:
+    clients:
+      - clientId: channel-tn01
+        clientSecret: p3456
+        tenant: tn01
+      - clientId: channel-tn02
+        clientSecret: p3456
+        tenant: tn02

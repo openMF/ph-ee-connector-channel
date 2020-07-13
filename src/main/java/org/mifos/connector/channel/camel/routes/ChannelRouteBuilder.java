@@ -187,7 +187,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                         if (channelRequest != null) {
                             JSONObject channelRequestJson = new JSONObject(channelRequest.substring(1, channelRequest.length() - 1)
                                     .replace("\\\"", "\""));
-                            response.setClientRefId(channelRequestJson.getString("clientRefId"));
+                            String clientRefId = channelRequestJson.optString("clientRefId", null);
+                            response.setClientRefId(clientRefId == null ? "000000" : clientRefId);
                         } else {
                             response.setClientRefId("000000");
                         }

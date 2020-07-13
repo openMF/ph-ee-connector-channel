@@ -66,7 +66,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private String paymentTransferFlow;
     private String transactionRequestFlow;
     private String partyRegistration;
-    private String identityUrl;
+    private String restAuthHost;
     private String operationsUrl;
     private ZeebeProcessStarter zeebeProcessStarter;
     private ZeebeClient zeebeClient;
@@ -79,7 +79,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                @Value("${bpmn.flows.payment-transfer}") String paymentTransferFlow,
                                @Value("${bpmn.flows.transaction-request}") String transactionRequestFlow,
                                @Value("${bpmn.flows.party-registration}") String partyRegistration,
-                               @Value("${rest.authorization.host}") String identityUrl,
+                               @Value("${rest.authorization.host}") String restAuthHost,
                                @Value("${operations.url}") String operationsUrl,
                                ZeebeClient zeebeClient,
                                ZeebeProcessStarter zeebeProcessStarter,
@@ -99,7 +99,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         this.objectMapper = objectMapper;
         this.clientProperties = clientProperties;
         this.restTemplate = restTemplate;
-        this.identityUrl = identityUrl;
+        this.restAuthHost = restAuthHost;
         this.operationsUrl = operationsUrl;
     }
 
@@ -152,7 +152,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             "Basic " + getEncoder().encodeToString((client.getClientId() + ":" + client.getClientSecret()).getBytes()));
 
                     HttpEntity<String> entity = new HttpEntity<>(null, httpHeaders);
-                    ResponseEntity<String> exchange = restTemplate.exchange(identityUrl + "/oauth/token?grant_type=client_credentials", HttpMethod.POST, entity, String.class);
+                    ResponseEntity<String> exchange = restTemplate.exchange(restAuthHost + "/oauth/token?grant_type=client_credentials", HttpMethod.POST, entity, String.class);
                     String token = new JSONObject(exchange.getBody()).getString("access_token");
 
                     String transactionId = e.getIn().getHeader("transactionId", String.class);

@@ -2,7 +2,6 @@ operations:
   url: "http://large-operations.mifos.io/api/v1"
 
 identity:
-  url: "http://large-identity.mifos.io/oauth/token"
   channel:
     clients:
       - clientId: channel-tn01

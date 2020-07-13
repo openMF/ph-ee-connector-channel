@@ -2,7 +2,6 @@ operations:
   url: "http://med-operations.mifos.io/api/v1"
 
 identity:
-  url: "http://med-identity.mifos.io/oauth/token"
   channel:
     clients:
       - clientId: channel-tn05

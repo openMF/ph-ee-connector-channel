@@ -178,7 +178,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                         response.setTransactionId(transactionId);
                         response.setTransferState("COMPLETED".equals(status) ? TransferState.COMMITTED : TransferState.RECEIVED);
 
-                        exchange = restTemplate.exchange(operationsUrl + "/transaction/" + workflowInstanceKey, HttpMethod.GET, entity, String.class);
+                        exchange = restTemplate.exchange(operationsUrl + "/transfer/" + workflowInstanceKey, HttpMethod.GET, entity, String.class);
                         JSONArray variables = new JSONObject(exchange.getBody()).getJSONArray("variables");
                         String transferCode = getVariableValue(variables.iterator(), "transferCode");
                         response.setTransferId(transferCode == null ? null : transferCode.replace("\"", ""));

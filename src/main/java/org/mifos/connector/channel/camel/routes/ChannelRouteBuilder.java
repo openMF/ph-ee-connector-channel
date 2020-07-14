@@ -256,9 +256,12 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     TransactionChannelRequestDTO channelRequest = exchange.getIn().getBody(TransactionChannelRequestDTO.class);
                     channelRequest.setTransactionType(transactionType);
 
-                    zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
+                    String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             objectMapper.writeValueAsString(channelRequest),
                             variables);
+                    JSONObject response = new JSONObject();
+                    response.put("transactionId", transactionId);
+                    exchange.getIn().setBody(response.toString());
                 });
 
         from("rest:POST:/channel/partyRegistration")
@@ -282,7 +285,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             objectMapper.writeValueAsString(channelRequest),
                             variables);
-                });
+                })
+                .setBody(constant(null));
 
         from("rest:POST:/channel/transaction/{" + TRANSACTION_ID + "}/resolve")
                 .id("transaction-resolve")
@@ -301,7 +305,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             .variables(variables)
                             .send()
                             .join();
-                });
+                })
+                .setBody(constant(null));
 
         from("rest:POST:/channel/job/resolve")
                 .id("job-resolve")
@@ -328,7 +333,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     zeebeClient.newResolveIncidentCommand(incident.getLong("key"))
                             .send()
                             .join();
-                });
+                })
+                .setBody(constant(null));
 
         from("rest:POST:/channel/workflow/resolve")
                 .id("workflow-resolve")
@@ -350,7 +356,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     zeebeClient.newResolveIncidentCommand(incident.getLong("key"))
                             .send()
                             .join();
-                });
+                })
+                .setBody(constant(null));
     }
 
     private String getVariableValue(Iterator<Object> iterator, String variableName) {

@@ -15,6 +15,7 @@ import org.mifos.connector.common.camel.AuthProperties;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.RegisterAliasRequestDTO;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
+import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -272,12 +273,50 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     transactionType.setScenario(TRANSFER);
 
                     Map<String, Object> extraVariables = new HashMap<>();
+                    extraVariables.put(IS_RTP_REQUEST, false);
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     extraVariables.put(TENANT_ID, tenantId);
 
                     TransactionChannelRequestDTO channelRequest = exchange.getIn().getBody(TransactionChannelRequestDTO.class);
                     channelRequest.setTransactionType(transactionType);
+
+                    PartyIdInfo requestedParty = (boolean)extraVariables.get(IS_RTP_REQUEST) ? channelRequest.getPayer().getPartyIdInfo() : channelRequest.getPayee().getPartyIdInfo();
+                    extraVariables.put(PARTY_ID_TYPE, requestedParty.getPartyIdType());
+                    extraVariables.put(PARTY_ID, requestedParty.getPartyIdentifier());
+
+                    String transactionId = zeebeProcessStarter.startZeebeWorkflow("gsma_p2p_base",
+                            objectMapper.writeValueAsString(channelRequest),
+                            extraVariables);
+                    JSONObject response = new JSONObject();
+                    response.put("transactionId", transactionId);
+                    exchange.getIn().setBody(response.toString());
+                });
+
+
+        from("rest:POST:/channel/gsma/merchantPay")
+                .id("gsma-payer-transfer")
+                .log(LoggingLevel.INFO, "## CHANNEL -> GSMA PAYER initiated transfer")
+                .unmarshal().json(JsonLibrary.Jackson, TransactionChannelRequestDTO.class)
+                .to("bean-validator:request")
+                .process(exchange -> {
+                    TransactionType transactionType = new TransactionType();
+                    transactionType.setInitiator(PAYEE);
+                    transactionType.setInitiatorType(CONSUMER);
+                    transactionType.setScenario(TRANSFER);
+
+                    Map<String, Object> extraVariables = new HashMap<>();
+                    extraVariables.put(IS_RTP_REQUEST, true);
+
+                    String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
+                    extraVariables.put(TENANT_ID, tenantId);
+
+                    TransactionChannelRequestDTO channelRequest = exchange.getIn().getBody(TransactionChannelRequestDTO.class);
+                    channelRequest.setTransactionType(transactionType);
+
+                    PartyIdInfo requestedParty = (boolean)extraVariables.get(IS_RTP_REQUEST) ? channelRequest.getPayer().getPartyIdInfo() : channelRequest.getPayee().getPartyIdInfo();
+                    extraVariables.put(PARTY_ID_TYPE, requestedParty.getPartyIdType());
+                    extraVariables.put(PARTY_ID, requestedParty.getPartyIdentifier());
 
                     String transactionId = zeebeProcessStarter.startZeebeWorkflow("gsma_p2p_base",
                             objectMapper.writeValueAsString(channelRequest),

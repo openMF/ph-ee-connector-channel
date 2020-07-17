@@ -1,0 +1,12 @@
+operations:
+  url: "http://med-operations.mifos.io/api/v1"
+
+identity:
+  channel:
+    clients:
+      - clientId: channel-tn05
+        clientSecret: p2345
+        tenant: tn05
+      - clientId: channel-tn06
+        clientSecret: p2345
+        tenant: tn06

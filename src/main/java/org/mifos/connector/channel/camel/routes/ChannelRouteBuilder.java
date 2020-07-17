@@ -9,27 +9,49 @@ import org.apache.camel.component.bean.validator.BeanValidationException;
 import org.apache.camel.model.dataformat.JsonLibrary;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.mifos.connector.channel.camel.config.Client;
+import org.mifos.connector.channel.camel.config.ClientProperties;
 import org.mifos.connector.channel.zeebe.ZeebeProcessStarter;
 import org.mifos.connector.common.camel.AuthProcessor;
 import org.mifos.connector.common.camel.AuthProperties;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.RegisterAliasRequestDTO;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
-import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
+import org.mifos.connector.common.channel.dto.TransactionStatusResponseDTO;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
+import org.mifos.connector.common.mojaloop.type.TransferState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Spliterator;
 
+import static java.util.Base64.getEncoder;
+import static java.util.Spliterators.spliteratorUnknownSize;
+import static java.util.stream.StreamSupport.stream;
 import static org.mifos.connector.channel.camel.config.CamelProperties.AUTH_TYPE;
+import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.ACCOUNT;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_AUTHORISATION_REQUIRED;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_RTP_REQUEST;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID_TYPE;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.TENANT_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_AUTHORISATION_REQUIRED;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_RTP_REQUEST;
@@ -37,30 +59,39 @@ import static org.mifos.connector.channel.zeebe.ZeebeVariables.TENANT_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
 import static org.mifos.connector.common.mojaloop.type.InitiatorType.CONSUMER;
 import static org.mifos.connector.common.mojaloop.type.Scenario.TRANSFER;
-import static org.mifos.connector.common.mojaloop.type.Scenario.WITHDRAWAL;
 import static org.mifos.connector.common.mojaloop.type.TransactionRole.PAYEE;
 import static org.mifos.connector.common.mojaloop.type.TransactionRole.PAYER;
 
 @Component
 public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
+
     private String paymentTransferFlow;
     private String transactionRequestFlow;
     private String partyRegistration;
+    private String restAuthHost;
+    private String operationsUrl;
     private ZeebeProcessStarter zeebeProcessStarter;
     private ZeebeClient zeebeClient;
     private List<String> dfspIds;
     private ObjectMapper objectMapper;
+    private ClientProperties clientProperties;
+    private RestTemplate restTemplate;
 
     public ChannelRouteBuilder(@Value("#{'${dfspids}'.split(',')}") List<String> dfspIds,
                                @Value("${bpmn.flows.payment-transfer}") String paymentTransferFlow,
                                @Value("${bpmn.flows.transaction-request}") String transactionRequestFlow,
                                @Value("${bpmn.flows.party-registration}") String partyRegistration,
+                               @Value("${rest.authorization.host}") String restAuthHost,
+                               @Value("${operations.url}") String operationsUrl,
                                ZeebeClient zeebeClient,
                                ZeebeProcessStarter zeebeProcessStarter,
                                @Autowired(required = false) AuthProcessor authProcessor,
                                @Autowired(required = false) AuthProperties authProperties,
-                               ObjectMapper objectMapper) {
+                               ObjectMapper objectMapper,
+                               ClientProperties clientProperties,
+                               RestTemplate restTemplate) {
         super(authProcessor, authProperties);
         super.configure();
         this.paymentTransferFlow = paymentTransferFlow;
@@ -70,6 +101,10 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         this.zeebeClient = zeebeClient;
         this.dfspIds = dfspIds;
         this.objectMapper = objectMapper;
+        this.clientProperties = clientProperties;
+        this.restTemplate = restTemplate;
+        this.restAuthHost = restAuthHost;
+        this.operationsUrl = operationsUrl;
     }
 
     @Override
@@ -105,6 +140,66 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         from("rest:GET:/")
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200))
                 .setBody(constant(""));
+
+        from("rest:GET:/channel/transfer/{transactionId}")
+                .id("transfer-details")
+                .log(LoggingLevel.INFO, "## CHANNEL -> inbound transferDetail request for ${header.transactionId}")
+                .process(e -> {
+                    String tenantId = e.getIn().getHeader("Platform-TenantId", String.class);
+                    if (tenantId == null || !dfspIds.contains(tenantId)) {
+                        throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
+                    }
+                    Client client = clientProperties.getClient(tenantId);
+                    HttpHeaders httpHeaders = new HttpHeaders();
+                    httpHeaders.add("Platform-TenantId", tenantId);
+                    httpHeaders.add("Authorization",
+                            "Basic " + getEncoder().encodeToString((client.getClientId() + ":" + client.getClientSecret()).getBytes()));
+
+                    HttpEntity<String> entity = new HttpEntity<>(null, httpHeaders);
+                    ResponseEntity<String> exchange = restTemplate.exchange(restAuthHost + "/oauth/token?grant_type=client_credentials", HttpMethod.POST, entity, String.class);
+                    String token = new JSONObject(exchange.getBody()).getString("access_token");
+
+                    String transactionId = e.getIn().getHeader("transactionId", String.class);
+
+                    httpHeaders.remove("Authorization");
+                    httpHeaders.add("Authorization", "Bearer " + token);
+                    entity = new HttpEntity<>(null, httpHeaders);
+                    exchange = restTemplate.exchange(operationsUrl + "/transfers?page=0&size=20&transactionId=" + transactionId, HttpMethod.GET, entity, String.class);
+                    JSONArray contents = new JSONObject(exchange.getBody()).getJSONArray("content");
+
+                    TransactionStatusResponseDTO response = new TransactionStatusResponseDTO();
+                    if (contents.length() != 1) {
+                        response.setClientRefId("000000");
+                        response.setCompletedTimestamp(null);
+                        response.setTransactionId(transactionId);
+                        response.setTransferState(TransferState.RECEIVED);
+                        response.setTransferId(null);
+                    } else {
+                        JSONObject transfer = contents.getJSONObject(0);
+                        long workflowInstanceKey = transfer.getLong("workflowInstanceKey");
+                        String status = transfer.getString("status");
+                        response.setCompletedTimestamp(transfer.isNull("completedAt") ? null : LocalDateTime.ofInstant(Instant.ofEpochMilli(transfer.getLong("completedAt")), ZoneId.systemDefault()));
+                        response.setTransactionId(transactionId);
+                        response.setTransferState("COMPLETED".equals(status) ? TransferState.COMMITTED : TransferState.RECEIVED);
+
+                        exchange = restTemplate.exchange(operationsUrl + "/transfer/" + workflowInstanceKey, HttpMethod.GET, entity, String.class);
+                        JSONArray variables = new JSONObject(exchange.getBody()).getJSONArray("variables");
+                        String transferCode = getVariableValue(variables.iterator(), "transferCode");
+                        response.setTransferId(transferCode == null ? null : transferCode.replace("\"", ""));
+
+                        String channelRequest = getVariableValue(variables.iterator(), "channelRequest");
+                        if (channelRequest != null) {
+                            JSONObject channelRequestJson = new JSONObject(channelRequest.substring(1, channelRequest.length() - 1)
+                                    .replace("\\\"", "\""));
+                            String clientRefId = channelRequestJson.optString("clientRefId", null);
+                            response.setClientRefId(clientRefId == null ? "000000" : clientRefId);
+                        } else {
+                            response.setClientRefId("000000");
+                        }
+                    }
+
+                    e.getIn().setBody(objectMapper.writeValueAsString(response));
+                });
 
         from("rest:POST:/channel/transfer")
                 .id("inbound-transaction-request")
@@ -165,9 +260,12 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     TransactionChannelRequestDTO channelRequest = exchange.getIn().getBody(TransactionChannelRequestDTO.class);
                     channelRequest.setTransactionType(transactionType);
 
-                    zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
+                    String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             objectMapper.writeValueAsString(channelRequest),
                             variables);
+                    JSONObject response = new JSONObject();
+                    response.put("transactionId", transactionId);
+                    exchange.getIn().setBody(response.toString());
                 });
 
         from("rest:POST:/channel/partyRegistration")
@@ -191,7 +289,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             objectMapper.writeValueAsString(channelRequest),
                             variables);
-                });
+                })
+                .setBody(constant(null));
 
         from("rest:POST:/channel/transaction/{" + TRANSACTION_ID + "}/resolve")
                 .id("transaction-resolve")
@@ -210,7 +309,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             .variables(variables)
                             .send()
                             .join();
-                });
+                })
+                .setBody(constant(null));
 
         from("rest:POST:/channel/job/resolve")
                 .id("job-resolve")
@@ -237,7 +337,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     zeebeClient.newResolveIncidentCommand(incident.getLong("key"))
                             .send()
                             .join();
-                });
+                })
+                .setBody(constant(null));
 
         from("rest:POST:/channel/workflow/resolve")
                 .id("workflow-resolve")
@@ -259,7 +360,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     zeebeClient.newResolveIncidentCommand(incident.getLong("key"))
                             .send()
                             .join();
-                });
+                })
+                .setBody(constant(null));
 
         from("rest:POST:/channel/gsma/transfer")
                 .id("gsma-payer-transfer")
@@ -325,5 +427,16 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     response.put("transactionId", transactionId);
                     exchange.getIn().setBody(response.toString());
                 });
+    }
+
+    private String getVariableValue(Iterator<Object> iterator, String variableName) {
+        String value = stream(spliteratorUnknownSize(iterator, Spliterator.ORDERED), false)
+                .map(v -> (JSONObject) v)
+                .filter(v -> variableName.equals(v.getString("name")))
+                .findFirst()
+                .map(v -> v.getString("value"))
+                .orElse(null);
+        logger.info("Variable {} found, value: {}", variableName, value);
+        return value;
     }
 }

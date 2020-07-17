@@ -358,6 +358,14 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             .join();
                 })
                 .setBody(constant(null));
+
+        from("rest:POST:/channel/workflow/{workflowInstanceKey}/cancel")
+                .id("workflow-cancel")
+                .log(LoggingLevel.INFO, "## operator workflow cancel")
+                .process(e -> zeebeClient.newCancelInstanceCommand(Long.parseLong(e.getIn().getHeader("workflowInstanceKey", String.class)))
+                        .send()
+                        .join())
+                .setBody(constant(null));
     }
 
     private String getVariableValue(Iterator<Object> iterator, String variableName) {

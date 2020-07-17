@@ -199,7 +199,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
         from("rest:POST:/channel/transfer")
                 .id("inbound-transaction-request")
-                .log(LoggingLevel.INFO, "## CHANNEL -> PAYER inbound transfer request")
+                .log(LoggingLevel.INFO, "## CHANNEL -> PAYER inbound transfer request: ${body}")
                 .unmarshal().json(JsonLibrary.Jackson, TransactionChannelRequestDTO.class)
                 .to("bean-validator:request")
                 .process(exchange -> {

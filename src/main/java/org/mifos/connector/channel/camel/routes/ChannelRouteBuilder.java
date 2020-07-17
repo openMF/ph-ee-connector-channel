@@ -361,7 +361,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
         from("rest:POST:/channel/workflow/{workflowInstanceKey}/cancel")
                 .id("workflow-cancel")
-                .log(LoggingLevel.INFO, "## operator workflow cancel")
+                .log(LoggingLevel.INFO, "## operator workflow cancel ${header.workflowInstanceKey}")
                 .process(e -> zeebeClient.newCancelInstanceCommand(Long.parseLong(e.getIn().getHeader("workflowInstanceKey", String.class)))
                         .send()
                         .join())

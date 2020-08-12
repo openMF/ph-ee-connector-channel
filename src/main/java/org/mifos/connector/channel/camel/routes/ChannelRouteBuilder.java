@@ -366,6 +366,49 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                         .send()
                         .join())
                 .setBody(constant(null));
+
+        //new changes
+        from("rest:GET:/channel/accounts/{accountId}/status")
+                .id("account-management-status-check")
+                .log(LoggingLevel.INFO, "## account-management-status-check")
+                .process(e -> {
+                    JSONObject request = new JSONObject(e.getIn().getBody(String.class));
+                    String accountId = e.getIn().getHeader("accountId", String.class);
+                })
+                .setBody(constant(null));
+
+        from("rest:GET:/channel/accounts/{accountId}/accountname")
+                .id("account-management-get-name")
+                .log(LoggingLevel.INFO, "## account-management-get-name")
+                .process(e -> {
+                    JSONObject request = new JSONObject(e.getIn().getBody(String.class));
+                    String accountId = e.getIn().getHeader("accountId", String.class);
+                })
+                .setBody(constant(null));
+        from("rest:GET:/channel/accounts/{accountId}/balance")
+                .id("account-management-balance-check")
+                .log(LoggingLevel.INFO, "## account-management-balance-check")
+                .process(e -> {
+                    JSONObject request = new JSONObject(e.getIn().getBody(String.class));
+                    String accountId = e.getIn().getHeader("accountId", String.class);
+                })
+                .setBody(constant(null));
+        from("rest:GET:/channel/accounts/{accountId}/transactions")
+                .id("account-management-get-transactions")
+                .log(LoggingLevel.INFO, "## account-management-get-transactions")
+                .process(e -> {
+                    JSONObject request = new JSONObject(e.getIn().getBody(String.class));
+                    String accountId = e.getIn().getHeader("accountId", String.class);
+                })
+                .setBody(constant(null));
+        from("rest:GET:/channel/accounts/{accountId}/statemententries")
+                .id("account-management-get-statemententries")
+                .log(LoggingLevel.INFO, "## account-management-get-statemententries")
+                .process(e -> {
+                    JSONObject request = new JSONObject(e.getIn().getBody(String.class));
+                    String accountId = e.getIn().getHeader("accountId", String.class);
+                })
+                .setBody(constant(null));
     }
 
     private String getVariableValue(Iterator<Object> iterator, String variableName) {

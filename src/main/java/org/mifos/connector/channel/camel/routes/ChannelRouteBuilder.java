@@ -48,12 +48,14 @@ import static java.util.stream.StreamSupport.stream;
 import static org.mifos.connector.channel.camel.config.CamelProperties.AUTH_TYPE;
 import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.ACCOUNT;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.GSMA_AUTHORIZATION_CODE;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_AUTHORISATION_REQUIRED;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_RTP_REQUEST;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID_TYPE;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.TENANT_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSACTION_ID;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSACTION_TYPE;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_AUTHORISATION_REQUIRED;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_RTP_REQUEST;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.TENANT_ID;
@@ -377,6 +379,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     Map<String, Object> extraVariables = new HashMap<>();
                     extraVariables.put(IS_RTP_REQUEST, false);
+                    extraVariables.put(TRANSACTION_TYPE, "transfer");
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     extraVariables.put(TENANT_ID, tenantId);
@@ -388,7 +391,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(PARTY_ID_TYPE, requestedParty.getPartyIdType());
                     extraVariables.put(PARTY_ID, requestedParty.getPartyIdentifier());
 
-                    String transactionId = zeebeProcessStarter.startZeebeWorkflow("gsma_p2p_base",
+                    String transactionId = zeebeProcessStarter.startZeebeWorkflow("gsma_link_transfer",
                             objectMapper.writeValueAsString(channelRequest),
                             extraVariables);
                     JSONObject response = new JSONObject();
@@ -397,7 +400,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 });
 
 
-        from("rest:POST:/channel/gsma/merchantPay")
+        from("rest:POST:/channel/gsma/merchantpay/authcode/{authorization_code}")
                 .id("gsma-payer-transfer")
                 .log(LoggingLevel.INFO, "## CHANNEL -> GSMA PAYER initiated transfer")
                 .unmarshal().json(JsonLibrary.Jackson, TransactionChannelRequestDTO.class)
@@ -410,6 +413,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     Map<String, Object> extraVariables = new HashMap<>();
                     extraVariables.put(IS_RTP_REQUEST, true);
+                    extraVariables.put(TRANSACTION_TYPE, "merchantpay");
+                    extraVariables.put(GSMA_AUTHORIZATION_CODE, exchange.getIn().getHeader("authorization_code", String.class));
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     extraVariables.put(TENANT_ID, tenantId);
@@ -421,13 +426,48 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(PARTY_ID_TYPE, requestedParty.getPartyIdType());
                     extraVariables.put(PARTY_ID, requestedParty.getPartyIdentifier());
 
-                    String transactionId = zeebeProcessStarter.startZeebeWorkflow("gsma_p2p_base",
+                    String transactionId = zeebeProcessStarter.startZeebeWorkflow("gsma_base_transaction",
                             objectMapper.writeValueAsString(channelRequest),
                             extraVariables);
                     JSONObject response = new JSONObject();
                     response.put("transactionId", transactionId);
                     exchange.getIn().setBody(response.toString());
                 });
+
+
+        from("rest:POST:/channel/gsma/merchantpay")
+                .id("gsma-payer-transfer")
+                .log(LoggingLevel.INFO, "## CHANNEL -> GSMA PAYER initiated transfer")
+                .unmarshal().json(JsonLibrary.Jackson, TransactionChannelRequestDTO.class)
+                .to("bean-validator:request")
+                .process(exchange -> {
+                    TransactionType transactionType = new TransactionType();
+                    transactionType.setInitiator(PAYEE);
+                    transactionType.setInitiatorType(CONSUMER);
+                    transactionType.setScenario(TRANSFER);
+
+                    Map<String, Object> extraVariables = new HashMap<>();
+                    extraVariables.put(IS_RTP_REQUEST, true);
+                    extraVariables.put(TRANSACTION_TYPE, "merchantpay");
+
+                    String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
+                    extraVariables.put(TENANT_ID, tenantId);
+
+                    TransactionChannelRequestDTO channelRequest = exchange.getIn().getBody(TransactionChannelRequestDTO.class);
+                    channelRequest.setTransactionType(transactionType);
+
+                    PartyIdInfo requestedParty = (boolean)extraVariables.get(IS_RTP_REQUEST) ? channelRequest.getPayer().getPartyIdInfo() : channelRequest.getPayee().getPartyIdInfo();
+                    extraVariables.put(PARTY_ID_TYPE, requestedParty.getPartyIdType());
+                    extraVariables.put(PARTY_ID, requestedParty.getPartyIdentifier());
+
+                    String transactionId = zeebeProcessStarter.startZeebeWorkflow("gsma_base_transaction",
+                            objectMapper.writeValueAsString(channelRequest),
+                            extraVariables);
+                    JSONObject response = new JSONObject();
+                    response.put("transactionId", transactionId);
+                    exchange.getIn().setBody(response.toString());
+                });
+                
     }
 
     private String getVariableValue(Iterator<Object> iterator, String variableName) {

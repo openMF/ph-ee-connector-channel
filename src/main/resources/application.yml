@@ -1,5 +1,5 @@
 camel:
-  server-port: ${PORT:5000}
+  server-port: ${PORT:9000}
   springboot:
     main-run-controller: true
   dataformat:

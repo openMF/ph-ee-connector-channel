@@ -17,4 +17,6 @@ public class ZeebeVariables {
     public static final String PARTY_ID_TYPE = "partyIdType";
     public static final String TENANT_ID = "tenantId";
     public static final String TRANSACTION_ID = "transactionId";
+    public static final String TRANSACTION_TYPE = "transactionType";
+    public static final String GSMA_AUTHORIZATION_CODE = "gsmaAuthorizationCode";
 }

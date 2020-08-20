@@ -206,7 +206,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
         from("rest:POST:/channel/transfer")
                 .id("inbound-transaction-request")
-                .log(LoggingLevel.INFO, "## CHANNEL -> PAYER inbound transfer request")
+                .log(LoggingLevel.INFO, "## CHANNEL -> PAYER inbound transfer request: ${body}")
                 .unmarshal().json(JsonLibrary.Jackson, TransactionChannelRequestDTO.class)
                 .to("bean-validator:request")
                 .process(exchange -> {
@@ -468,6 +468,13 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     exchange.getIn().setBody(response.toString());
                 });
                 
+        from("rest:POST:/channel/workflow/{workflowInstanceKey}/cancel")
+                .id("workflow-cancel")
+                .log(LoggingLevel.INFO, "## operator workflow cancel ${header.workflowInstanceKey}")
+                .process(e -> zeebeClient.newCancelInstanceCommand(Long.parseLong(e.getIn().getHeader("workflowInstanceKey", String.class)))
+                        .send()
+                        .join())
+                .setBody(constant(null));
     }
 
     private String getVariableValue(Iterator<Object> iterator, String variableName) {

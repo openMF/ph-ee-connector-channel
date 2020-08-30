@@ -1,5 +1,5 @@
 camel:
-  server-port: 5000
+  server-port: 6000
   springboot:
     main-run-controller: true
   dataformat:
@@ -13,6 +13,11 @@ bpmn:
     payment-transfer: "PayerFundTransfer-{dfspid}"
     transaction-request: "PayeeTransactionRequest-{dfspid}"
     party-registration: "PartyRegistration-{dfspid}"
+    gsma-base-transaction: "gsma_base_transaction"
+    gsma-int-transfer: "gsma_int_transfer"
+    gsma-payee-process: "gsma_payee_process"
+    gsma-bill-payment: "gsma_bill_payment"
+    gsma-link-based-payment: "gsma_link_transfer"
 
 zeebe:
   client:

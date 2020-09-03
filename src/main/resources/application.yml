@@ -31,3 +31,5 @@ rest:
   authorization:
     enabled: false
     host: http://localhost:8080
+  connector-ams:
+    host: "http://localhost:6000"

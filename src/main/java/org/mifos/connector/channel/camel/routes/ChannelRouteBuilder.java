@@ -68,6 +68,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private String partyRegistration;
     private String restAuthHost;
     private String operationsUrl;
+    private String amsUrl;
     private ZeebeProcessStarter zeebeProcessStarter;
     private ZeebeClient zeebeClient;
     private List<String> dfspIds;
@@ -81,6 +82,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                @Value("${bpmn.flows.party-registration}") String partyRegistration,
                                @Value("${rest.authorization.host}") String restAuthHost,
                                @Value("${operations.url}") String operationsUrl,
+                               @Value("${rest.connector-ams.host}") String amsUrl,
                                ZeebeClient zeebeClient,
                                ZeebeProcessStarter zeebeProcessStarter,
                                @Autowired(required = false) AuthProcessor authProcessor,
@@ -101,6 +103,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         this.restTemplate = restTemplate;
         this.restAuthHost = restAuthHost;
         this.operationsUrl = operationsUrl;
+        this.amsUrl = amsUrl;
     }
 
     @Override
@@ -368,47 +371,71 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .setBody(constant(null));
 
         //new changes
-        from("rest:GET:/channel/accounts/{accountId}/status")
+        from("rest:GET:/channel/accounts/{IdentifierType}/{IdentifierId}/status")
                 .id("account-management-status-check")
                 .log(LoggingLevel.INFO, "## account-management-status-check")
-                .process(e -> {
-                    JSONObject request = new JSONObject(e.getIn().getBody(String.class));
-                    String accountId = e.getIn().getHeader("accountId", String.class);
-                })
-                .setBody(constant(null));
+                .process(e ->{
+                    String IdentifierType = e.getIn().getHeader("IdentifierType", String.class);
+                    String IdentifierId = e.getIn().getHeader("IdentifierId", String.class);
+                    String tenantId = e.getIn().getHeader("Platform-TenantId", String.class);
+                    ResponseEntity<String> exchange = fetchDetailsFromRestService(tenantId, "/ams/accounts/" + IdentifierType + "/" + IdentifierId +"/status");
+                    e.getIn().setBody(exchange.getBody());
+                });
 
-        from("rest:GET:/channel/accounts/{accountId}/accountname")
+
+        from("rest:GET:/channel/accounts/{IdentifierType}/{IdentifierId}/accountname")
                 .id("account-management-get-name")
                 .log(LoggingLevel.INFO, "## account-management-get-name")
                 .process(e -> {
-                    JSONObject request = new JSONObject(e.getIn().getBody(String.class));
-                    String accountId = e.getIn().getHeader("accountId", String.class);
-                })
-                .setBody(constant(null));
-        from("rest:GET:/channel/accounts/{accountId}/balance")
+                    String IdentifierType = e.getIn().getHeader("IdentifierType", String.class);
+                    String IdentifierId = e.getIn().getHeader("IdentifierId", String.class);
+                    String tenantId = e.getIn().getHeader("Platform-TenantId", String.class);
+                    ResponseEntity<String> exchange = fetchDetailsFromRestService(tenantId, "/ams/accounts/" + IdentifierType + "/" + IdentifierId +"/accountname");
+                    e.getIn().setBody(exchange.getBody());
+                });
+        from("rest:GET:/channel/accounts/{IdentifierType}/{IdentifierId}/balance")
                 .id("account-management-balance-check")
                 .log(LoggingLevel.INFO, "## account-management-balance-check")
                 .process(e -> {
-                    JSONObject request = new JSONObject(e.getIn().getBody(String.class));
-                    String accountId = e.getIn().getHeader("accountId", String.class);
-                })
-                .setBody(constant(null));
-        from("rest:GET:/channel/accounts/{accountId}/transactions")
+                    String IdentifierType = e.getIn().getHeader("IdentifierType", String.class);
+                    String IdentifierId = e.getIn().getHeader("IdentifierId", String.class);
+                    String tenantId = e.getIn().getHeader("Platform-TenantId", String.class);
+                    ResponseEntity<String> exchange = fetchDetailsFromRestService(tenantId, "/ams/accounts/" + IdentifierType + "/" + IdentifierId +"/balance");
+                    e.getIn().setBody(exchange.getBody());
+                });
+        from("rest:GET:/channel/accounts/{IdentifierType}/{IdentifierId}/transactions")
                 .id("account-management-get-transactions")
                 .log(LoggingLevel.INFO, "## account-management-get-transactions")
                 .process(e -> {
-                    JSONObject request = new JSONObject(e.getIn().getBody(String.class));
-                    String accountId = e.getIn().getHeader("accountId", String.class);
-                })
-                .setBody(constant(null));
-        from("rest:GET:/channel/accounts/{accountId}/statemententries")
+                    String IdentifierType = e.getIn().getHeader("IdentifierType", String.class);
+                    String IdentifierId = e.getIn().getHeader("IdentifierId", String.class);
+                    String tenantId = e.getIn().getHeader("Platform-TenantId", String.class);
+                    ResponseEntity<String> exchange = fetchDetailsFromRestService(tenantId, "/ams/accounts/" + IdentifierType + "/" + IdentifierId +"/transactions");
+                    e.getIn().setBody(exchange.getBody());
+                });
+        from("rest:GET:/channel/accounts/{IdentifierType}/{IdentifierId}/statemententries")
                 .id("account-management-get-statemententries")
                 .log(LoggingLevel.INFO, "## account-management-get-statemententries")
                 .process(e -> {
-                    JSONObject request = new JSONObject(e.getIn().getBody(String.class));
-                    String accountId = e.getIn().getHeader("accountId", String.class);
-                })
-                .setBody(constant(null));
+                    String IdentifierType = e.getIn().getHeader("IdentifierType", String.class);
+                    String IdentifierId = e.getIn().getHeader("IdentifierId", String.class);
+                    String tenantId = e.getIn().getHeader("Platform-TenantId", String.class);
+                    ResponseEntity<String> exchange = fetchDetailsFromRestService(tenantId, "/ams/accounts/" + IdentifierType + "/" + IdentifierId +"/statemententries");
+                    e.getIn().setBody(exchange.getBody());
+                });
+    }
+
+    private ResponseEntity<String> fetchDetailsFromRestService(String tenantId, String url) {
+        if (tenantId == null || !dfspIds.contains(tenantId)) {
+            throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
+        }
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("Platform-TenantId", tenantId);
+
+        HttpEntity<String> entity = new HttpEntity<>(null, httpHeaders);
+        System.out.println("*********AMS URL "+ amsUrl + url    );
+        ResponseEntity<String> exchange = restTemplate.exchange(amsUrl + url, HttpMethod.GET, entity, String.class);
+        return exchange;
     }
 
     private String getVariableValue(Iterator<Object> iterator, String variableName) {

@@ -9,12 +9,12 @@ import org.apache.camel.component.bean.validator.BeanValidationException;
 import org.apache.camel.model.dataformat.JsonLibrary;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.mifos.connector.channel.camel.config.ClientProperties;
 import org.mifos.connector.channel.zeebe.ZeebeProcessStarter;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.gsma.dto.GSMATransaction;
 import org.mifos.connector.common.gsma.dto.GsmaParty;
+import org.mifos.connector.common.gsma.dto.Kyc;
 import org.mifos.connector.common.mojaloop.dto.MoneyData;
 import org.mifos.connector.common.mojaloop.dto.Party;
 import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
@@ -22,10 +22,8 @@ import org.mifos.connector.common.mojaloop.dto.TransactionType;
 import org.mifos.connector.common.mojaloop.type.IdentifierType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.List;
@@ -150,6 +148,51 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     exchange.getIn().setBody(response.toString());
                 });
 
+
+        from("rest:POST:/channel/gsma/inttransfer")
+                .id("gsma-payer-inttransfer")
+                .log(LoggingLevel.INFO, "## CHANNEL -> GSMA PAYER initiated international transfer")
+                .unmarshal().json(JsonLibrary.Jackson, GSMATransaction.class)
+                .to("bean-validator:request")
+                .process(exchange -> {
+                    GSMATransaction gsmaChannelRequest = exchange.getIn().getBody(GSMATransaction.class); // GSMA Object
+                    TransactionChannelRequestDTO channelRequest = new TransactionChannelRequestDTO(); // Fineract Object
+
+                    Party payer = partyMapper(gsmaChannelRequest.getDebitParty());
+                    Party payee = partyMapper(gsmaChannelRequest.getCreditParty());
+                    MoneyData amount = amountMapper(gsmaChannelRequest.getAmount(), gsmaChannelRequest.getCurrency());
+
+                    channelRequest.setPayer(payer);
+                    channelRequest.setPayee(payee);
+                    channelRequest.setAmount(amount);
+
+                    TransactionType transactionType = new TransactionType();
+                    transactionType.setInitiator(PAYER);
+                    transactionType.setInitiatorType(CONSUMER);
+                    transactionType.setScenario(TRANSFER);
+
+                    Map<String, Object> extraVariables = new HashMap<>();
+                    extraVariables.put(IS_RTP_REQUEST, false);
+                    extraVariables.put(TRANSACTION_TYPE, "inttransfer");
+
+                    String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
+                    extraVariables.put(TENANT_ID, tenantId);
+                    channelRequest.setTransactionType(transactionType);
+
+                    PartyIdInfo requestedParty = (boolean)extraVariables.get(IS_RTP_REQUEST) ? channelRequest.getPayer().getPartyIdInfo() : channelRequest.getPayee().getPartyIdInfo();
+                    extraVariables.put(PARTY_ID_TYPE, requestedParty.getPartyIdType());
+                    extraVariables.put(PARTY_ID, requestedParty.getPartyIdentifier());
+
+                    extraVariables.put(GSMA_CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaChannelRequest));
+
+                    String transactionId = zeebeProcessStarter.startZeebeWorkflow(intTransfer,
+                            objectMapper.writeValueAsString(channelRequest),
+                            extraVariables);
+                    JSONObject response = new JSONObject();
+                    response.put("transactionId", transactionId);
+                    exchange.getIn().setBody(response.toString());
+                });
+
     }
 
     public Party partyMapper(GsmaParty[] gsmaParties) {
@@ -173,6 +216,10 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         PartyIdInfo partyIdInfo = new PartyIdInfo(identifierType, gsmaParties[0].getValue());
         return new Party(partyIdInfo);
     }
+    
+//    public Party partyMapper(GsmaParty[] gsmaParties, Kyc kyc) {
+//        return new Party(); // To be taken care of
+//    }
 
     public MoneyData amountMapper(String amount, String currency) {
         MoneyData moneyData = new MoneyData();

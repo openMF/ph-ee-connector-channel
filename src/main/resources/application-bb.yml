@@ -1,8 +1,6 @@
 operations:
   url: "http://identity.ibank.financial/api/v1"
 
-institution-name: ibank
-
 identity:
   channel:
     clients:

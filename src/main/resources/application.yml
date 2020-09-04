@@ -34,4 +34,4 @@ rest:
     enabled: false
     host: http://identity.ibank.financial
   connector-ams:
-    host: "http://localhost:6000"
+    host: "http://ph-ee-connector-ams-mifos"

@@ -4,9 +4,9 @@ operations:
 identity:
   channel:
     clients:
-      - clientId: channel-tn03
+      - clientId: channel-ibank-usa
         clientSecret: p1234
-        tenant: tn03
-      - clientId: channel-tn04
+        tenant: ibank-usa
+      - clientId: channel-ibank-india
         clientSecret: p1234
-        tenant: tn04
+        tenant: ibank-india

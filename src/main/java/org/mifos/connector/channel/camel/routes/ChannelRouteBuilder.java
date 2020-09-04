@@ -18,6 +18,8 @@ import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.RegisterAliasRequestDTO;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.channel.dto.TransactionStatusResponseDTO;
+import org.mifos.connector.common.gsma.dto.RequestState;
+import org.mifos.connector.common.gsma.dto.RequestStateDTO;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
 import org.mifos.connector.common.mojaloop.type.TransferState;
 import org.slf4j.Logger;
@@ -162,7 +164,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     httpHeaders.remove("Authorization");
                     httpHeaders.add("Authorization", "Bearer " + token);
-                    System.out.println("************* token "+token);
+
                     entity = new HttpEntity<>(null, httpHeaders);
                     exchange = restTemplate.exchange(operationsUrl + "/transfers?page=0&size=20&transactionId=" + transactionId, HttpMethod.GET, entity, String.class);
                     JSONArray contents = new JSONObject(exchange.getBody()).getJSONArray("content");
@@ -372,6 +374,51 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .setBody(constant(null));
 
         //new changes
+        from("rest:GET:/channel/requeststates/{serverCorrelationId}")
+                .id("request-status")
+                .log(LoggingLevel.INFO, "## CHANNEL -> inbound request status request for ${header.serverCorrelationId}")
+                .process(e -> {
+                    String tenantId = e.getIn().getHeader("Platform-TenantId", String.class);
+                    if (tenantId == null || !dfspIds.contains(tenantId)) {
+                        throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
+                    }
+                    Client client = clientProperties.getClient(tenantId);
+                    HttpHeaders httpHeaders = new HttpHeaders();
+                    httpHeaders.add("Platform-TenantId", tenantId);
+                    httpHeaders.add("Authorization",
+                            "Basic " + getEncoder().encodeToString((client.getClientId() + ":" + client.getClientSecret()).getBytes()));
+
+                    HttpEntity<String> entity = new HttpEntity<>(null, httpHeaders);
+                    ResponseEntity<String> exchange = restTemplate.exchange(restAuthHost + "/oauth/token?grant_type=client_credentials", HttpMethod.POST, entity, String.class);
+                    String token = new JSONObject(exchange.getBody()).getString("access_token");
+
+                    String serverCorrelationId = e.getIn().getHeader("serverCorrelationId", String.class);
+
+                    httpHeaders.remove("Authorization");
+                    httpHeaders.add("Authorization", "Bearer " + token);
+
+                    entity = new HttpEntity<>(null, httpHeaders);
+                    exchange = restTemplate.exchange(operationsUrl + "/transfers?page=0&size=20&transactionId=" + serverCorrelationId, HttpMethod.GET, entity, String.class);
+                    JSONArray contents = new JSONObject(exchange.getBody()).getJSONArray("content");
+
+                    RequestStateDTO response = new RequestStateDTO();
+                    response.setServerCorrelationId(serverCorrelationId);
+                    response.setStatus(RequestState.pending.toString());
+                    response.setPendingReason("");
+                    response.setNotificationMethod("none");
+                    response.setObjectReference("");
+                    response.setExpiryTime(LocalDateTime.now().toString());
+                    response.setPollLimit("0");
+                    if (contents.length() != 1) {
+                        response.setStatus(RequestState.pending.toString());
+                    } else {
+                        JSONObject transfer = contents.getJSONObject(0);
+                        String status = transfer.getString("status");
+                        response.setStatus("COMPLETED".equals(status) ? RequestState.completed.toString() : RequestState.pending.toString());
+                    }
+                    e.getIn().setBody(objectMapper.writeValueAsString(response));
+                });
+
         from("rest:GET:/channel/accounts/{IdentifierType}/{IdentifierId}/status")
                 .id("account-management-status-check")
                 .log(LoggingLevel.INFO, "## account-management-status-check")

@@ -162,6 +162,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     httpHeaders.remove("Authorization");
                     httpHeaders.add("Authorization", "Bearer " + token);
+                    System.out.println("************* token "+token);
                     entity = new HttpEntity<>(null, httpHeaders);
                     exchange = restTemplate.exchange(operationsUrl + "/transfers?page=0&size=20&transactionId=" + transactionId, HttpMethod.GET, entity, String.class);
                     JSONArray contents = new JSONObject(exchange.getBody()).getJSONArray("content");

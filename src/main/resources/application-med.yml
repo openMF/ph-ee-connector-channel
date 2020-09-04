@@ -1,12 +1,12 @@
 operations:
-  url: "http://med-operations.mifos.io/api/v1"
+  url: "http://identity.ibank.financial/api/v1"
 
 identity:
   channel:
     clients:
-      - clientId: channel-tn05
-        clientSecret: p2345
-        tenant: tn05
+      - clientId: channel-ibank-usa
+        clientSecret: p1234
+        tenant: ibank-usa
       - clientId: channel-tn06
         clientSecret: p2345
         tenant: tn06

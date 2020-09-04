@@ -111,5 +111,6 @@ public class ZeebeWorkers {
                 .name("send-unknown-to-channel")
                 .maxJobsActive(workerMaxJobs)
                 .open();
+
     }
 }

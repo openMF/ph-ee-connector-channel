@@ -46,6 +46,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private String linkBasedPayment;
     private String internationalRemittancePayee;
     private String internationalRemittancePayer;
+    private String payeeDepositTransfer;
     private ZeebeProcessStarter zeebeProcessStarter;
     private ZeebeClient zeebeClient;
     private List<String> dfspIds;

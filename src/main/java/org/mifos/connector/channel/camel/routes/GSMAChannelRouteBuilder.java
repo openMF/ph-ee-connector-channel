@@ -51,7 +51,6 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private ZeebeClient zeebeClient;
     private List<String> dfspIds;
     private ObjectMapper objectMapper;
-    private String institutionName;
 
     public GSMAChannelRouteBuilder(@Value("#{'${dfspids}'.split(',')}") List<String> dfspIds,
                                @Value("${bpmn.flows.gsma-base-transaction}") String baseTransaction,
@@ -61,7 +60,6 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                @Value("${bpmn.flows.gsma-link-based-payment}") String linkBasedPayment,
                                @Value("${bpmn.flows.international-remittance-payee}") String internationalRemittancePayee,
                                @Value("${bpmn.flows.international-remittance-payer}") String internationalRemittancePayer,
-                               @Value("${institution-name}") String institutionName,
                                ZeebeClient zeebeClient,
                                ZeebeProcessStarter zeebeProcessStarter,
                                ObjectMapper objectMapper) {
@@ -73,7 +71,6 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         this.linkBasedPayment = linkBasedPayment;
         this.internationalRemittancePayee = internationalRemittancePayee;
         this.internationalRemittancePayer = internationalRemittancePayer;
-        this.institutionName = institutionName;
         this.zeebeProcessStarter = zeebeProcessStarter;
         this.zeebeClient = zeebeClient;
         this.dfspIds = dfspIds;
@@ -149,7 +146,6 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(PARTY_ID, requestedParty.getPartyIdentifier());
 
                     extraVariables.put(GSMA_CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaChannelRequest));
-                    extraVariables.put("DFSPID", institutionName + "-" + tenantId);
                     String tenantSpecificBpmn = baseTransaction.replace("{dfspid}", tenantId);
                     String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             objectMapper.writeValueAsString(channelRequest),
@@ -243,8 +239,8 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     gsmaResponse.setPollLimit("");
 
                     exchange.getIn().setBody(objectMapper.writeValueAsString(gsmaResponse));
-                })
-                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
+                    exchange.getIn().setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
+                });
 
     }
 

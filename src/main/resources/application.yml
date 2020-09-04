@@ -21,7 +21,6 @@ bpmn:
     international-remittance-payee: "international-remittance-payee-process-{dfspid}"
     international-remittance-payer: "international-remittance-payer-process-{dfspid}"
 
-
 zeebe:
   client:
     max-execution-threads: 100

@@ -14,7 +14,7 @@ import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.gsma.dto.GSMATransaction;
 import org.mifos.connector.common.gsma.dto.GsmaParty;
-import org.mifos.connector.common.gsma.dto.Kyc;
+import org.mifos.connector.common.gsma.dto.RequestStateDTO;
 import org.mifos.connector.common.mojaloop.dto.MoneyData;
 import org.mifos.connector.common.mojaloop.dto.Party;
 import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
@@ -44,6 +44,8 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private String payeeProcess;
     private String billPayment;
     private String linkBasedPayment;
+    private String internationalRemittancePayee;
+    private String internationalRemittancePayer;
     private ZeebeProcessStarter zeebeProcessStarter;
     private ZeebeClient zeebeClient;
     private List<String> dfspIds;
@@ -55,6 +57,8 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                @Value("${bpmn.flows.gsma-payee-process}") String payeeProcess,
                                @Value("${bpmn.flows.gsma-bill-payment}") String billPayment,
                                @Value("${bpmn.flows.gsma-link-based-payment}") String linkBasedPayment,
+                               @Value("${bpmn.flows.international-remittance-payee}") String internationalRemittancePayee,
+                               @Value("${bpmn.flows.international-remittance-payer}") String internationalRemittancePayer,
                                ZeebeClient zeebeClient,
                                ZeebeProcessStarter zeebeProcessStarter,
                                ObjectMapper objectMapper) {
@@ -64,6 +68,8 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         this.payeeProcess = payeeProcess;
         this.billPayment = billPayment;
         this.linkBasedPayment = linkBasedPayment;
+        this.internationalRemittancePayee = internationalRemittancePayee;
+        this.internationalRemittancePayer = internationalRemittancePayer;
         this.zeebeProcessStarter = zeebeProcessStarter;
         this.zeebeClient = zeebeClient;
         this.dfspIds = dfspIds;
@@ -177,6 +183,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     extraVariables.put(TENANT_ID, tenantId);
+                    String tenantSpecificBpmn = internationalRemittancePayer.replace("{dfspid}", tenantId);
                     channelRequest.setTransactionType(transactionType);
 
                     PartyIdInfo requestedParty = (boolean)extraVariables.get(IS_RTP_REQUEST) ? channelRequest.getPayer().getPartyIdInfo() : channelRequest.getPayee().getPartyIdInfo();
@@ -185,12 +192,53 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     extraVariables.put(GSMA_CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaChannelRequest));
 
-                    String transactionId = zeebeProcessStarter.startZeebeWorkflow(intTransfer,
+                    String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             objectMapper.writeValueAsString(channelRequest),
                             extraVariables);
                     JSONObject response = new JSONObject();
                     response.put("transactionId", transactionId);
                     exchange.getIn().setBody(response.toString());
+                });
+
+
+        from("rest:POST:/channel/gsma/deposit")
+                .id("gsma-payee-deposit")
+                .log(LoggingLevel.INFO, "## CHANNEL -> GSMA PAYEE deposit")
+                .unmarshal().json(JsonLibrary.Jackson, GSMATransaction.class)
+                .to("bean-validator:request")
+                .process(exchange -> {
+                    GSMATransaction gsmaChannelRequest = exchange.getIn().getBody(GSMATransaction.class); // GSMA Object
+                    TransactionChannelRequestDTO channelRequest = new TransactionChannelRequestDTO(); // Fineract Object
+
+                    Party payer = partyMapper(gsmaChannelRequest.getDebitParty());
+                    Party payee = partyMapper(gsmaChannelRequest.getCreditParty());
+                    MoneyData amount = amountMapper(gsmaChannelRequest.getAmount(), gsmaChannelRequest.getCurrency());
+
+                    channelRequest.setPayer(payer);
+                    channelRequest.setPayee(payee);
+                    channelRequest.setAmount(amount);
+
+                    Map<String, Object> extraVariables = new HashMap<>();
+
+                    String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
+                    extraVariables.put(TENANT_ID, tenantId);
+                    String tenantSpecificBpmn = internationalRemittancePayee.replace("{dfspid}", tenantId);
+
+                    extraVariables.put(GSMA_CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaChannelRequest));
+
+                    String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
+                            objectMapper.writeValueAsString(channelRequest),
+                            extraVariables);
+
+                    RequestStateDTO gsmaResponse = new RequestStateDTO();
+                    gsmaResponse.setServerCorrelationId(transactionId);
+                    gsmaResponse.setStatus("pending");
+                    gsmaResponse.setNotificationMethod("polling");
+                    gsmaResponse.setObjectReference("");
+                    gsmaResponse.setPollLimit("");
+
+                    exchange.getIn().setBody(objectMapper.writeValueAsString(gsmaResponse));
+                    exchange.getIn().setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
                 });
 
     }

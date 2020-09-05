@@ -402,18 +402,19 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     RequestStateDTO response = new RequestStateDTO();
                     response.setServerCorrelationId(serverCorrelationId);
-                    response.setStatus(RequestState.pending.toString());
+                    response.setStatus(RequestState.completed.toString());
                     response.setPendingReason("");
                     response.setNotificationMethod("none");
                     response.setObjectReference("");
                     response.setExpiryTime(LocalDateTime.now().toString());
                     response.setPollLimit("0");
                     if (contents.length() != 1) {
-                        response.setStatus(RequestState.pending.toString());
+                        response.setStatus(RequestState.completed.toString());
                     } else {
                         JSONObject transfer = contents.getJSONObject(0);
                         String status = transfer.getString("status");
-                        response.setStatus("COMPLETED".equals(status) ? RequestState.completed.toString() : RequestState.pending.toString());
+                        response.setPendingReason(status);
+                        //response.setStatus("COMPLETED".equals(status) ? RequestState.completed.toString() : RequestState.pending.toString());
                     }
                     e.getIn().setBody(objectMapper.writeValueAsString(response));
                 });

@@ -229,7 +229,8 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     String tenantSpecificBpmn = internationalRemittancePayee.replace("{dfspid}", tenantId);
 
                     extraVariables.put(GSMA_CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaChannelRequest));
-
+                    extraVariables.put(PARTY_ID_TYPE, channelRequest.getPayee().getPartyIdInfo().getPartyIdType());
+                    extraVariables.put(PARTY_ID, channelRequest.getPayee().getPartyIdInfo().getPartyIdentifier());
                     String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             objectMapper.writeValueAsString(channelRequest),
                             extraVariables);
@@ -242,8 +243,8 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     gsmaResponse.setPollLimit("");
 
                     exchange.getIn().setBody(objectMapper.writeValueAsString(gsmaResponse));
-                    exchange.getIn().setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
-                });
+                })
+                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
 
     }
 

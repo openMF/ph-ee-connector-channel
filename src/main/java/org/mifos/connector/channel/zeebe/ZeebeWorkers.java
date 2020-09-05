@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.time.Duration;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -27,6 +28,9 @@ public class ZeebeWorkers {
 
     @Value("${zeebe.client.evenly-allocated-max-jobs}")
     private int workerMaxJobs;
+
+    public static final String TRANSFER_FAILED = "transferFailed";
+    public static final String TRANSFER_STATE = "transferState";
 
     @PostConstruct
     public void setupWorkers() {
@@ -112,5 +116,54 @@ public class ZeebeWorkers {
                 .maxJobsActive(workerMaxJobs)
                 .open();
 
+        zeebeClient.newWorker()
+                .jobType("send-payee-success-to-channel")
+                .handler((client, job) -> {
+                    logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+                    Map<String, Object> variables = job.getVariablesAsMap();
+
+                    variables.put(ERROR_INFORMATION, "Custom Error: Failed to deposit!");
+                    variables.put(TRANSFER_FAILED, true);
+
+                    zeebeClient.newPublishMessageCommand()
+                            .messageName("transferResponse")
+                            .correlationKey(variables.get("transactionId").toString())
+                            .timeToLive(Duration.ofMillis(30000))
+                            .variables(variables)
+                            .send()
+                            .join();
+
+                    client.newCompleteCommand(job.getKey())
+                            .send()
+                            .join();
+                })
+                .name("send-payee-success-to-channel")
+                .maxJobsActive(workerMaxJobs)
+                .open();
+
+        zeebeClient.newWorker()
+                .jobType("send-payee-failure-to-channel")
+                .handler((client, job) -> {
+                    logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+                    Map<String, Object> variables = job.getVariablesAsMap();
+
+                    variables.put(TRANSFER_STATE, "COMMITTED");
+                    variables.put(TRANSFER_FAILED, false);
+
+                    zeebeClient.newPublishMessageCommand()
+                            .messageName("transferResponse")
+                            .correlationKey(variables.get("transactionId").toString())
+                            .timeToLive(Duration.ofMillis(30000))
+                            .variables(variables)
+                            .send()
+                            .join();
+
+                    client.newCompleteCommand(job.getKey())
+                            .send()
+                            .join();
+                })
+                .name("send-payee-failure-to-channel")
+                .maxJobsActive(workerMaxJobs)
+                .open();
     }
 }

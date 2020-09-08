@@ -11,6 +11,7 @@ dfspids: "DFSPID"
 bpmn:
   flows:
     payment-transfer: "PayerFundTransfer-{dfspid}"
+    special-payment-transfer: "SpecialPayerFundTransfer-{dfspid}"
     transaction-request: "PayeeTransactionRequest-{dfspid}"
     party-registration: "PartyRegistration-{dfspid}"
 

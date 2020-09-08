@@ -64,6 +64,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private String paymentTransferFlow;
+    private String specialPaymentTransferFlow;
     private String transactionRequestFlow;
     private String partyRegistration;
     private String restAuthHost;
@@ -77,6 +78,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
     public ChannelRouteBuilder(@Value("#{'${dfspids}'.split(',')}") List<String> dfspIds,
                                @Value("${bpmn.flows.payment-transfer}") String paymentTransferFlow,
+                               @Value("${bpmn.flows.special-payment-transfer}") String specialPaymentTransferFlow,
                                @Value("${bpmn.flows.transaction-request}") String transactionRequestFlow,
                                @Value("${bpmn.flows.party-registration}") String partyRegistration,
                                @Value("${rest.authorization.host}") String restAuthHost,
@@ -91,6 +93,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         super(authProcessor, authProperties);
         super.configure();
         this.paymentTransferFlow = paymentTransferFlow;
+        this.specialPaymentTransferFlow = specialPaymentTransferFlow;
         this.transactionRequestFlow = transactionRequestFlow;
         this.partyRegistration = partyRegistration;
         this.zeebeProcessStarter = zeebeProcessStarter;
@@ -203,11 +206,6 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .unmarshal().json(JsonLibrary.Jackson, TransactionChannelRequestDTO.class)
                 .to("bean-validator:request")
                 .process(exchange -> {
-                    TransactionType transactionType = new TransactionType();
-                    transactionType.setInitiator(PAYER);
-                    transactionType.setInitiatorType(CONSUMER);
-                    transactionType.setScenario(TRANSFER);
-
                     Map<String, Object> extraVariables = new HashMap<>();
                     extraVariables.put(IS_RTP_REQUEST, false);
 
@@ -216,10 +214,22 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                         throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
                     }
                     extraVariables.put(TENANT_ID, tenantId);
-                    String tenantSpecificBpmn = paymentTransferFlow.replace("{dfspid}", tenantId);
 
                     TransactionChannelRequestDTO channelRequest = exchange.getIn().getBody(TransactionChannelRequestDTO.class);
+                    TransactionType transactionType = new TransactionType();
+                    transactionType.setInitiator(PAYER);
+                    transactionType.setInitiatorType(CONSUMER);
+                    transactionType.setScenario(TRANSFER);
                     channelRequest.setTransactionType(transactionType);
+
+                    String tenantSpecificBpmn;
+                    if(channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier().startsWith("6666")) {
+                        tenantSpecificBpmn = specialPaymentTransferFlow.replace("{dfspid}", tenantId);
+                        extraVariables.put("specialTermination", true);
+                    } else {
+                        tenantSpecificBpmn = paymentTransferFlow.replace("{dfspid}", tenantId);
+                        extraVariables.put("specialTermination", false);
+                    }
 
                     String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             objectMapper.writeValueAsString(channelRequest),

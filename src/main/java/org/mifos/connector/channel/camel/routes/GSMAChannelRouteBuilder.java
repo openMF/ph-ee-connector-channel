@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.*;
 import static org.mifos.connector.common.mojaloop.type.InitiatorType.CONSUMER;
@@ -198,8 +199,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     JSONObject response = new JSONObject();
                     response.put("transactionId", transactionId);
                     exchange.getIn().setBody(response.toString());
-                });
-
+                    });
 
         from("rest:POST:/channel/gsma/deposit")
                 .id("gsma-payee-deposit")
@@ -241,6 +241,52 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     exchange.getIn().setBody(objectMapper.writeValueAsString(gsmaResponse));
                     exchange.getIn().setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
                 });
+
+        from("rest:POST:/channel/transaction")
+                .id("transaction-transaction")
+                .log(LoggingLevel.INFO, "## CHANNEL ->  transfer")
+                .unmarshal().json(JsonLibrary.Jackson, GSMATransaction.class)
+                .to("bean-validator:request")
+                .process(exchange -> {
+                    GSMATransaction gsmaChannelRequest = exchange.getIn().getBody(GSMATransaction.class); // GSMA Object
+                    TransactionChannelRequestDTO channelRequest = new TransactionChannelRequestDTO(); // Fineract Object
+
+                    Party payer = partyMapper(gsmaChannelRequest.getDebitParty());
+                    Party payee = partyMapper(gsmaChannelRequest.getCreditParty());
+                    MoneyData amount = amountMapper(gsmaChannelRequest.getAmount(), gsmaChannelRequest.getCurrency());
+
+                    channelRequest.setPayer(payer);
+                    channelRequest.setPayee(payee);
+                    channelRequest.setAmount(amount);
+
+                    TransactionType transactionType = new TransactionType();
+                    transactionType.setInitiator(PAYER);
+                    transactionType.setInitiatorType(CONSUMER);
+                    transactionType.setScenario(TRANSFER);
+
+                    Map<String, Object> extraVariables = new HashMap<>();
+                    extraVariables.put(IS_RTP_REQUEST, false);
+                    extraVariables.put(TRANSACTION_TYPE, "inttransfer");
+
+                    String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
+                    extraVariables.put(TENANT_ID, tenantId);
+                    String tenantSpecificBpmn = internationalRemittancePayer.replace("{dfspid}", tenantId);
+                    channelRequest.setTransactionType(transactionType);
+
+                    PartyIdInfo requestedParty = (boolean)extraVariables.get(IS_RTP_REQUEST) ? channelRequest.getPayer().getPartyIdInfo() : channelRequest.getPayee().getPartyIdInfo();
+                    extraVariables.put(PARTY_ID_TYPE, requestedParty.getPartyIdType());
+                    extraVariables.put(PARTY_ID, requestedParty.getPartyIdentifier());
+
+                    extraVariables.put(GSMA_CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaChannelRequest));
+                    //String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
+                    //        objectMapper.writeValueAsString(channelRequest),
+                    //        extraVariables);
+                    String transactionId =  UUID.randomUUID().toString();
+                    JSONObject response = new JSONObject();
+                    response.put("transactionId", transactionId);
+                    exchange.getIn().setBody(response.toString());
+                });
+
 
     }
 

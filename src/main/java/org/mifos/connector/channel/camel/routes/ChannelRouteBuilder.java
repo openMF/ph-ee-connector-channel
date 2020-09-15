@@ -18,7 +18,6 @@ import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.RegisterAliasRequestDTO;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.channel.dto.TransactionStatusResponseDTO;
-import org.mifos.connector.common.gsma.dto.RequestState;
 import org.mifos.connector.common.gsma.dto.RequestStateDTO;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
 import org.mifos.connector.common.mojaloop.type.TransferState;
@@ -141,6 +140,16 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         from("rest:GET:/")
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200))
                 .setBody(constant(""));
+
+        from("rest:GET:/channel/heartbeat")
+                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200))
+                .process(e-> {
+                    JSONObject response = new JSONObject();
+                    response.put("serviceStatus", "available");
+                    response.put("delay", 0);
+                    response.put("plannedRestorationTime", "");
+                    e.getIn().setBody(response.toString());
+                });
 
         from("rest:GET:/channel/transfer/{transactionId}")
                 .id("transfer-details")
@@ -402,14 +411,14 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     RequestStateDTO response = new RequestStateDTO();
                     response.setServerCorrelationId(serverCorrelationId);
-                    response.setStatus(RequestState.completed.toString());
+                    response.setStatus("completed");
                     response.setPendingReason("");
                     response.setNotificationMethod("none");
                     response.setObjectReference("");
                     response.setExpiryTime(LocalDateTime.now().toString());
                     response.setPollLimit("0");
                     if (contents.length() != 1) {
-                        response.setStatus(RequestState.completed.toString());
+                        response.setStatus("completed");
                     } else {
                         JSONObject transfer = contents.getJSONObject(0);
                         String status = transfer.getString("status");
@@ -417,6 +426,63 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                         //response.setStatus("COMPLETED".equals(status) ? RequestState.completed.toString() : RequestState.pending.toString());
                     }
                     e.getIn().setBody(objectMapper.writeValueAsString(response));
+                });
+
+        from("rest:POST:/channel/imuConversion/preview")
+                .id("imu-conversion-preview")
+                .log(LoggingLevel.INFO, "## CHANNEL -> imu conversion preview request")
+                .process(e -> {
+                    String tenantId = e.getIn().getHeader("Platform-TenantId", String.class);
+                    if (tenantId == null || !dfspIds.contains(tenantId)) {
+                        throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
+                    }
+                    Client client = clientProperties.getClient(tenantId);
+                    HttpHeaders httpHeaders = new HttpHeaders();
+                    httpHeaders.add("Platform-TenantId", tenantId);
+                    httpHeaders.add("Authorization",
+                            "Basic " + getEncoder().encodeToString((client.getClientId() + ":" + client.getClientSecret()).getBytes()));
+
+                    httpHeaders.add("Content-Type", "application/json");
+
+                    HttpEntity<String> entity = new HttpEntity<>(null, httpHeaders);
+                    ResponseEntity<String> exchange = restTemplate.exchange(restAuthHost + "/oauth/token?grant_type=client_credentials", HttpMethod.POST, entity, String.class);
+                    String token = new JSONObject(exchange.getBody()).getString("access_token");
+
+                    httpHeaders.remove("Authorization");
+                    httpHeaders.add("Authorization", "Bearer " + token);
+
+                    entity = new HttpEntity<>(e.getIn().getBody(String.class), httpHeaders);
+                    exchange = restTemplate.exchange(operationsUrl + "/imuexchange/convert" , HttpMethod.POST, entity, String.class);
+                    e.getIn().setBody(exchange.getBody());
+                });
+        from("rest:GET:/channel/beneficiary/{customerIdentifier}")
+                .id("imu-beneficiaries-list")
+                .log(LoggingLevel.INFO, "## CHANNEL -> get beneficiaries list for customer")
+                .process(e -> {
+                    String tenantId = e.getIn().getHeader("Platform-TenantId", String.class);
+                    if (tenantId == null || !dfspIds.contains(tenantId)) {
+                        throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
+                    }
+                    Client client = clientProperties.getClient(tenantId);
+                    HttpHeaders httpHeaders = new HttpHeaders();
+                    httpHeaders.add("Platform-TenantId", tenantId);
+                    httpHeaders.add("Authorization",
+                            "Basic " + getEncoder().encodeToString((client.getClientId() + ":" + client.getClientSecret()).getBytes()));
+
+                    //httpHeaders.add("Content-Type", "application/json");
+
+                    HttpEntity<String> entity = new HttpEntity<>(null, httpHeaders);
+                    ResponseEntity<String> exchange = restTemplate.exchange(restAuthHost + "/oauth/token?grant_type=client_credentials", HttpMethod.POST, entity, String.class);
+                    String token = new JSONObject(exchange.getBody()).getString("access_token");
+
+                    String customerIdentifier = e.getIn().getHeader("customerIdentifier", String.class);
+
+                    httpHeaders.remove("Authorization");
+                    httpHeaders.add("Authorization", "Bearer " + token);
+
+                    entity = new HttpEntity<>(e.getIn().getBody(String.class), httpHeaders);
+                    exchange = restTemplate.exchange(operationsUrl + "/beneficiary/"+customerIdentifier , HttpMethod.GET, entity, String.class);
+                    e.getIn().setBody(exchange.getBody());
                 });
 
         from("rest:GET:/channel/accounts/{IdentifierType}/{IdentifierId}/status")
@@ -471,6 +537,53 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     ResponseEntity<String> exchange = fetchDetailsFromRestService(tenantId, "/ams/accounts/" + IdentifierType + "/" + IdentifierId +"/statemententries");
                     e.getIn().setBody(exchange.getBody());
                 });
+
+        from("rest:POST:/channel/customers/")
+                .id("customer-creation")
+                .log(LoggingLevel.INFO, "## account-management-customer-creation")
+                .process(e -> {
+                    JSONObject request = new JSONObject(e.getIn().getBody(String.class));
+                    String identifierType = request.getString("identifierType");
+                    String IdentifierId = request.getString("IdentifierId");
+                    Map<String, Object> newVariables = new HashMap<>();
+                    String tenantId = e.getIn().getHeader("Platform-TenantId", String.class);
+                    //todo: call ams
+                    JSONObject response = new JSONObject();
+                    response.put("status", "success");
+                    e.getIn().setBody(response.toString());
+                });
+        from("rest:POST:/channel/customers/{IdentifierType}/{Identifier}/cpin")
+                .id("customer-set-pin")
+                .log(LoggingLevel.INFO, "## account-management-customer-set-pin")
+                .process(e->{
+                    String IdentifierType = e.getIn().getHeader("IdentifierType", String.class);
+                    String IdentifierId = e.getIn().getHeader("IdentifierId", String.class);
+                    String tenantId = e.getIn().getHeader("Platform-TenantId", String.class);
+                    JSONObject request = new JSONObject(e.getIn().getBody(String.class));
+                    String existingPin = request.getString("existingPin");
+                    String pin = request.getString("pin");
+                    Map<String, Object> newVariables = new HashMap<>();
+                    //todo: call ams
+                    JSONObject response = new JSONObject();
+                    response.put("status", "success");
+                    e.getIn().setBody(response.toString());
+                });
+        from("rest:POST:/channel/merchant/{merchantId}/mpin")
+                .id("customer-set-pin")
+                .log(LoggingLevel.INFO, "## account-management-customer-set-pin")
+                .process(e->{
+                    String merchantId = e.getIn().getHeader("merchantId", String.class);
+                    String tenantId = e.getIn().getHeader("Platform-TenantId", String.class);
+                    JSONObject request = new JSONObject(e.getIn().getBody(String.class));
+                    String existingPin = request.getString("existingPin");
+                    String pin = request.getString("pin");
+                    Map<String, Object> newVariables = new HashMap<>();
+                    //todo: call ams
+                    JSONObject response = new JSONObject();
+                    response.put("status", "success");
+                    e.getIn().setBody(response.toString());
+                });
+
     }
 
     private ResponseEntity<String> fetchDetailsFromRestService(String tenantId, String url) {
@@ -485,6 +598,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         ResponseEntity<String> exchange = restTemplate.exchange(amsUrl + url, HttpMethod.GET, entity, String.class);
         return exchange;
     }
+
+
 
     private String getVariableValue(Iterator<Object> iterator, String variableName) {
         String value = stream(spliteratorUnknownSize(iterator, Spliterator.ORDERED), false)

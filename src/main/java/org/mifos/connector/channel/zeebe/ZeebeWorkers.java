@@ -47,7 +47,7 @@ public class ZeebeWorkers {
 
                     client.newCompleteCommand(job.getKey())
                             .send()
-                            .join();
+                            ;
                 })
                 .name("send-error-to-channel")
                 .maxJobsActive(workerMaxJobs)
@@ -59,7 +59,7 @@ public class ZeebeWorkers {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                     client.newCompleteCommand(job.getKey())
                             .send()
-                            .join();
+                            ;
                 })
                 .name("send-success-to-channel")
                 .maxJobsActive(workerMaxJobs)
@@ -71,7 +71,7 @@ public class ZeebeWorkers {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                     client.newCompleteCommand(job.getKey())
                             .send()
-                            .join();
+                            ;
                 })
                 .name("notify-operator")
                 .maxJobsActive(workerMaxJobs)
@@ -83,7 +83,7 @@ public class ZeebeWorkers {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                     client.newCompleteCommand(job.getKey())
                             .send()
-                            .join();
+                            ;
                 })
                 .name("notify-ams-failure")
                 .maxJobsActive(workerMaxJobs)
@@ -106,7 +106,7 @@ public class ZeebeWorkers {
 
                     client.newCompleteCommand(job.getKey())
                             .send()
-                            .join();
+                            ;
                 })
                 .name("send-unknown-to-channel")
                 .maxJobsActive(workerMaxJobs)

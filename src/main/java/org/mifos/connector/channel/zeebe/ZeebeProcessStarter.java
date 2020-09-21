@@ -39,7 +39,7 @@ public class ZeebeProcessStarter {
                 .latestVersion()
                 .variables(variables)
                 .send()
-                .join();
+                ;
 
         logger.info("zeebee workflow instance from process {} started with transactionId {}", workflowId, transactionId);
         return transactionId;

@@ -314,7 +314,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             .timeToLive(Duration.ofMillis(30000))
                             .variables(variables)
                             .send()
-                            .join();
+                            ;
                 })
                 .setBody(constant(null));
 
@@ -333,16 +333,16 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     zeebeClient.newSetVariablesCommand(incident.getLong("elementInstanceKey"))
                             .variables(newVariables)
                             .send()
-                            .join();
+                            ;
 
                     zeebeClient.newUpdateRetriesCommand(incident.getLong("jobKey"))
                             .retries(incident.getInt("newRetries"))
                             .send()
-                            .join();
+                            ;
 
                     zeebeClient.newResolveIncidentCommand(incident.getLong("key"))
                             .send()
-                            .join();
+                            ;
                 })
                 .setBody(constant(null));
 
@@ -361,11 +361,11 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     zeebeClient.newSetVariablesCommand(incident.getLong("elementInstanceKey"))
                             .variables(newVariables)
                             .send()
-                            .join();
+                            ;
 
                     zeebeClient.newResolveIncidentCommand(incident.getLong("key"))
                             .send()
-                            .join();
+                            ;
                 })
                 .setBody(constant(null));
 
@@ -374,7 +374,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .log(LoggingLevel.INFO, "## operator workflow cancel ${header.workflowInstanceKey}")
                 .process(e -> zeebeClient.newCancelInstanceCommand(Long.parseLong(e.getIn().getHeader("workflowInstanceKey", String.class)))
                         .send()
-                        .join())
+                        )
                 .setBody(constant(null));
     }
 

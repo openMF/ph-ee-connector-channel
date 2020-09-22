@@ -33,15 +33,16 @@ public class ZeebeProcessStarter {
             variables.putAll(extraVariables);
         }
 
+        logger.info("starting workflow HERE:");
         // TODO if successful transfer response arrives in X timeout return it otherwise do callback
-        zeebeClient.newCreateInstanceCommand()
+        WorkflowInstanceEvent instance = zeebeClient.newCreateInstanceCommand()
                 .bpmnProcessId(workflowId)
                 .latestVersion()
                 .variables(variables)
                 .send()
-                ;
+                .join();
 
-        logger.info("zeebee workflow instance from process {} started with transactionId {}", workflowId, transactionId);
+        logger.info("zeebee workflow instance from process {} started with transactionId {}, instance key: {}", workflowId, transactionId, instance.getWorkflowInstanceKey());
         return transactionId;
     }
 

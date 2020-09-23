@@ -23,7 +23,7 @@ public class ZeebeClientConfiguration {
                 .usePlaintext()
                 .defaultJobPollInterval(Duration.ofMillis(10))
                 .defaultJobWorkerMaxJobsActive(512)
-//                .numJobWorkerExecutionThreads(zeebeClientMaxThreads)
+                .numJobWorkerExecutionThreads(zeebeClientMaxThreads)
                 .build();
     }
 }

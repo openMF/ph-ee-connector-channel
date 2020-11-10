@@ -19,7 +19,6 @@ import static org.mifos.connector.common.mojaloop.type.ErrorCode.fromCode;
 
 @Component
 public class ZeebeWorkers {
-
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -37,7 +36,7 @@ public class ZeebeWorkers {
 
                     Object errorInfoVariable = job.getVariablesAsMap().get(ERROR_INFORMATION);
                     if (errorInfoVariable != null) {
-                        JSONObject errorInformation = new JSONObject((String)errorInfoVariable).getJSONObject("errorInformation");
+                        JSONObject errorInformation = new JSONObject((String) errorInfoVariable).getJSONObject("errorInformation");
                         int errorCode = Integer.parseInt(errorInformation.getString("errorCode"));
                         logger.error("Error occurred with code: {} type: {} message: {}",
                                 errorCode,
@@ -47,7 +46,7 @@ public class ZeebeWorkers {
 
                     client.newCompleteCommand(job.getKey())
                             .send()
-                            ;
+                    ;
                 })
                 .name("send-error-to-channel")
                 .maxJobsActive(workerMaxJobs)
@@ -59,7 +58,7 @@ public class ZeebeWorkers {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                     client.newCompleteCommand(job.getKey())
                             .send()
-                            ;
+                    ;
                 })
                 .name("send-success-to-channel")
                 .maxJobsActive(workerMaxJobs)
@@ -71,7 +70,7 @@ public class ZeebeWorkers {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                     client.newCompleteCommand(job.getKey())
                             .send()
-                            ;
+                    ;
                 })
                 .name("notify-operator")
                 .maxJobsActive(workerMaxJobs)
@@ -83,7 +82,7 @@ public class ZeebeWorkers {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                     client.newCompleteCommand(job.getKey())
                             .send()
-                            ;
+                    ;
                 })
                 .name("notify-ams-failure")
                 .maxJobsActive(workerMaxJobs)
@@ -99,14 +98,14 @@ public class ZeebeWorkers {
                             variables.get(TRANSACTION_ID),
                             3, // TODO externalize bpmn expression variables
                             variables.keySet().stream()
-                            .sorted(naturalOrder())
-                            .map(k -> k + " -- " + variables.get(k))
-                            .collect(Collectors.joining("\n"))
+                                    .sorted(naturalOrder())
+                                    .map(k -> k + " -- " + variables.get(k))
+                                    .collect(Collectors.joining("\n"))
                     );
 
                     client.newCompleteCommand(job.getKey())
                             .send()
-                            ;
+                    ;
                 })
                 .name("send-unknown-to-channel")
                 .maxJobsActive(workerMaxJobs)

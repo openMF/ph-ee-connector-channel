@@ -19,7 +19,7 @@ public class ZeebeClientConfiguration {
     @Bean
     public ZeebeClient setup() {
         return ZeebeClient.newClientBuilder()
-                .brokerContactPoint(zeebeBrokerContactpoint)
+                .gatewayAddress(zeebeBrokerContactpoint)
                 .usePlaintext()
                 .defaultJobPollInterval(Duration.ofMillis(10))
                 .defaultJobWorkerMaxJobsActive(512)

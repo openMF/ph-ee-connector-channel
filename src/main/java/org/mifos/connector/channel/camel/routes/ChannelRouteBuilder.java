@@ -452,7 +452,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     httpHeaders.add("Authorization", "Bearer " + token);
 
                     entity = new HttpEntity<>(e.getIn().getBody(String.class), httpHeaders);
-                    exchange = restTemplate.exchange(operationsUrl + "/imuexchange/convert" , HttpMethod.POST, entity, String.class);
+                    exchange = restTemplate.exchange(operationsUrl + "/imuexchange/preview" , HttpMethod.POST, entity, String.class);
                     e.getIn().setBody(exchange.getBody());
                 });
         from("rest:GET:/channel/beneficiary/{customerIdentifier}")

@@ -238,6 +238,9 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(PARTY_ID, requestedParty.getPartyIdentifier());
 
                     extraVariables.put(GSMA_CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaChannelRequest));
+                    extraVariables.put(PARTY_LOOKUP_FSPID, gsmaChannelRequest.getReceivingLei());
+                    extraVariables.put(INITIATOR_FSPID, gsmaChannelRequest.getRequestingLei());
+
                     String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             objectMapper.writeValueAsString(channelRequest),
                             extraVariables);
@@ -272,6 +275,10 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(GSMA_CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaChannelRequest));
                     extraVariables.put(PARTY_ID_TYPE, channelRequest.getPayee().getPartyIdInfo().getPartyIdType());
                     extraVariables.put(PARTY_ID, channelRequest.getPayee().getPartyIdInfo().getPartyIdentifier());
+
+                    extraVariables.put(PARTY_LOOKUP_FSPID, gsmaChannelRequest.getReceivingLei());
+                    extraVariables.put(INITIATOR_FSPID, gsmaChannelRequest.getRequestingLei());
+
                     String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             objectMapper.writeValueAsString(channelRequest),
                             extraVariables);

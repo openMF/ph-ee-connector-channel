@@ -20,4 +20,6 @@ public class ZeebeVariables {
     public static final String TRANSACTION_TYPE = "transactionType";
     public static final String GSMA_AUTHORIZATION_CODE = "gsmaAuthorizationCode";
     public static final String GSMA_CHANNEL_REQUEST = "gsmaChannelRequest";
+    public static final String PARTY_LOOKUP_FSPID = "partyLookupFspId";
+    public static final String INITIATOR_FSPID = "initiatorFspId";
 }

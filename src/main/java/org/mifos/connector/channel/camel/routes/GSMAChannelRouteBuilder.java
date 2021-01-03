@@ -33,6 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -191,11 +192,27 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .unmarshal().json(JsonLibrary.Jackson, GSMATransaction.class)
                 .to("bean-validator:request")
                 .process(exchange -> {
+                    String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     GSMATransaction gsmaChannelRequest = exchange.getIn().getBody(GSMATransaction.class); // GSMA Object
                     TransactionChannelRequestDTO channelRequest = new TransactionChannelRequestDTO(); // Fineract Object
 
                     Party payer = partyMapper(gsmaChannelRequest.getDebitParty());
                     Party payee = partyMapper(gsmaChannelRequest.getCreditParty());
+
+                    JSONObject imu = new JSONObject();
+                    imu.put("amount", gsmaChannelRequest.getAmount());
+                    imu.put("from", gsmaChannelRequest.getCurrency());
+                    imu.put("to", gsmaChannelRequest.getInternationalTransferInformation().getReceivingCurrency());
+                    imu.put("failWhenExpired", true);
+
+                    if(gsmaChannelRequest.getConvLockKey() != null) {
+                        imu.put("lockKey", gsmaChannelRequest.getConvLockKey());
+                    }
+                    if(gsmaChannelRequest.getInternationalTransferInformation().getReceivingCurrency() !=null &&
+                        !gsmaChannelRequest.getCurrency().equals(gsmaChannelRequest.getInternationalTransferInformation().getReceivingCurrency())) {
+                        convertCurrency(tenantId, imu, gsmaChannelRequest);
+                    }
+
                     MoneyData amount = amountMapper(gsmaChannelRequest.getAmount(), gsmaChannelRequest.getCurrency());
 
                     channelRequest.setPayer(payer);
@@ -211,7 +228,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(IS_RTP_REQUEST, false);
                     extraVariables.put(TRANSACTION_TYPE, "inttransfer");
 
-                    String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
+
                     extraVariables.put(TENANT_ID, tenantId);
                     String tenantSpecificBpmn = internationalRemittancePayer.replace("{dfspid}", tenantId);
                     channelRequest.setTransactionType(transactionType);
@@ -465,4 +482,39 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         return moneyData;
     }
 
+    public void convertCurrency(String tenantId, JSONObject convJson, GSMATransaction gsmaTransaction) throws JsonProcessingException {
+        if (tenantId == null || !dfspIds.contains(tenantId)) {
+            throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
+        }
+        Client client = clientProperties.getClient(tenantId);
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("Platform-TenantId", tenantId);
+        httpHeaders.add("Authorization",
+                "Basic " + getEncoder().encodeToString((client.getClientId() + ":" + client.getClientSecret()).getBytes()));
+
+        httpHeaders.add("Content-Type", "application/json");
+
+        HttpEntity<String> entity = new HttpEntity<>(null, httpHeaders);
+        ResponseEntity<String> exchange = restTemplate.exchange(restAuthHost + "/oauth/token?grant_type=client_credentials", HttpMethod.POST, entity, String.class);
+        String token = new JSONObject(exchange.getBody()).getString("access_token");
+
+        httpHeaders.remove("Authorization");
+        httpHeaders.add("Authorization", "Bearer " + token);
+
+        entity = new HttpEntity<>(convJson.toString(), httpHeaders);
+
+        exchange = restTemplate.exchange(operationsUrl + "/imuexchange/preview", HttpMethod.POST, entity, String.class);
+
+        JSONObject conv =  new JSONObject(exchange.getBody());
+        String amount = conv.getBigDecimal("convertedAmount").toString();
+        String rate =  conv.getBigDecimal("rate").toString();
+
+        gsmaTransaction.getInternationalTransferInformation().setCurrencyPair(gsmaTransaction.getCurrency()+"/"+
+                gsmaTransaction.getInternationalTransferInformation().getReceivingCurrency());
+        gsmaTransaction.getInternationalTransferInformation().setSenderAmount(gsmaTransaction.getAmount());
+        gsmaTransaction.setAmount(amount);
+        gsmaTransaction.getInternationalTransferInformation().setCurrencyPairRate(rate);
+        gsmaTransaction.getInternationalTransferInformation().setOriginCurrency(gsmaTransaction.getCurrency());
+        gsmaTransaction.setCurrency(gsmaTransaction.getInternationalTransferInformation().getReceivingCurrency());
+    }
 }

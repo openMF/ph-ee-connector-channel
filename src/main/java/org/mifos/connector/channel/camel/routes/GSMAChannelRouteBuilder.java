@@ -211,6 +211,8 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     if(gsmaChannelRequest.getInternationalTransferInformation().getReceivingCurrency() !=null &&
                         !gsmaChannelRequest.getCurrency().equals(gsmaChannelRequest.getInternationalTransferInformation().getReceivingCurrency())) {
                         convertCurrency(tenantId, imu, gsmaChannelRequest);
+                    }else{
+                        gsmaChannelRequest.getInternationalTransferInformation().setReceivingAmount(gsmaChannelRequest.getAmount());
                     }
 
                     MoneyData amount = amountMapper(gsmaChannelRequest.getAmount(), gsmaChannelRequest.getCurrency());
@@ -354,6 +356,21 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
         Party payer = partyMapper(gsmaChannelRequest.getDebitParty());
         Party payee = partyMapper(gsmaChannelRequest.getCreditParty());
+        JSONObject imu = new JSONObject();
+        imu.put("amount", gsmaChannelRequest.getAmount());
+        imu.put("from", gsmaChannelRequest.getCurrency());
+        imu.put("to", gsmaChannelRequest.getInternationalTransferInformation().getReceivingCurrency());
+        imu.put("failWhenExpired", true);
+
+        if(gsmaChannelRequest.getConvLockKey() != null) {
+            imu.put("lockKey", gsmaChannelRequest.getConvLockKey());
+        }
+        if(gsmaChannelRequest.getInternationalTransferInformation().getReceivingCurrency() !=null &&
+                !gsmaChannelRequest.getCurrency().equals(gsmaChannelRequest.getInternationalTransferInformation().getReceivingCurrency())) {
+            convertCurrency(tenantId, imu, gsmaChannelRequest);
+        }else{
+            gsmaChannelRequest.getInternationalTransferInformation().setReceivingAmount(gsmaChannelRequest.getAmount());
+        }
         MoneyData amount = amountMapper(gsmaChannelRequest.getAmount(), gsmaChannelRequest.getCurrency());
 
         channelRequest.setPayer(payer);
@@ -518,10 +535,8 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
         gsmaTransaction.getInternationalTransferInformation().setCurrencyPair(gsmaTransaction.getCurrency()+"/"+
                 gsmaTransaction.getInternationalTransferInformation().getReceivingCurrency());
-        gsmaTransaction.getInternationalTransferInformation().setSenderAmount(gsmaTransaction.getAmount());
-        gsmaTransaction.setAmount(amount);
+        gsmaTransaction.getInternationalTransferInformation().setReceivingAmount(amount);
         gsmaTransaction.getInternationalTransferInformation().setCurrencyPairRate(rate);
-        gsmaTransaction.getInternationalTransferInformation().setOriginCurrency(gsmaTransaction.getCurrency());
-        gsmaTransaction.setCurrency(gsmaTransaction.getInternationalTransferInformation().getReceivingCurrency());
+        gsmaTransaction.getInternationalTransferInformation().setSenderCurrency(gsmaTransaction.getCurrency());
     }
 }

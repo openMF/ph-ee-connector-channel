@@ -1,6 +1,7 @@
 package org.mifos.connector.channel.camel.routes;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import io.zeebe.client.ZeebeClient;
@@ -23,6 +24,7 @@ import org.mifos.connector.common.mojaloop.dto.Party;
 import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
 import org.mifos.connector.common.mojaloop.type.IdentifierType;
+import org.mifos.connector.common.operations.dto.Transfer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +36,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -295,6 +300,46 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     exchange.getIn().setBody(objectMapper.writeValueAsString(gsmaResponse));
                     exchange.getIn().setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
                 });
+
+        from("rest:GET:/channel/gsma/accounts/{identifierType}/{identifier}/statemententries")
+                .id("statement-entries")
+                .log(LoggingLevel.INFO, "## CHANNEL -> Statement entries for ${header.identifierType} ${header.identifier}")
+                .process(e -> {
+                    String tenantId = e.getIn().getHeader("Platform-TenantId", String.class);
+                    if (tenantId == null || !dfspIds.contains(tenantId)) {
+                        throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
+                    }
+                    Client client = clientProperties.getClient(tenantId);
+                    HttpHeaders httpHeaders = new HttpHeaders();
+                    httpHeaders.add("Platform-TenantId", tenantId);
+                    httpHeaders.add("Authorization",
+                            "Basic " + getEncoder().encodeToString((client.getClientId() + ":" + client.getClientSecret()).getBytes()));
+
+                    HttpEntity<String> entity = new HttpEntity<>(null, httpHeaders);
+                    ResponseEntity<String> exchange = restTemplate.exchange(restAuthHost + "/oauth/token?grant_type=client_credentials", HttpMethod.POST, entity, String.class);
+                    String token = new JSONObject(exchange.getBody()).getString("access_token");
+
+                    String identifier = e.getIn().getHeader("identifier", String.class);
+                    String identifierType = e.getIn().getHeader("identifierType", String.class);
+                    String statementURL = operationsUrl + "/transfers?page=0&size=50&partyId=" + URLEncoder.encode(identifier, "UTF-8") + "&partyIdType=" + identifierType;
+
+                    httpHeaders.remove("Authorization");
+                    httpHeaders.add("Authorization", "Bearer " + token);
+
+                    logger.info("Token: " + token);
+                    logger.info("Calling Statements URL: " + statementURL);
+
+                    entity = new HttpEntity<>(null, httpHeaders);
+                    exchange = restTemplate.exchange(statementURL, HttpMethod.GET, entity, String.class);
+
+                    logger.info("Response: " + exchange.getBody());
+
+                    JSONArray contents = new JSONObject(exchange.getBody()).getJSONArray("content");
+                    List<Transfer> entries = objectMapper.readValue(contents.toString(), new TypeReference<List<Transfer>>() {});
+
+                    e.getIn().setBody(entries);
+                })
+                .marshal().json();
 
         from("rest:POST:/channel/transaction")
                 .id("transaction-transaction")

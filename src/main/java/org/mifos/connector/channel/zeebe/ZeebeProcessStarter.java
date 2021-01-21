@@ -2,6 +2,8 @@ package org.mifos.connector.channel.zeebe;
 
 import io.zeebe.client.ZeebeClient;
 import io.zeebe.client.api.response.WorkflowInstanceEvent;
+import org.mifos.connector.common.mojaloop.type.InitiatorType;
+import org.mifos.connector.common.mojaloop.type.TransactionRole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +32,8 @@ public class ZeebeProcessStarter {
         variables.put(ZeebeVariables.TRANSACTION_ID, transactionId);
         variables.put(ZeebeVariables.CHANNEL_REQUEST, request);
         variables.put(ZeebeVariables.ORIGIN_DATE, Instant.now().toEpochMilli());
-        variables.put("initiator", "PAYER");
+        variables.put("initiator", TransactionRole.PAYER);
+        variables.put("initiatorType", InitiatorType.CONSUMER);
         if(extraVariables != null) {
             variables.putAll(extraVariables);
         }

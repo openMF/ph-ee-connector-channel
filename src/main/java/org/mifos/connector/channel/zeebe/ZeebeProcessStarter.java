@@ -30,6 +30,7 @@ public class ZeebeProcessStarter {
         variables.put(ZeebeVariables.TRANSACTION_ID, transactionId);
         variables.put(ZeebeVariables.CHANNEL_REQUEST, request);
         variables.put(ZeebeVariables.ORIGIN_DATE, Instant.now().toEpochMilli());
+        variables.put("initiator", "PAYER");
         if(extraVariables != null) {
             variables.putAll(extraVariables);
         }

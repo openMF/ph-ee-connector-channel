@@ -19,6 +19,8 @@ import org.mifos.connector.common.channel.dto.RegisterAliasRequestDTO;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.channel.dto.TransactionStatusResponseDTO;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
+import org.mifos.connector.common.mojaloop.type.InitiatorType;
+import org.mifos.connector.common.mojaloop.type.TransactionRole;
 import org.mifos.connector.common.mojaloop.type.TransferState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -221,6 +223,9 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     transactionType.setInitiatorType(CONSUMER);
                     transactionType.setScenario(TRANSFER);
                     channelRequest.setTransactionType(transactionType);
+                    extraVariables.put("initiator", transactionType.getInitiator().name());
+                    extraVariables.put("initiatorType", transactionType.getInitiatorType().name());
+                    extraVariables.put("scenario", transactionType.getScenario().name());
 
                     String tenantSpecificBpmn;
                     if(channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier().startsWith("6666")) {
@@ -245,22 +250,25 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .unmarshal().json(JsonLibrary.Jackson, TransactionChannelRequestDTO.class)
                 .to("bean-validator:request")
                 .process(exchange -> {
+                    Map<String, Object> extraVariables = new HashMap<>();
                     TransactionType transactionType = new TransactionType();
                     transactionType.setInitiator(PAYEE);
                     transactionType.setInitiatorType(CONSUMER);
                     transactionType.setScenario(TRANSFER);
+                    extraVariables.put("initiator", transactionType.getInitiator().name());
+                    extraVariables.put("initiatorType", transactionType.getInitiatorType().name());
+                    extraVariables.put("scenario", transactionType.getScenario().name());
 
-                    Map<String, Object> variables = new HashMap<>();
-                    variables.put(IS_RTP_REQUEST, true);
+                    extraVariables.put(IS_RTP_REQUEST, true);
 //                    variables.put(AUTH_RETRIES_LEFT, 3); // TODO if auth enabled
-                    variables.put(IS_AUTHORISATION_REQUIRED, false); // TODO how to decide?
-                    variables.put(AUTH_TYPE, "NONE");
+                    extraVariables.put(IS_AUTHORISATION_REQUIRED, false); // TODO how to decide?
+                    extraVariables.put(AUTH_TYPE, "NONE");
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     if (tenantId == null || !dfspIds.contains(tenantId)) {
                         throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
                     }
-                    variables.put(TENANT_ID, tenantId);
+                    extraVariables.put(TENANT_ID, tenantId);
                     String tenantSpecificBpmn = transactionRequestFlow.replace("{dfspid}", tenantId);
 
                     TransactionChannelRequestDTO channelRequest = exchange.getIn().getBody(TransactionChannelRequestDTO.class);
@@ -268,7 +276,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             objectMapper.writeValueAsString(channelRequest),
-                            variables);
+                            extraVariables);
                     JSONObject response = new JSONObject();
                     response.put("transactionId", transactionId);
                     exchange.getIn().setBody(response.toString());

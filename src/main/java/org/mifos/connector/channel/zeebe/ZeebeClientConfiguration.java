@@ -21,8 +21,8 @@ public class ZeebeClientConfiguration {
         return ZeebeClient.newClientBuilder()
                 .gatewayAddress(zeebeBrokerContactpoint)
                 .usePlaintext()
-                .defaultJobPollInterval(Duration.ofMillis(10))
-                .defaultJobWorkerMaxJobsActive(512)
+                .defaultJobPollInterval(Duration.ofMillis(1))
+                .defaultJobWorkerMaxJobsActive(2000)
                 .numJobWorkerExecutionThreads(zeebeClientMaxThreads)
                 .build();
     }

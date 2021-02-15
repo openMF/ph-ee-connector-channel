@@ -17,9 +17,11 @@ bpmn:
 
 zeebe:
   client:
-    max-execution-threads: 100
-    number-of-workers: 5
-    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
+    max-execution-threads: 1000
+    evenly-allocated-max-jobs: 1000
+#    max-execution-threads: 100
+#    number-of-workers: 5
+#    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
   broker:
     contactpoint: "ph-ee-zeebe:26500"
 

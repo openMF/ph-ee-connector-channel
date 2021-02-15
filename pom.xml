@@ -58,7 +58,7 @@
 		<dependency>
 			<groupId>io.zeebe</groupId>
 			<artifactId>zeebe-client-java</artifactId>
-			<version>0.25.1</version>
+			<version>0.26.0</version>
 		</dependency>
 
 		<!-- test deps -->

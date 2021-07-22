@@ -6,7 +6,7 @@ camel:
     json-jackson:
       auto-discover-object-mapper: true
 
-dfspids: "ibank-usa,ibank-india"
+dfspids: "DFSPID"
 
 bpmn:
   flows:
@@ -31,11 +31,11 @@ zeebe:
 #    number-of-workers: 5
 #    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
   broker:
-    contactpoint: "localhost:26500"
+    contactpoint: "ph-ee-zeebe:26500"
 
 rest:
   authorization:
     enabled: false
-    host: http://identity.ibank.financial
+    host: http://localhost:8080
   connector-ams:
     host: "http://ph-ee-connector-ams-mifos"

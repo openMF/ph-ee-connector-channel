@@ -1,12 +1,12 @@
 operations:
-  url: "http://identity.ibank.financial/api/v1"
-institution-name: ibank
+  url: "http://bb-operations.mifos.io/api/v1"
+
 identity:
   channel:
     clients:
-      - clientId: channel-ibank-usa
+      - clientId: channel-tn03
         clientSecret: p1234
-        tenant: ibank-usa
-      - clientId: channel-ibank-india
+        tenant: tn03
+      - clientId: channel-tn04
         clientSecret: p1234
-        tenant: ibank-india
+        tenant: tn04

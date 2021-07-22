@@ -11,6 +11,7 @@ dfspids: "ibank-usa,ibank-india"
 bpmn:
   flows:
     payment-transfer: "PayerFundTransfer-{dfspid}"
+    special-payment-transfer: "SpecialPayerFundTransfer-{dfspid}"
     transaction-request: "PayeeTransactionRequest-{dfspid}"
     party-registration: "PartyRegistration-{dfspid}"
     gsma-base-transaction: "gsma_base_transaction-{dfspid}"
@@ -24,9 +25,11 @@ bpmn:
 
 zeebe:
   client:
-    max-execution-threads: 100
-    number-of-workers: 5
-    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
+    max-execution-threads: 1000
+    evenly-allocated-max-jobs: 1000
+#    max-execution-threads: 100
+#    number-of-workers: 5
+#    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
   broker:
     contactpoint: "localhost:26500"
 

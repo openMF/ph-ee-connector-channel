@@ -164,6 +164,5 @@ public class ZeebeWorkers {
                 .name("send-payee-failure-to-channel")
                 .maxJobsActive(workerMaxJobs)
                 .open();
-
     }
 }

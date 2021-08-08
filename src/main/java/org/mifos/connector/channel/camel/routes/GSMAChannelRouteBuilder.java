@@ -235,7 +235,6 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(IS_RTP_REQUEST, false);
                     extraVariables.put(TRANSACTION_TYPE, "inttransfer");
 
-
                     extraVariables.put(TENANT_ID, tenantId);
                     String tenantSpecificBpmn = internationalRemittancePayer.replace("{dfspid}", tenantId);
                     channelRequest.setTransactionType(transactionType);

@@ -31,7 +31,7 @@ zeebe:
 #    number-of-workers: 5
 #    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
   broker:
-    contactpoint: "ph-ee-zeebe:26500"
+    contactpoint: "localhost:26500"
 
 rest:
   authorization:

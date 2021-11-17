@@ -247,6 +247,28 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     exchange.getIn().setBody(response.toString());
                 });
 
+        /*
+         * Tester endpoint for starting mpesa workflow
+         */
+        from("rest:POST:/channel/mpesa/transaction")
+                .id("mpesa-payment-request")
+                .log(LoggingLevel.INFO, "## CHANNEL -> MPESA transaction request")
+                .to("bean-validator:request")
+                .process(exchange -> {
+
+                    Map<String, Object> extraVariables = new HashMap<>();
+                    extraVariables.put("initiator", "PAYEE");
+                    extraVariables.put("initiatorType", "BUSINESS");
+                    extraVariables.put("scenario", "MPESA");
+
+                    String transactionId = zeebeProcessStarter.startZeebeWorkflow("Process_0zpkte0",
+                            exchange.getIn().getBody(String.class),
+                            extraVariables);
+                    JSONObject response = new JSONObject();
+                    response.put("transactionId", transactionId);
+                    exchange.getIn().setBody(response.toString());
+                });
+
         from("rest:POST:/channel/transactionRequest")
                 .id("inbound-payment-request")
                 .log(LoggingLevel.INFO, "## CHANNEL -> PAYEE inbound transaction request")

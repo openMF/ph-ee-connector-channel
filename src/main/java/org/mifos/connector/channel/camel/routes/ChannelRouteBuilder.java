@@ -71,6 +71,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private String specialPaymentTransferFlow;
     private String transactionRequestFlow;
     private String partyRegistration;
+    private String mpesaFlow;
     private String restAuthHost;
     private String operationsUrl;
     private ZeebeProcessStarter zeebeProcessStarter;
@@ -85,6 +86,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                @Value("${bpmn.flows.special-payment-transfer}") String specialPaymentTransferFlow,
                                @Value("${bpmn.flows.transaction-request}") String transactionRequestFlow,
                                @Value("${bpmn.flows.party-registration}") String partyRegistration,
+                               @Value("${bpmn.flows.mpesa-flow}") String mpesaFlow,
                                @Value("${rest.authorization.host}") String restAuthHost,
                                @Value("${operations.url}") String operationsUrl,
                                ZeebeClient zeebeClient,
@@ -99,6 +101,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         this.paymentTransferFlow = paymentTransferFlow;
         this.specialPaymentTransferFlow = specialPaymentTransferFlow;
         this.transactionRequestFlow = transactionRequestFlow;
+        this.mpesaFlow = mpesaFlow;
         this.partyRegistration = partyRegistration;
         this.zeebeProcessStarter = zeebeProcessStarter;
         this.zeebeClient = zeebeClient;
@@ -250,7 +253,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         /*
          * Tester endpoint for starting mpesa workflow
          */
-        from("rest:POST:/channel/mpesa/transaction")
+        from("rest:POST:/channel/collection")
                 .id("mpesa-payment-request")
                 .log(LoggingLevel.INFO, "## CHANNEL -> MPESA transaction request")
                 .to("bean-validator:request")
@@ -261,7 +264,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("initiatorType", "BUSINESS");
                     extraVariables.put("scenario", "MPESA");
 
-                    String transactionId = zeebeProcessStarter.startZeebeWorkflow("Process_0zpkte0",
+                    String transactionId = zeebeProcessStarter.startZeebeWorkflow(mpesaFlow,
                             exchange.getIn().getBody(String.class),
                             extraVariables);
                     JSONObject response = new JSONObject();

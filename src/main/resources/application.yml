@@ -21,6 +21,7 @@ bpmn:
     gsma-link-based-payment: "gsma_link_transfer"
     international-remittance-payee: "international-remittance-payee-process-{dfspid}"
     international-remittance-payer: "international-remittance-payer-process-{dfspid}"
+    mpesa-flow: "mpesa-flow-v3"
 
 zeebe:
   client:

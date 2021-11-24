@@ -2,7 +2,7 @@ package org.mifos.connector.channel.camel.routes;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import io.zeebe.client.ZeebeClient;
+import io.camunda.zeebe.client.ZeebeClient;
 import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.component.bean.validator.BeanValidationException;

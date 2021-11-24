@@ -1,6 +1,6 @@
 package org.mifos.connector.channel.zeebe;
 
-import io.zeebe.client.ZeebeClient;
+import io.camunda.zeebe.client.ZeebeClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

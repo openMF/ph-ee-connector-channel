@@ -1,6 +1,6 @@
 package org.mifos.connector.channel.zeebe;
 
-import io.zeebe.client.ZeebeClient;
+import io.camunda.zeebe.client.ZeebeClient;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

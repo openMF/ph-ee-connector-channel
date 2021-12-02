@@ -6,6 +6,7 @@ plugins {
     id 'java'
     id 'maven-publish'
     id 'eclipse'
+    id 'org.springframework.boot' version '2.1.9.RELEASE'
 }
 
 repositories {
@@ -26,6 +27,8 @@ dependencies {
     implementation 'org.apache.camel:camel-bean-validator:3.4.0'
     implementation 'org.apache.camel:camel-undertow:3.4.0'
     implementation 'org.apache.camel.springboot:camel-jackson-starter:3.4.0'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.6.0'
+    implementation 'org.json:json:20210307'
     implementation 'io.camunda:zeebe-client-java:1.1.0'
     testImplementation 'org.springframework.boot:spring-boot-starter-test:2.2.2.RELEASE'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'

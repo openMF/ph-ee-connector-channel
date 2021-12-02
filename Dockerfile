@@ -1,6 +1,6 @@
 FROM openjdk:13
 EXPOSE 5000
 
-COPY target/*.jar .
+COPY build/libs/*.jar .
 CMD java -jar *.jar
 

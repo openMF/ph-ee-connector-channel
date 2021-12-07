@@ -264,7 +264,15 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("initiatorType", "BUSINESS");
                     extraVariables.put("scenario", "MPESA");
 
-                    String transactionId = zeebeProcessStarter.startZeebeWorkflow(mpesaFlow,
+                    String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
+                    if (tenantId == null || !dfspIds.contains(tenantId)) {
+                        throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
+                    }
+                    extraVariables.put(TENANT_ID, tenantId);
+
+                    String tenantSpecificBpmn = mpesaFlow.replace("{dfspid}", tenantId);
+
+                    String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             exchange.getIn().getBody(String.class),
                             extraVariables);
                     JSONObject response = new JSONObject();

@@ -8,6 +8,9 @@ camel:
 
 dfspids: "DFSPID"
 
+operations:
+  url: "http://bb-operations.mifos.io/api/v1"
+
 bpmn:
   flows:
     payment-transfer: "PayerFundTransfer-{dfspid}"
@@ -21,7 +24,7 @@ bpmn:
     gsma-link-based-payment: "gsma_link_transfer"
     international-remittance-payee: "international-remittance-payee-process-{dfspid}"
     international-remittance-payer: "international-remittance-payer-process-{dfspid}"
-    mpesa-flow: "mpesa-flow-v3"
+    mpesa-flow: "mpesa-flow-v3-{dfspid}"
 
 zeebe:
   client:

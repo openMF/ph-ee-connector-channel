@@ -270,10 +270,28 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     }
                     extraVariables.put(TENANT_ID, tenantId);
 
+                    String channelRequestBodyString = exchange.getIn().getBody(String.class);
+                    JSONObject body = new JSONObject(channelRequestBodyString);
+                    JSONArray payer = body.getJSONArray("payer");
+                    String phoneNumber = "";
+                    String  accountId = "";
+                    if ( ((JSONObject) payer.get(0)).getString("key") == "key") {
+                        phoneNumber = ((JSONObject) payer.get(0)).getString("value");
+                        accountId = ((JSONObject) payer.get(1)).getString("value");
+                    } else {
+                        phoneNumber = ((JSONObject) payer.get(1)).getString("value");
+                        accountId = ((JSONObject) payer.get(0)).getString("value");
+                    }
+                    String amount = body.getString("amount");
+
+                    extraVariables.put("accountId", accountId);
+                    extraVariables.put("phoneNumber", phoneNumber);
+                    extraVariables.put("amount", amount);
+
                     String tenantSpecificBpmn = mpesaFlow.replace("{dfspid}", tenantId);
 
                     String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
-                            exchange.getIn().getBody(String.class),
+                            channelRequestBodyString,
                             extraVariables);
                     JSONObject response = new JSONObject();
                     response.put("transactionId", transactionId);

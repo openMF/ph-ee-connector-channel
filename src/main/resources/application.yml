@@ -14,7 +14,7 @@ bpmn:
     special-payment-transfer: "SpecialPayerFundTransfer-{dfspid}"
     transaction-request: "PayeeTransactionRequest-{dfspid}"
     party-registration: "PartyRegistration-{dfspid}"
-    gsma-base-transaction: "gsma_base_transaction"
+    gsma-base-transaction: "gsma_base_transaction-{dfspid}"
     gsma-int-transfer: "gsma_int_transfer"
     gsma-payee-process: "gsma_payee_process"
     gsma-bill-payment: "gsma_bill_payment"

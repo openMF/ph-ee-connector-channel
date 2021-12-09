@@ -275,10 +275,12 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     JSONArray payer = body.getJSONArray("payer");
                     String phoneNumber = "";
                     String  accountId = "";
-                    if ( ((JSONObject) payer.get(0)).getString("key") == "key") {
+                    if (((JSONObject) payer.get(0)).getString("key").equals("MSISDN")) {
+                        // case where 1st array element is MSISDN
                         phoneNumber = ((JSONObject) payer.get(0)).getString("value");
                         accountId = ((JSONObject) payer.get(1)).getString("value");
                     } else {
+                        // case where 1st array element is ACCOUNTID
                         phoneNumber = ((JSONObject) payer.get(1)).getString("value");
                         accountId = ((JSONObject) payer.get(0)).getString("value");
                     }

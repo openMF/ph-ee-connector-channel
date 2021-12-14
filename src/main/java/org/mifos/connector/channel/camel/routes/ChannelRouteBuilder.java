@@ -20,8 +20,6 @@ import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.channel.dto.TransactionStatusResponseDTO;
 import org.mifos.connector.common.mojaloop.dto.FspMoneyData;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
-import org.mifos.connector.common.mojaloop.type.InitiatorType;
-import org.mifos.connector.common.mojaloop.type.TransactionRole;
 import org.mifos.connector.common.mojaloop.type.TransferState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +32,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -115,6 +112,17 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
     @Override
     public void configure() {
+        handleExceptions();
+        indexRoutes();
+        transferRoutes();
+        collectionRoutes();
+        transactionRoutes();
+        partyRegistrationRoutes();
+        jobRoutes();
+        workflowRoutes();
+    }
+
+    private void handleExceptions(){
         onException(BeanValidationException.class)
                 .process(e -> {
                     JSONArray violations = new JSONArray();
@@ -142,11 +150,15 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 })
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(400))
                 .stop();
+    }
 
+    private void indexRoutes(){
         from("rest:GET:/")
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200))
                 .setBody(constant(""));
+    }
 
+    private void transferRoutes(){
         from("rest:GET:/channel/transfer/{transactionId}")
                 .id("transfer-details")
                 .log(LoggingLevel.INFO, "## CHANNEL -> inbound transferDetail request for ${header.transactionId}")
@@ -249,10 +261,9 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     response.put("transactionId", transactionId);
                     exchange.getIn().setBody(response.toString());
                 });
+    }
 
-        /*
-         * Tester endpoint for starting mpesa workflow
-         */
+    private void collectionRoutes(){
         from("rest:POST:/channel/collection")
                 .id("mpesa-payment-request")
                 .log(LoggingLevel.INFO, "## CHANNEL -> MPESA transaction request")
@@ -279,7 +290,9 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     response.put("transactionId", transactionId);
                     exchange.getIn().setBody(response.toString());
                 });
+    }
 
+    private void transactionRoutes(){
         from("rest:POST:/channel/transactionRequest")
                 .id("inbound-payment-request")
                 .log(LoggingLevel.INFO, "## CHANNEL -> PAYEE inbound transaction request")
@@ -318,6 +331,28 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     exchange.getIn().setBody(response.toString());
                 });
 
+        from("rest:POST:/channel/transaction/{" + TRANSACTION_ID + "}/resolve")
+                .id("transaction-resolve")
+                .log(LoggingLevel.INFO, "## operator transaction resolve")
+                .process(e -> {
+                    Map<String, Object> variables = new HashMap<>();
+                    JSONObject request = new JSONObject(e.getIn().getBody(String.class));
+                    request.keys().forEachRemaining(k -> {
+                        variables.put(k, request.get(k));
+                    });
+
+                    zeebeClient.newPublishMessageCommand()
+                            .messageName(OPERATOR_MANUAL_RECOVERY)
+                            .correlationKey(e.getIn().getHeader(TRANSACTION_ID, String.class))
+                            .timeToLive(Duration.ofMillis(30000))
+                            .variables(variables)
+                            .send()
+                    ;
+                })
+                .setBody(constant(null));
+    }
+
+    private void partyRegistrationRoutes(){
         from("rest:POST:/channel/partyRegistration")
                 .id("inbound-party-registration-request")
                 .log(LoggingLevel.INFO, "## CHANNEL -> PHEE inbound party registration request")
@@ -341,27 +376,9 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             variables);
                 })
                 .setBody(constant(null));
+    }
 
-        from("rest:POST:/channel/transaction/{" + TRANSACTION_ID + "}/resolve")
-                .id("transaction-resolve")
-                .log(LoggingLevel.INFO, "## operator transaction resolve")
-                .process(e -> {
-                    Map<String, Object> variables = new HashMap<>();
-                    JSONObject request = new JSONObject(e.getIn().getBody(String.class));
-                    request.keys().forEachRemaining(k -> {
-                        variables.put(k, request.get(k));
-                    });
-
-                    zeebeClient.newPublishMessageCommand()
-                            .messageName(OPERATOR_MANUAL_RECOVERY)
-                            .correlationKey(e.getIn().getHeader(TRANSACTION_ID, String.class))
-                            .timeToLive(Duration.ofMillis(30000))
-                            .variables(variables)
-                            .send()
-                            ;
-                })
-                .setBody(constant(null));
-
+    private void jobRoutes(){
         from("rest:POST:/channel/job/resolve")
                 .id("job-resolve")
                 .log(LoggingLevel.INFO, "## operator job resolve")
@@ -377,19 +394,22 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     zeebeClient.newSetVariablesCommand(incident.getLong("elementInstanceKey"))
                             .variables(newVariables)
                             .send()
-                            ;
+                    ;
 
                     zeebeClient.newUpdateRetriesCommand(incident.getLong("jobKey"))
                             .retries(incident.getInt("newRetries"))
                             .send()
-                            ;
+                    ;
 
                     zeebeClient.newResolveIncidentCommand(incident.getLong("key"))
                             .send()
-                            ;
+                    ;
                 })
                 .setBody(constant(null));
 
+    }
+
+    private void workflowRoutes(){
         from("rest:POST:/channel/workflow/resolve")
                 .id("workflow-resolve")
                 .log(LoggingLevel.INFO, "## operator workflow resolve")
@@ -405,11 +425,11 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     zeebeClient.newSetVariablesCommand(incident.getLong("elementInstanceKey"))
                             .variables(newVariables)
                             .send()
-                            ;
+                    ;
 
                     zeebeClient.newResolveIncidentCommand(incident.getLong("key"))
                             .send()
-                            ;
+                    ;
                 })
                 .setBody(constant(null));
 
@@ -418,7 +438,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .log(LoggingLevel.INFO, "## operator workflow cancel ${header.workflowInstanceKey}")
                 .process(e -> zeebeClient.newCancelInstanceCommand(Long.parseLong(e.getIn().getHeader("workflowInstanceKey", String.class)))
                         .send()
-                        )
+                )
                 .setBody(constant(null));
     }
 

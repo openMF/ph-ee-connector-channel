@@ -33,6 +33,16 @@ public class ZeebeWorkers {
 
     @PostConstruct
     public void setupWorkers() {
+        workerSendErrorToChannel();
+        workerSendSuccessToChannel();
+        workerNotifyOperator();
+        workerNotifyAmsFailure();
+        workerSendUnknownToChannel();
+        workerSendPayeeSuccessToChannel();
+        workerSendPayeeFailureToChannel();
+    }
+
+    private void workerSendErrorToChannel(){
         zeebeClient.newWorker()
                 .jobType("send-error-to-channel")
                 .handler((client, job) -> {
@@ -55,7 +65,9 @@ public class ZeebeWorkers {
                 .name("send-error-to-channel")
                 .maxJobsActive(workerMaxJobs)
                 .open();
+    }
 
+    private void workerSendSuccessToChannel(){
         zeebeClient.newWorker()
                 .jobType("send-success-to-channel")
                 .handler((client, job) -> {
@@ -67,7 +79,9 @@ public class ZeebeWorkers {
                 .name("send-success-to-channel")
                 .maxJobsActive(workerMaxJobs)
                 .open();
+    }
 
+    private void workerNotifyOperator(){
         zeebeClient.newWorker()
                 .jobType("notify-operator")
                 .handler((client, job) -> {
@@ -79,7 +93,9 @@ public class ZeebeWorkers {
                 .name("notify-operator")
                 .maxJobsActive(workerMaxJobs)
                 .open();
+    }
 
+    private void workerNotifyAmsFailure(){
         zeebeClient.newWorker()
                 .jobType("notify-ams-failure")
                 .handler((client, job) -> {
@@ -91,7 +107,9 @@ public class ZeebeWorkers {
                 .name("notify-ams-failure")
                 .maxJobsActive(workerMaxJobs)
                 .open();
+    }
 
+    private void workerSendUnknownToChannel(){
         zeebeClient.newWorker()
                 .jobType("send-unknown-to-channel")
                 .handler((client, job) -> {
@@ -114,7 +132,9 @@ public class ZeebeWorkers {
                 .name("send-unknown-to-channel")
                 .maxJobsActive(workerMaxJobs)
                 .open();
+    }
 
+    private void workerSendPayeeSuccessToChannel(){
         zeebeClient.newWorker()
                 .jobType("send-payee-success-to-channel")
                 .handler((client, job) -> {
@@ -139,7 +159,9 @@ public class ZeebeWorkers {
                 .name("send-payee-success-to-channel")
                 .maxJobsActive(workerMaxJobs)
                 .open();
+    }
 
+    private void workerSendPayeeFailureToChannel(){
         zeebeClient.newWorker()
                 .jobType("send-payee-failure-to-channel")
                 .handler((client, job) -> {

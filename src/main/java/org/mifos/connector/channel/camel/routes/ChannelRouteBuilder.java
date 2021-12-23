@@ -36,11 +36,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Spliterator;
+import java.util.*;
 
 import static java.util.Base64.getEncoder;
 import static java.util.Spliterators.spliteratorUnknownSize;
@@ -120,6 +116,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         partyRegistrationRoutes();
         jobRoutes();
         workflowRoutes();
+        acknowledgementRoutes();
     }
 
     private void handleExceptions(){
@@ -440,6 +437,37 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                         .send()
                 )
                 .setBody(constant(null));
+    }
+
+    private void acknowledgementRoutes(){
+        from("rest:POST:/channel/acknowledgement")
+                .id("invoke-ack-workers")
+                .log(LoggingLevel.INFO, "## CHANNEL -> MPESA transaction request")
+                .process(exchange -> {
+                    // fetch transaction ids and batch id
+                    Collection<String> transactionIds = new ArrayList<String>();
+                    String batchId = "";
+                    for(String transactionId: transactionIds){
+                        Map<String, Object> extraVariables = new HashMap<>();
+
+                        String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
+                        if (tenantId == null || !dfspIds.contains(tenantId)) {
+                            throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
+                        }
+                        extraVariables.put(TENANT_ID, tenantId);
+
+                        String tenantSpecificBpmn = mpesaFlow.replace("{dfspid}", tenantId);
+
+                        String instanceId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
+                                exchange.getIn().getBody(String.class),
+                                extraVariables);
+                        JSONObject response = new JSONObject();
+                        response.put("instanceId", instanceId);
+                        response.put("transactionId", transactionId);
+                        response.put("batchId", batchId);
+                        exchange.getIn().setBody(response.toString());
+                    }
+                });
     }
 
     private String getVariableValue(Iterator<Object> iterator, String variableName) {

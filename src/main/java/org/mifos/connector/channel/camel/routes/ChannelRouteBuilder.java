@@ -300,7 +300,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     String tenantSpecificBpmn = mpesaFlow.replace("{dfspid}", tenantId);
 
-                    String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
+
+                    String transactionId = zeebeProcessStarter.startMpesaZeebeWorkflow(tenantSpecificBpmn,
                             channelRequestBodyString,
                             extraVariables);
                     JSONObject response = new JSONObject();

@@ -292,7 +292,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                         phoneNumber = ((JSONObject) payer.get(1)).getString("value");
                         accountId = ((JSONObject) payer.get(0)).getString("value");
                     }
-                    String amount = body.getString("amount");
+                    String amount = body.getJSONObject("amount").getString("amount");
 
                     extraVariables.put("accountId", accountId);
                     extraVariables.put("phoneNumber", phoneNumber);

@@ -11,13 +11,8 @@ public class MpesaUtils {
 
         JSONObject channelRequestJson = new JSONObject(channelRequest);
 
-        String amount = channelRequestJson.getString("amount");
+        JSONObject amountJson = channelRequestJson.getJSONObject("amount");
         JSONArray payerArray = channelRequestJson.getJSONArray("payer");
-
-        // amount conversion
-        JSONObject amountJson = new JSONObject();
-        amountJson.put("amount", amount.split(" ")[1]);
-        amountJson.put("currency", amount.split(" ")[0]);
 
         // setting amount json
         mpesaChannelRequestJson.put("amount", amountJson);

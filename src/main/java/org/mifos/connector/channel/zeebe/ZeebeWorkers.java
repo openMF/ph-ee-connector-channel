@@ -55,6 +55,7 @@ public class ZeebeWorkers {
         workerSendUnknownToChannel();
         workerSendPayeeSuccessToChannel();
         workerSendPayeeFailureToChannel();
+        workerInvokeAcknowledgementWorkflows();
     }
 
     private void workerSendErrorToChannel(){

@@ -1,6 +1,11 @@
 package org.mifos.connector.channel.zeebe;
 
+import com.google.gson.Gson;
 import io.camunda.zeebe.client.ZeebeClient;
+import org.apache.camel.CamelContext;
+import org.apache.camel.Exchange;
+import org.apache.camel.ProducerTemplate;
+import org.apache.camel.support.DefaultExchange;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,13 +14,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.io.StringReader;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.naturalOrder;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.ERROR_INFORMATION;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSACTION_ID;
+import static org.mifos.connector.channel.camel.config.CamelProperties.BATCH_ID;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.*;
 import static org.mifos.connector.common.mojaloop.type.ErrorCode.fromCode;
 
 @Component
@@ -24,6 +33,12 @@ public class ZeebeWorkers {
 
     @Autowired
     private ZeebeClient zeebeClient;
+
+    @Autowired
+    private ProducerTemplate producerTemplate;
+
+    @Autowired
+    private CamelContext camelContext;
 
     @Value("${zeebe.client.evenly-allocated-max-jobs}")
     private int workerMaxJobs;
@@ -40,6 +55,7 @@ public class ZeebeWorkers {
         workerSendUnknownToChannel();
         workerSendPayeeSuccessToChannel();
         workerSendPayeeFailureToChannel();
+        workerInvokeAcknowledgementWorkflows();
     }
 
     private void workerSendErrorToChannel(){
@@ -178,6 +194,30 @@ public class ZeebeWorkers {
                             .variables(variables)
                             .send()
                             .join();
+
+                    client.newCompleteCommand(job.getKey())
+                            .send()
+                            .join();
+                })
+                .name("send-payee-failure-to-channel")
+                .maxJobsActive(workerMaxJobs)
+                .open();
+    }
+
+    private void workerInvokeAcknowledgementWorkflows(){
+        zeebeClient.newWorker()
+                .jobType("invoke-ack-workers")
+                .handler((client, job) -> {
+                    logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+                    Map<String, Object> variables = job.getVariablesAsMap();
+
+                    String successfulTxIdsStr = variables.get(SAMPLED_TX_IDS).toString();
+                    ArrayList<String> successfulTxIds = new Gson().fromJson(successfulTxIdsStr, ArrayList.class);
+
+                    Exchange exchange = new DefaultExchange(camelContext);
+                    exchange.setProperty("successfulTxIds", successfulTxIds);
+                    exchange.setProperty("batchId", variables.get(BATCH_ID));
+                    producerTemplate.send("direct:invoke-ack-workers", exchange);
 
                     client.newCompleteCommand(job.getKey())
                             .send()

@@ -21,6 +21,7 @@ repositories {
 }
 
 dependencies {
+    implementation 'com.google.code.gson:gson:2.8.9'
     implementation 'org.mifos:ph-ee-connector-common:1.0.0-SNAPSHOT'
     implementation 'org.apache.camel.springboot:camel-spring-boot-starter:3.4.0'
     implementation 'org.springframework:spring-web:5.2.2.RELEASE'

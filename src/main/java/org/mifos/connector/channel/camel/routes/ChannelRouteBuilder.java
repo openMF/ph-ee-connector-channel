@@ -368,7 +368,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             .send()
                     ;
                 })
-                .setBody(constant(null));
+                .setBody(constant((Object) null));
     }
 
     private void partyRegistrationRoutes(){
@@ -394,7 +394,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             objectMapper.writeValueAsString(channelRequest),
                             variables);
                 })
-                .setBody(constant(null));
+                .setBody(constant((Object) null));
     }
 
     private void jobRoutes(){
@@ -424,7 +424,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             .send()
                     ;
                 })
-                .setBody(constant(null));
+                .setBody(constant((Object) null));
 
     }
 
@@ -450,7 +450,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             .send()
                     ;
                 })
-                .setBody(constant(null));
+                .setBody(constant((Object) null));
 
         from("rest:POST:/channel/workflow/{workflowInstanceKey}/cancel")
                 .id("workflow-cancel")
@@ -458,7 +458,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .process(e -> zeebeClient.newCancelInstanceCommand(Long.parseLong(e.getIn().getHeader("workflowInstanceKey", String.class)))
                         .send()
                 )
-                .setBody(constant(null));
+                .setBody(constant((Object) null));
     }
 
     private void acknowledgementRoutes(){

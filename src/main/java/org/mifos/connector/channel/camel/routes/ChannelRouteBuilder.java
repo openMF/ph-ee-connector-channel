@@ -42,6 +42,7 @@ import static java.util.Base64.getEncoder;
 import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.stream.StreamSupport.stream;
 import static org.mifos.connector.channel.camel.config.CamelProperties.AUTH_TYPE;
+import static org.mifos.connector.channel.camel.config.CamelProperties.BATCH_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.ACCOUNT;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_AUTHORISATION_REQUIRED;
@@ -367,7 +368,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             .send()
                     ;
                 })
-                .setBody(constant(null));
+                .setBody(constant((Object) null));
     }
 
     private void partyRegistrationRoutes(){
@@ -393,7 +394,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             objectMapper.writeValueAsString(channelRequest),
                             variables);
                 })
-                .setBody(constant(null));
+                .setBody(constant((Object) null));
     }
 
     private void jobRoutes(){
@@ -423,7 +424,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             .send()
                     ;
                 })
-                .setBody(constant(null));
+                .setBody(constant((Object) null));
 
     }
 
@@ -449,7 +450,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             .send()
                     ;
                 })
-                .setBody(constant(null));
+                .setBody(constant((Object) null));
 
         from("rest:POST:/channel/workflow/{workflowInstanceKey}/cancel")
                 .id("workflow-cancel")
@@ -457,17 +458,18 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .process(e -> zeebeClient.newCancelInstanceCommand(Long.parseLong(e.getIn().getHeader("workflowInstanceKey", String.class)))
                         .send()
                 )
-                .setBody(constant(null));
+                .setBody(constant((Object) null));
     }
 
     private void acknowledgementRoutes(){
-        from("rest:POST:/channel/acknowledgement")
-                .id("invoke-ack-workers")
-                .log(LoggingLevel.INFO, "## CHANNEL -> MPESA transaction request")
+        String id = "invoke-ack-workers";
+        from("direct:" + id)
+                .id(id)
+                .log(LoggingLevel.INFO, "## CHANNEL -> Ack transaction request")
                 .process(exchange -> {
                     // fetch transaction ids and batch id
-                    Collection<String> transactionIds = new ArrayList<String>();
-                    String batchId = "";
+                    Collection<String> transactionIds = exchange.getProperty("successfulTxIds", ArrayList.class);
+                    String batchId = (String) exchange.getProperty(BATCH_ID);
                     for(String transactionId: transactionIds){
                         Map<String, Object> extraVariables = new HashMap<>();
 

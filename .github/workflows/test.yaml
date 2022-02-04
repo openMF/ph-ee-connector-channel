@@ -1,0 +1,12 @@
+name: Test
+on: [push, pull_request]
+jobs:
+  Assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Assemble project
+        run: ./gradlew clean build
+      - name: Build Docker image
+        run: docker build . -t paymenthubee.mifos.io/phee/connector-channel

@@ -8,6 +8,8 @@ camel:
 
 dfspids: "DFSPID"
 
+transaction-id-length: -1
+
 operations:
   url: "http://bb-operations.mifos.io/api/v1"
 

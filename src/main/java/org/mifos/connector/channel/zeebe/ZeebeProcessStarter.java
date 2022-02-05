@@ -6,8 +6,8 @@ import org.mifos.connector.channel.camel.utils.MpesaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,6 +22,9 @@ public class ZeebeProcessStarter {
 
     @Autowired
     private ZeebeClient zeebeClient;
+
+    @Value("${transaction-id-length}")
+    private int transactionIdLength;
 
 
     public String startZeebeWorkflow(String workflowId, String request, Map<String, Object> extraVariables) {
@@ -49,7 +52,7 @@ public class ZeebeProcessStarter {
     }
 
     public String startMpesaZeebeWorkflow(String workflowId, String request, Map<String, Object> extraVariables) {
-        String transactionId = generateTransactionId();
+        String transactionId = customSizeTransactionId();
 
         Map<String, Object> variables = new HashMap<>();
         variables.put(ZeebeVariables.TRANSACTION_ID, transactionId);
@@ -76,5 +79,28 @@ public class ZeebeProcessStarter {
     // TODO generate proper cluster-safe transaction id
     private String generateTransactionId() {
         return UUID.randomUUID().toString();
+    }
+
+    private String randomCharOfSize(int size) {
+        String data = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        char[] arr = data.toCharArray();
+        StringBuilder s = new StringBuilder();
+        for (int i = 0; i < size; i++) {
+            int index = (int) (Math.random() * (data.length()));
+            s.append(arr[index]);
+        }
+        return s.toString();
+    }
+
+    public String customSizeTransactionId() {
+        String transactionId = generateTransactionId();
+        if(transactionIdLength == -1 || transactionIdLength < 13) {
+            return transactionId;
+        }
+        String originalUUID = transactionId.replace("-","");
+        String uuid12digits = originalUUID.substring(0, 12);
+        String randomString = randomCharOfSize(transactionIdLength - 12);
+        return uuid12digits + randomString;
+
     }
 }

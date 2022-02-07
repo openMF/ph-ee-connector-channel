@@ -68,6 +68,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private String mpesaFlow;
     private String restAuthHost;
     private String operationsUrl;
+    private Boolean isNotificationServiceEnabled;
     private ZeebeProcessStarter zeebeProcessStarter;
     private ZeebeClient zeebeClient;
     private List<String> dfspIds;
@@ -83,6 +84,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                @Value("${bpmn.flows.mpesa-flow}") String mpesaFlow,
                                @Value("${rest.authorization.host}") String restAuthHost,
                                @Value("${operations.url}") String operationsUrl,
+                               @Value("${notification.enabled}") Boolean isNotificationServiceEnabled,
                                ZeebeClient zeebeClient,
                                ZeebeProcessStarter zeebeProcessStarter,
                                @Autowired(required = false) AuthProcessor authProcessor,
@@ -105,6 +107,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         this.restTemplate = restTemplate;
         this.restAuthHost = restAuthHost;
         this.operationsUrl = operationsUrl;
+        this.isNotificationServiceEnabled = isNotificationServiceEnabled;
     }
 
     @Override
@@ -242,6 +245,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("initiatorType", transactionType.getInitiatorType().name());
                     extraVariables.put("scenario", transactionType.getScenario().name());
                     extraVariables.put("amount", new FspMoneyData(channelRequest.getAmount().getAmountDecimal(), channelRequest.getAmount().getCurrency()));
+                    extraVariables.put("isNotificationsEnabled", isNotificationServiceEnabled);
 
                     String tenantSpecificBpmn;
                     if(channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier().startsWith("6666")) {

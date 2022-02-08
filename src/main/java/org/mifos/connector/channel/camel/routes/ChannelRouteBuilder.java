@@ -84,7 +84,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                @Value("${bpmn.flows.mpesa-flow}") String mpesaFlow,
                                @Value("${rest.authorization.host}") String restAuthHost,
                                @Value("${operations.url}") String operationsUrl,
-                               @Value("${notification.enabled}") Boolean isNotificationServiceEnabled,
+                               @Value("${mpesa.notification.enabled}") Boolean isNotificationServiceEnabled,
                                ZeebeClient zeebeClient,
                                ZeebeProcessStarter zeebeProcessStarter,
                                @Autowired(required = false) AuthProcessor authProcessor,

@@ -10,8 +10,9 @@ dfspids: "DFSPID"
 
 transaction-id-length: -1
 
-notification:
-  enabled: true
+mpesa:
+  notification:
+    enabled: true
 
 operations:
   url: "http://bb-operations.mifos.io/api/v1"

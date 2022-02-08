@@ -245,7 +245,6 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("initiatorType", transactionType.getInitiatorType().name());
                     extraVariables.put("scenario", transactionType.getScenario().name());
                     extraVariables.put("amount", new FspMoneyData(channelRequest.getAmount().getAmountDecimal(), channelRequest.getAmount().getCurrency()));
-                    extraVariables.put("isNotificationsEnabled", isNotificationServiceEnabled);
 
                     String tenantSpecificBpmn;
                     if(channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier().startsWith("6666")) {
@@ -302,6 +301,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("accountId", accountId);
                     extraVariables.put("phoneNumber", phoneNumber);
                     extraVariables.put("amount", amount);
+                    extraVariables.put("isNotificationsEnabled", isNotificationServiceEnabled);
 
                     String tenantSpecificBpmn = mpesaFlow.replace("{dfspid}", tenantId);
 

@@ -68,13 +68,15 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private String mpesaFlow;
     private String restAuthHost;
     private String operationsUrl;
-    private Boolean isNotificationServiceEnabled;
+    private Boolean isNotificationSuccessServiceEnabled;
+    private Boolean isNotificationFailureServiceEnabled;
     private ZeebeProcessStarter zeebeProcessStarter;
     private ZeebeClient zeebeClient;
     private List<String> dfspIds;
     private ObjectMapper objectMapper;
     private ClientProperties clientProperties;
     private RestTemplate restTemplate;
+    private String timer;
 
     public ChannelRouteBuilder(@Value("#{'${dfspids}'.split(',')}") List<String> dfspIds,
                                @Value("${bpmn.flows.payment-transfer}") String paymentTransferFlow,
@@ -84,7 +86,9 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                @Value("${bpmn.flows.mpesa-flow}") String mpesaFlow,
                                @Value("${rest.authorization.host}") String restAuthHost,
                                @Value("${operations.url}") String operationsUrl,
-                               @Value("${mpesa.notification.enabled}") Boolean isNotificationServiceEnabled,
+                               @Value("${mpesa.notification.success.enabled}") Boolean isNotificationSuccessServiceEnabled,
+                               @Value("${mpesa.notification.failure.enabled}") Boolean isNotificationFailureServiceEnabled,
+                               @Value("${timer}") String timer,
                                ZeebeClient zeebeClient,
                                ZeebeProcessStarter zeebeProcessStarter,
                                @Autowired(required = false) AuthProcessor authProcessor,
@@ -107,7 +111,9 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         this.restTemplate = restTemplate;
         this.restAuthHost = restAuthHost;
         this.operationsUrl = operationsUrl;
-        this.isNotificationServiceEnabled = isNotificationServiceEnabled;
+        this.isNotificationSuccessServiceEnabled = isNotificationSuccessServiceEnabled;
+        this.isNotificationFailureServiceEnabled = isNotificationFailureServiceEnabled;
+        this.timer = timer;
     }
 
     @Override
@@ -301,7 +307,10 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("accountId", accountId);
                     extraVariables.put("phoneNumber", phoneNumber);
                     extraVariables.put("amount", amount);
-                    extraVariables.put("isNotificationsEnabled", isNotificationServiceEnabled);
+                    extraVariables.put("isNotificationSuccessServiceEnabled", isNotificationSuccessServiceEnabled);
+                    extraVariables.put("isNotificationFailureServiceEnabled", isNotificationFailureServiceEnabled);
+                    extraVariables.put("timer",timer);
+
 
                     String tenantSpecificBpmn = mpesaFlow.replace("{dfspid}", tenantId);
 

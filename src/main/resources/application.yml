@@ -12,7 +12,12 @@ transaction-id-length: -1
 
 mpesa:
   notification:
-    enabled: true
+    success:
+      enabled: false
+    failure:
+      enabled: true
+
+timer: "PT45S"
 
 operations:
   url: "http://bb-operations.mifos.io/api/v1"

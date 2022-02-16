@@ -307,8 +307,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("accountId", accountId);
                     extraVariables.put("phoneNumber", phoneNumber);
                     extraVariables.put("amount", amount);
-                    extraVariables.put("isNotificationsSuccessServiceEnabled", isNotificationSuccessServiceEnabled);
-                    extraVariables.put("isNotificationsFailureServiceEnabled", isNotificationFailureServiceEnabled);
+                    extraVariables.put("isNotificationsSuccessEnabled", isNotificationSuccessServiceEnabled);
+                    extraVariables.put("isNotificationsFailureEnabled", isNotificationFailureServiceEnabled);
                     extraVariables.put("timer",timer);
 
 

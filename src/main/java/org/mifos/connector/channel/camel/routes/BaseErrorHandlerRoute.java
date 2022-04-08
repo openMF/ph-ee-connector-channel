@@ -7,13 +7,16 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 
-public class BaseErrorHandlerRoute extends ErrorHandlerRouteBuilder {
+public abstract class BaseErrorHandlerRoute extends ErrorHandlerRouteBuilder {
 
     @Override
     public void configure() {
         super.configure();
         handleExceptions();
+        configureRoutes();
     }
+
+    abstract void configureRoutes();
 
     private void handleExceptions(){
         onException(BeanValidationException.class)

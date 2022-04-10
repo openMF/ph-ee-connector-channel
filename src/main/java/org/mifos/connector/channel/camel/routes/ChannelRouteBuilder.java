@@ -11,6 +11,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mifos.connector.channel.camel.config.Client;
 import org.mifos.connector.channel.camel.config.ClientProperties;
+import org.mifos.connector.channel.camel.utils.AMSProps;
+import org.mifos.connector.channel.camel.utils.AMSUtils;
 import org.mifos.connector.channel.zeebe.ZeebeProcessStarter;
 import org.mifos.connector.common.camel.AuthProcessor;
 import org.mifos.connector.common.camel.AuthProperties;
@@ -25,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -57,9 +60,14 @@ import static org.mifos.connector.common.mojaloop.type.TransactionRole.PAYEE;
 import static org.mifos.connector.common.mojaloop.type.TransactionRole.PAYER;
 
 @Component
+
 public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
+
     private Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Autowired
+    private AMSUtils amsUtils;
 
     private String paymentTransferFlow;
     private String specialPaymentTransferFlow;
@@ -77,6 +85,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private ClientProperties clientProperties;
     private RestTemplate restTemplate;
     private String timer;
+
 
     public ChannelRouteBuilder(@Value("#{'${dfspids}'.split(',')}") List<String> dfspIds,
                                @Value("${bpmn.flows.payment-transfer}") String paymentTransferFlow,
@@ -277,6 +286,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .to("bean-validator:request")
                 .process(exchange -> {
 
+                    amsUtils.postConstruct();
+
                     Map<String, Object> extraVariables = new HashMap<>();
                     extraVariables.put("initiator", "PAYEE");
                     extraVariables.put("initiatorType", "BUSINESS");
@@ -287,32 +298,55 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                         throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
                     }
                     extraVariables.put(TENANT_ID, tenantId);
+                    String tenantSpecificBpmn;
 
                     String channelRequestBodyString = exchange.getIn().getBody(String.class);
                     JSONObject body = new JSONObject(channelRequestBodyString);
                     JSONArray payer = body.getJSONArray("payer");
-                    String phoneNumber = "";
-                    String  accountId = "";
-                    if (((JSONObject) payer.get(0)).getString("key").equals("MSISDN")) {
-                        // case where 1st array element is MSISDN
-                        phoneNumber = ((JSONObject) payer.get(0)).getString("value");
-                        accountId = ((JSONObject) payer.get(1)).getString("value");
-                    } else {
-                        // case where 1st array element is ACCOUNTID
-                        phoneNumber = ((JSONObject) payer.get(1)).getString("value");
-                        accountId = ((JSONObject) payer.get(0)).getString("value");
+                    String primaryIdentifierVal = "";
+                    String  secondaryIdentifierVal = "";
+                    String primaryIdentifierName = "";
+                    String  secondaryIdentifierName = "";
+                    String ams = "";
+                    primaryIdentifierName= ((JSONObject) payer.get(0)).getString("key");
+                    secondaryIdentifierName = ((JSONObject) payer.get(1)).getString("key");
+                    primaryIdentifierVal = ((JSONObject) payer.get(0)).getString("value");
+                    secondaryIdentifierVal = ((JSONObject) payer.get(1)).getString("value");
+                    for ( AMSProps.AMS amsIdentifier : amsUtils.postConstruct()) {
+                        String identifier = amsIdentifier.getIdentifier();
+                        if (identifier.equalsIgnoreCase(secondaryIdentifierName)) {
+                            ams = amsIdentifier.getValue();
+                            break;
+                        } else {
+                            ams = amsIdentifier.getDefaultValue();
+                        }
+                    }//end for loop
+                    for ( AMSProps.AMS amsIdentifier : amsUtils.postConstruct()) {
+                        String identifier = amsIdentifier.getIdentifier();
+                        if(identifier.equalsIgnoreCase(primaryIdentifierName)){
+                            ams = amsIdentifier.getValue();
+                            // logic to keep correct primary/secondary identifier for line 345-346
+                            String temp = primaryIdentifierVal;
+                            primaryIdentifierVal = secondaryIdentifierVal;
+                            secondaryIdentifierVal = temp;
+                            break;
+                        }
+                        else {
+                            ams = amsIdentifier.getDefaultValue();
+                        }
+
                     }
+                         tenantSpecificBpmn = mpesaFlow.replace("{dfspid}", tenantId)
+                                 .replace("{ams}",ams);
+
                     String amount = body.getJSONObject("amount").getString("amount");
 
-                    extraVariables.put("accountId", accountId);
-                    extraVariables.put("phoneNumber", phoneNumber);
+                    extraVariables.put("accountId", secondaryIdentifierVal);
+                    extraVariables.put("phoneNumber", primaryIdentifierVal);
                     extraVariables.put("amount", amount);
                     extraVariables.put("isNotificationsSuccessEnabled", isNotificationSuccessServiceEnabled);
                     extraVariables.put("isNotificationsFailureEnabled", isNotificationFailureServiceEnabled);
                     extraVariables.put("timer",timer);
-
-
-                    String tenantSpecificBpmn = mpesaFlow.replace("{dfspid}", tenantId);
 
 
                     String transactionId = zeebeProcessStarter.startMpesaZeebeWorkflow(tenantSpecificBpmn,

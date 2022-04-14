@@ -40,14 +40,11 @@ bpmn:
 
 ams:
   groups:
-    -
-      identifier: "accountid"
+    - identifier: "accountid"
       value: "roster"
-    -
-      identifier: "foundationalid"
+    - identifier: "foundationalid"
       value: "paygops"
-    -
-      identifier: "default"
+    - identifier: "default"
       value : "paygops"
 
 

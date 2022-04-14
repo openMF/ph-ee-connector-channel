@@ -288,6 +288,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     amsUtils.postConstruct();
 
+
                     Map<String, Object> extraVariables = new HashMap<>();
                     extraVariables.put("initiator", "PAYEE");
                     extraVariables.put("initiatorType", "BUSINESS");
@@ -307,37 +308,41 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     String  secondaryIdentifierVal = "";
                     String primaryIdentifierName = "";
                     String  secondaryIdentifierName = "";
-                    String ams = "";
+                    String finalAmsVal = "value";
                     primaryIdentifierName= ((JSONObject) payer.get(0)).getString("key");
                     secondaryIdentifierName = ((JSONObject) payer.get(1)).getString("key");
                     primaryIdentifierVal = ((JSONObject) payer.get(0)).getString("value");
                     secondaryIdentifierVal = ((JSONObject) payer.get(1)).getString("value");
                     for ( AMSProps.AMS amsIdentifier : amsUtils.postConstruct()) {
+                        logger.info("KEY VALUE PAIR : " + amsIdentifier.getIdentifier() + " " + amsIdentifier.getValue());
                         String identifier = amsIdentifier.getIdentifier();
                         if (identifier.equalsIgnoreCase(secondaryIdentifierName)) {
-                            ams = amsIdentifier.getValue();
+                            finalAmsVal = amsIdentifier.getValue();
+                            logger.info("Assigned from secondary" + finalAmsVal);
                             break;
-                        } else {
-                            ams = amsIdentifier.getDefaultValue();
                         }
-                    }//end for loop
-                    for ( AMSProps.AMS amsIdentifier : amsUtils.postConstruct()) {
-                        String identifier = amsIdentifier.getIdentifier();
-                        if(identifier.equalsIgnoreCase(primaryIdentifierName)){
-                            ams = amsIdentifier.getValue();
+                        else if(identifier.equalsIgnoreCase(primaryIdentifierName)){
+                            finalAmsVal = amsIdentifier.getValue();
                             // logic to keep correct primary/secondary identifier for line 345-346
                             String temp = primaryIdentifierVal;
                             primaryIdentifierVal = secondaryIdentifierVal;
                             secondaryIdentifierVal = temp;
+                            logger.info("Assigned from primary" + finalAmsVal);
                             break;
                         }
                         else {
-                            ams = amsIdentifier.getDefaultValue();
-                        }
+                            if(identifier.equalsIgnoreCase("default")){
+                                finalAmsVal = amsIdentifier.getDefaultValue();
+                                logger.info("Assigned default from secondary" + finalAmsVal);
+                            }
 
-                    }
-                         tenantSpecificBpmn = mpesaFlow.replace("{dfspid}", tenantId)
-                                 .replace("{ams}",ams);
+
+                        }
+                    }//end for loop
+
+                    logger.info("Final Value for ams : " + finalAmsVal);
+                    tenantSpecificBpmn = mpesaFlow.replace("{dfspid}", tenantId)
+                                 .replace("{ams}",finalAmsVal);
 
                     String amount = body.getJSONObject("amount").getString("amount");
 

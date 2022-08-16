@@ -558,10 +558,9 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             }
                             HttpHeaders httpHeaders = new HttpHeaders();
                             httpHeaders.add("identifierType", String.valueOf(identifierType));
-                            httpHeaders.add("ams", finalAmsVal);
 
                             HttpEntity<String> entity = new HttpEntity<>(null, httpHeaders);
-                            ResponseEntity<String> exchange = restTemplate.exchange(restAuthHost + "", HttpMethod.POST, entity, String.class);
+                            ResponseEntity<String> exchange = restTemplate.exchange(restAuthHost + "/api/v1/validate/${finalAmsVal}", HttpMethod.GET, entity, String.class);
                             JSONObject response = new JSONObject(exchange.getBody());
                             e.getIn().setBody(response.toString());
                         }

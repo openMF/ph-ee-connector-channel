@@ -544,6 +544,29 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     }
                 });
     }
+    private void validationRoutes()
+    {
+        from("rest:GET:/accounts/{identifierType}")
+                .id("validation-confirm")
+                .log(LoggingLevel.INFO, "Validation Check for identifier type ${header.identifierType}")
+                .process(e -> {
+                            Integer identifierType = e.getIn().getHeader("identifierType", Integer.class);
+                            String finalAmsVal = e.getIn().getHeader("ams", String.class).toLowerCase();
+                            if (finalAmsVal == null || (!finalAmsVal.equalsIgnoreCase("paygops") || !finalAmsVal.equalsIgnoreCase("roster")))
+                            {
+                                    throw new RuntimeException("Requested ams type " + finalAmsVal + " not configured in the connector!");
+                            }
+                            HttpHeaders httpHeaders = new HttpHeaders();
+                            httpHeaders.add("identifierType", String.valueOf(identifierType));
+                            httpHeaders.add("ams", finalAmsVal);
+
+                            HttpEntity<String> entity = new HttpEntity<>(null, httpHeaders);
+                            ResponseEntity<String> exchange = restTemplate.exchange(restAuthHost + "", HttpMethod.POST, entity, String.class);
+                            JSONObject response = new JSONObject(exchange.getBody());
+                            e.getIn().setBody(response.toString());
+                        }
+                     );
+    }
 
     private String getVariableValue(Iterator<Object> iterator, String variableName) {
         String value = stream(spliteratorUnknownSize(iterator, Spliterator.ORDERED), false)

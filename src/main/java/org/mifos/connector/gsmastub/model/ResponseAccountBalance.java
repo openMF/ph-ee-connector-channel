@@ -20,16 +20,16 @@ public class ResponseAccountBalance   {
   private AccountStatus accountStatus = null;
 
   @JsonProperty("currentBalance")
-  private CurrentBalance currentBalance = null;
+  private String currentBalance = null;
 
   @JsonProperty("availableBalance")
-  private AvailableBalance availableBalance = null;
+  private String availableBalance = null;
 
   @JsonProperty("reservedBalance")
-  private ReservedBalance reservedBalance = null;
+  private String reservedBalance = null;
 
   @JsonProperty("unclearedBalance")
-  private UnclearedBalance unclearedBalance = null;
+  private String unclearedBalance = null;
 
   @JsonProperty("currency")
   private Currency currency = null;
@@ -54,7 +54,7 @@ public class ResponseAccountBalance   {
     this.accountStatus = accountStatus;
   }
 
-  public ResponseAccountBalance currentBalance(CurrentBalance currentBalance) {
+  public ResponseAccountBalance currentBalance(String currentBalance) {
     this.currentBalance = currentBalance;
     return this;
   }
@@ -66,15 +66,15 @@ public class ResponseAccountBalance   {
   @Schema(description = "")
   
     @Valid
-    public CurrentBalance getCurrentBalance() {
+    public String getCurrentBalance() {
     return currentBalance;
   }
 
-  public void setCurrentBalance(CurrentBalance currentBalance) {
+  public void setCurrentBalance(String currentBalance) {
     this.currentBalance = currentBalance;
   }
 
-  public ResponseAccountBalance availableBalance(AvailableBalance availableBalance) {
+  public ResponseAccountBalance availableBalance(String availableBalance) {
     this.availableBalance = availableBalance;
     return this;
   }
@@ -86,15 +86,15 @@ public class ResponseAccountBalance   {
   @Schema(description = "")
   
     @Valid
-    public AvailableBalance getAvailableBalance() {
+    public String getAvailableBalance() {
     return availableBalance;
   }
 
-  public void setAvailableBalance(AvailableBalance availableBalance) {
+  public void setAvailableBalance(String availableBalance) {
     this.availableBalance = availableBalance;
   }
 
-  public ResponseAccountBalance reservedBalance(ReservedBalance reservedBalance) {
+  public ResponseAccountBalance reservedBalance(String reservedBalance) {
     this.reservedBalance = reservedBalance;
     return this;
   }
@@ -106,15 +106,15 @@ public class ResponseAccountBalance   {
   @Schema(description = "")
   
     @Valid
-    public ReservedBalance getReservedBalance() {
+    public String getReservedBalance() {
     return reservedBalance;
   }
 
-  public void setReservedBalance(ReservedBalance reservedBalance) {
+  public void setReservedBalance(String reservedBalance) {
     this.reservedBalance = reservedBalance;
   }
 
-  public ResponseAccountBalance unclearedBalance(UnclearedBalance unclearedBalance) {
+  public ResponseAccountBalance unclearedBalance(String unclearedBalance) {
     this.unclearedBalance = unclearedBalance;
     return this;
   }
@@ -126,11 +126,11 @@ public class ResponseAccountBalance   {
   @Schema(description = "")
   
     @Valid
-    public UnclearedBalance getUnclearedBalance() {
+    public String getUnclearedBalance() {
     return unclearedBalance;
   }
 
-  public void setUnclearedBalance(UnclearedBalance unclearedBalance) {
+  public void setUnclearedBalance(String unclearedBalance) {
     this.unclearedBalance = unclearedBalance;
   }
 

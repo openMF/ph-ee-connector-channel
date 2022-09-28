@@ -34,16 +34,16 @@ public class ResponseAccount   {
   private String accountSubStatus = null;
 
   @JsonProperty("currentBalance")
-  private CurrentBalance currentBalance = null;
+  private String currentBalance = null;
 
   @JsonProperty("availableBalance")
-  private AvailableBalance availableBalance = null;
+  private String availableBalance = null;
 
   @JsonProperty("reservedBalance")
-  private ReservedBalance reservedBalance = null;
+  private String reservedBalance = null;
 
   @JsonProperty("unclearedBalance")
-  private UnclearedBalance unclearedBalance = null;
+  private String unclearedBalance = null;
 
   @JsonProperty("currency")
   private Currency currency = null;
@@ -121,7 +121,7 @@ public class ResponseAccount   {
    * @return accountType
    **/
   @Schema(description = "A non-harmonised field that indicates the type of the account.")
-  
+
   @Size(max=256)   public String getAccountType() {
     return accountType;
   }
@@ -161,7 +161,7 @@ public class ResponseAccount   {
    * @return accountSubStatus
    **/
   @Schema(description = "Field can be used to return a provider-specific status for the account.")
-  
+
   @Size(max=256)   public String getAccountSubStatus() {
     return accountSubStatus;
   }
@@ -170,7 +170,7 @@ public class ResponseAccount   {
     this.accountSubStatus = accountSubStatus;
   }
 
-  public ResponseAccount currentBalance(CurrentBalance currentBalance) {
+  public ResponseAccount currentBalance(String currentBalance) {
     this.currentBalance = currentBalance;
     return this;
   }
@@ -180,17 +180,17 @@ public class ResponseAccount   {
    * @return currentBalance
    **/
   @Schema(description = "")
-  
+
     @Valid
-    public CurrentBalance getCurrentBalance() {
+    public String getCurrentBalance() {
     return currentBalance;
   }
 
-  public void setCurrentBalance(CurrentBalance currentBalance) {
+  public void setCurrentBalance(String currentBalance) {
     this.currentBalance = currentBalance;
   }
 
-  public ResponseAccount availableBalance(AvailableBalance availableBalance) {
+  public ResponseAccount availableBalance(String availableBalance) {
     this.availableBalance = availableBalance;
     return this;
   }
@@ -200,17 +200,17 @@ public class ResponseAccount   {
    * @return availableBalance
    **/
   @Schema(description = "")
-  
+
     @Valid
-    public AvailableBalance getAvailableBalance() {
+    public String getAvailableBalance() {
     return availableBalance;
   }
 
-  public void setAvailableBalance(AvailableBalance availableBalance) {
+  public void setAvailableBalance(String availableBalance) {
     this.availableBalance = availableBalance;
   }
 
-  public ResponseAccount reservedBalance(ReservedBalance reservedBalance) {
+  public ResponseAccount reservedBalance(String reservedBalance) {
     this.reservedBalance = reservedBalance;
     return this;
   }
@@ -220,17 +220,17 @@ public class ResponseAccount   {
    * @return reservedBalance
    **/
   @Schema(description = "")
-  
+
     @Valid
-    public ReservedBalance getReservedBalance() {
+    public String getReservedBalance() {
     return reservedBalance;
   }
 
-  public void setReservedBalance(ReservedBalance reservedBalance) {
+  public void setReservedBalance(String reservedBalance) {
     this.reservedBalance = reservedBalance;
   }
 
-  public ResponseAccount unclearedBalance(UnclearedBalance unclearedBalance) {
+  public ResponseAccount unclearedBalance(String unclearedBalance) {
     this.unclearedBalance = unclearedBalance;
     return this;
   }
@@ -240,13 +240,13 @@ public class ResponseAccount   {
    * @return unclearedBalance
    **/
   @Schema(description = "")
-  
+
     @Valid
-    public UnclearedBalance getUnclearedBalance() {
+    public String getUnclearedBalance() {
     return unclearedBalance;
   }
 
-  public void setUnclearedBalance(UnclearedBalance unclearedBalance) {
+  public void setUnclearedBalance(String unclearedBalance) {
     this.unclearedBalance = unclearedBalance;
   }
 
@@ -260,7 +260,7 @@ public class ResponseAccount   {
    * @return currency
    **/
   @Schema(description = "")
-  
+
     @Valid
     public Currency getCurrency() {
     return currency;
@@ -280,7 +280,7 @@ public class ResponseAccount   {
    * @return fees
    **/
   @Schema(description = "")
-  
+
     @Valid
     public FeesArray getFees() {
     return fees;
@@ -300,7 +300,7 @@ public class ResponseAccount   {
    * @return commissionEarned
    **/
   @Schema(description = "")
-  
+
     @Valid
     public CommissionEarnedArray getCommissionEarned() {
     return commissionEarned;
@@ -320,7 +320,7 @@ public class ResponseAccount   {
    * @return registeringEntity
    **/
   @Schema(description = "The entity that registered the account, for example, a mobile money agent.")
-  
+
   @Size(max=256)   public String getRegisteringEntity() {
     return registeringEntity;
   }
@@ -339,7 +339,7 @@ public class ResponseAccount   {
    * @return creationDate
    **/
   @Schema(description = "Date and time when the object was created by the API Provider.")
-  
+
     @Valid
     public OffsetDateTime getCreationDate() {
     return creationDate;
@@ -359,7 +359,7 @@ public class ResponseAccount   {
    * @return modificationDate
    **/
   @Schema(description = "Date and time when the object was modified by the API Provider.")
-  
+
     @Valid
     public OffsetDateTime getModificationDate() {
     return modificationDate;
@@ -379,7 +379,7 @@ public class ResponseAccount   {
    * @return requestDate
    **/
   @Schema(description = "The date and time of the request as supplied by the client.")
-  
+
     @Valid
     public OffsetDateTime getRequestDate() {
     return requestDate;
@@ -399,7 +399,7 @@ public class ResponseAccount   {
    * @return customData
    **/
   @Schema(description = "")
-  
+
     @Valid
     public CustomDataArray getCustomData() {
     return customData;
@@ -447,7 +447,7 @@ public class ResponseAccount   {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class ResponseAccount {\n");
-    
+
     sb.append("    accountIdentifiers: ").append(toIndentedString(accountIdentifiers)).append("\n");
     sb.append("    identity: ").append(toIndentedString(identity)).append("\n");
     sb.append("    accountType: ").append(toIndentedString(accountType)).append("\n");

@@ -22,7 +22,6 @@ import java.util.List;
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 @RestController
-@RequestMapping("/accounts")
 public class AccountsApiController implements AccountsApi {
 
     private static final Logger log = LoggerFactory.getLogger(AccountsApiController.class);

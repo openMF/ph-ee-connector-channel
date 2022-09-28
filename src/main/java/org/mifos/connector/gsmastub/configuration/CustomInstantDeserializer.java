@@ -1,10 +1,9 @@
 package org.mifos.connector.gsmastub.configuration;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonTokenId;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.datatype.threetenbp.DecimalUtils;
 import com.fasterxml.jackson.datatype.threetenbp.deser.ThreeTenDateTimeDeserializerBase;
 import com.fasterxml.jackson.datatype.threetenbp.function.BiFunction;
@@ -26,6 +25,24 @@ import java.math.BigDecimal;
 public class CustomInstantDeserializer<T extends Temporal>
     extends ThreeTenDateTimeDeserializerBase<T> {
   private static final long serialVersionUID = 1L;
+
+  public static class LocalDateSerializer extends JsonSerializer<LocalDate> {
+    @Override
+    public void serialize(LocalDate arg0, JsonGenerator arg1, SerializerProvider arg2) throws IOException {
+      arg1.writeString(arg0.toString());
+    }
+  }
+
+  public static class LocalDateDeserializer extends JsonDeserializer<LocalDate> {
+    @Override
+    public LocalDate deserialize(JsonParser arg0, DeserializationContext arg1) throws IOException {
+      try {
+        return LocalDate.parse(arg0.getText(), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
+      } catch (Exception e) {
+        return LocalDate.parse(arg0.getText(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+      }
+    }
+  }
 
   public static final CustomInstantDeserializer<Instant> INSTANT = new CustomInstantDeserializer<Instant>(
       Instant.class, DateTimeFormatter.ISO_INSTANT,

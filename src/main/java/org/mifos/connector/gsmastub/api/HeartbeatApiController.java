@@ -47,7 +47,7 @@ public class HeartbeatApiController implements HeartbeatApi {
             }
         }
 
-        return new ResponseEntity<ResponseHeartbeat>(HttpStatus.NOT_IMPLEMENTED);
+        return new ResponseEntity<ResponseHeartbeat>(HttpStatus.OK);
     }
 
 }

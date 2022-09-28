@@ -38,14 +38,14 @@ public class ResponsesApiController implements ResponsesApi {
         String accept = request.getHeader("Accept");
         if (accept != null && accept.contains("application/json")) {
             try {
-                return new ResponseEntity<ResponseResponse>(objectMapper.readValue("{\n  \"link\" : \"link\"\n}", ResponseResponse.class), HttpStatus.NOT_IMPLEMENTED);
+                return new ResponseEntity<ResponseResponse>(objectMapper.readValue("{\n  \"link\" : \"link\"\n}", ResponseResponse.class), HttpStatus.OK);
             } catch (IOException e) {
                 log.error("Couldn't serialize response for content type application/json", e);
                 return new ResponseEntity<ResponseResponse>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
 
-        return new ResponseEntity<ResponseResponse>(HttpStatus.NOT_IMPLEMENTED);
+        return new ResponseEntity<ResponseResponse>(HttpStatus.OK);
     }
 
 }

@@ -40,7 +40,7 @@ public class HeartbeatApiController implements HeartbeatApi {
                         objectMapper.readValue(
                                 "{\n  \"plannedRestorationTime\" : \"2000-01-23T04:56:07.000+00:00\",\n " +
                                         " \"delay\" : 0.8008281904610115,\n  \"serviceStatus\" : \"available\"\n}", ResponseHeartbeat.class),
-                        HttpStatus.NOT_IMPLEMENTED);
+                        HttpStatus.OK);
             } catch (IOException e) {
                 log.error("Couldn't serialize response for content type application/json", e);
                 return new ResponseEntity<ResponseHeartbeat>(HttpStatus.INTERNAL_SERVER_ERROR);

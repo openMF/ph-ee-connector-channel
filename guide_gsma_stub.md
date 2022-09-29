@@ -41,7 +41,7 @@ implementation 'com.github.joschi.jackson:jackson-datatype-threetenbp:2.6.4'
 Copy the packages `api`, `configuration` and `model` from `spring-server-generated` project and paste it inside the `channel-connector` under the package `org.mifos.connector.gsmastub`. 
 Also copy the `RFC3339DateFormat.java` file from `spring-server-generated` project and paste it in `channel-connector` under the package `org.mifos.connector.gsmastub`.
 
-Make sure all the imports are resolved in all the files in newely pasted packages `api`, `configuration` and `model`.
+Make sure all the imports are resolved in all the files in newly pasted packages `api`, `configuration` and `model`.
 
 ### Step 6 - Update ChannelConnectorApplication.java
 
@@ -57,22 +57,54 @@ static class CustomDateConfig implements WebMvcConfigurer {
 }
 ```
 
-Add deserializer for type `Instant.class`, `OffsetDateTime.class` and `ZonedDateTime.class` in the existing `objectMapper` initializer. Refer below code snippet.
+Add deserializer for type `Instant.class`, `OffsetDateTime.class`, `LocalDate.class` and `ZonedDateTime.class` in the existing `objectMapper` initializer. Refer below code snippet.
 
 ```java
 JavaTimeModule javaTimeModule = new JavaTimeModule();
 javaTimeModule.addDeserializer(Instant.class, CustomInstantDeserializer.INSTANT);
 javaTimeModule.addDeserializer(OffsetDateTime.class, CustomInstantDeserializer.OFFSET_DATE_TIME);
 javaTimeModule.addDeserializer(ZonedDateTime.class, CustomInstantDeserializer.ZONED_DATE_TIME);
+javaTimeModule.addDeserializer(LocalDate.class, new CustomInstantDeserializer.LocalDateDeserializer());
 ObjectMapper objectMapper = new ObjectMapper();
 objectMapper.registerModule(javaTimeModule);
 ```
+
+In case the deserializer is not generated for any of the type you can use below code snippet, as per your need.
+
+```java
+public static class LocalDateDeserializer extends JsonDeserializer<LocalDate> { 
+    @Override
+    public LocalDate deserialize(JsonParser arg0, DeserializationContext arg1) throws IOException {
+        try {
+            return LocalDate.parse(arg0.getText(), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
+        } catch (Exception e) {
+        return LocalDate.parse(arg0.getText(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        }
+    }
+}
+```
+
+### Step 7 - Remove Void auto generated Classes
+
+Delete the below-mentioned models from `model` package and replace there uses with `String.class`.
+`AvailableBalance.java` <br>
+`CurrentBalance.java`<br>
+`ReservedBalance.java`<br>
+`UnclearedBalance.java`
+
+
+
 
 ### PS
 * The endpoint are available on tomcat server port and not on the camel server port. So by default all the camle endpoints are accesible on `5000` port whereas WebMvc endpoints are accesible on `8080` port.
 * To make sure endpoints are working fine, try running the below curl request.
     ```bash
+    # for localhost
     curl --location --request GET 'http://localhost:8080/heartbeat' \
+    --header 'Accept: application/json'
+  
+    # for SIT cluster
+    curl --location --request GET 'https://channel-gsma.sandbox.fynarfin.io/heartbeat/' \
     --header 'Accept: application/json'
     ```
     

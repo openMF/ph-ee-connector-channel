@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -44,8 +44,7 @@ import java.util.*;
 import static java.util.Base64.getEncoder;
 import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.stream.StreamSupport.stream;
-import static org.mifos.connector.channel.camel.config.CamelProperties.AUTH_TYPE;
-import static org.mifos.connector.channel.camel.config.CamelProperties.BATCH_ID;
+import static org.mifos.connector.channel.camel.config.CamelProperties.*;
 import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.ACCOUNT;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_AUTHORISATION_REQUIRED;
@@ -85,7 +84,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private ClientProperties clientProperties;
     private RestTemplate restTemplate;
     private String timer;
-
+    @Autowired
+    private Environment env;
 
     public ChannelRouteBuilder(@Value("#{'${dfspids}'.split(',')}") List<String> dfspIds,
                                @Value("${bpmn.flows.payment-transfer}") String paymentTransferFlow,
@@ -136,8 +136,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         jobRoutes();
         workflowRoutes();
         acknowledgementRoutes();
+        validationRoutes();
     }
-
     private void handleExceptions(){
         onException(BeanValidationException.class)
                 .process(e -> {
@@ -546,25 +546,39 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
     private void validationRoutes()
     {
-        from("rest:GET:/accounts/{identifierType}")
-                .id("validation-confirm")
-                .log(LoggingLevel.INFO, "Validation Check for identifier type ${header.identifierType}")
+        from("rest:POST:/accounts/{primaryIdentifierName}/{primaryIdentifierVal}")
+                .id("validation-ams")
+                .log(LoggingLevel.INFO, "Validation Check for identifier type paygops")
                 .process(e -> {
-                            Integer identifierType = e.getIn().getHeader("identifierType", Integer.class);
-                            String finalAmsVal = e.getIn().getHeader("ams", String.class).toLowerCase();
-                            if (finalAmsVal == null || (!finalAmsVal.equalsIgnoreCase("paygops") || !finalAmsVal.equalsIgnoreCase("roster")))
-                            {
-                                    throw new RuntimeException("Requested ams type " + finalAmsVal + " not configured in the connector!");
-                            }
-                            HttpHeaders httpHeaders = new HttpHeaders();
-                            httpHeaders.add("identifierType", String.valueOf(identifierType));
-
-                            HttpEntity<String> entity = new HttpEntity<>(null, httpHeaders);
-                            ResponseEntity<String> exchange = restTemplate.exchange(restAuthHost + "/api/v1/validate/${finalAmsVal}", HttpMethod.GET, entity, String.class);
-                            JSONObject response = new JSONObject(exchange.getBody());
-                            e.getIn().setBody(response.toString());
-                        }
-                     );
+                    String paybillRequestBodyString = e.getIn().getBody(String.class);
+                    logger.info("Payload : {}",paybillRequestBodyString);
+                    JSONObject body = new JSONObject(paybillRequestBodyString);
+                    String amsURL="";
+                    // Finding the AMS connector
+                    String finalAmsVal = amsUtils.getAMSName(body);
+                    if(finalAmsVal.equalsIgnoreCase("paygops"))
+                    {
+                        amsURL=env.getProperty("paybill.paygops");
+                    }
+                    else if(finalAmsVal.equalsIgnoreCase("roster"))
+                    {
+                        amsURL=env.getProperty("paybill.roster");
+                    }
+                    logger.info("Final Value for ams : " + finalAmsVal);
+                    logger.info("AMS URL : {}",amsURL);
+                    e.getIn().setBody(body.toString());
+                    e.setProperty("amsURL",amsURL);
+                    e.setProperty("finalAmsVal",finalAmsVal);
+                }).log("${header.amsURL},${header.finalAmsVal}")
+                .removeHeaders("*")
+                .toD("${header.amsURL}/api/v1/paybill/${header.finalAmsVal}?bridgeEndpoint=true")
+                .process(e->{
+                    //Start Workflow
+                    // Starting confimation workflow
+                    String paybillRequestBodyString = e.getIn().getBody(String.class);
+                    logger.info("Paybill Request Body : {}",paybillRequestBodyString);
+                    zeebeProcessStarter.startZeebeWorkflow("paybill", paybillRequestBodyString, new HashMap<>());
+                });
     }
 
     private String getVariableValue(Iterator<Object> iterator, String variableName) {

@@ -271,6 +271,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
     public MoneyData amountMapper(String amount, String currency) {
         MoneyData moneyData = new MoneyData();
+        amount.trim();
         moneyData.setAmount(amount);
         moneyData.setCurrency(currency);
 

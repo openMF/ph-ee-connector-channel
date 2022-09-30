@@ -6,4 +6,5 @@ public class CamelProperties {
 
     public static final String AUTH_TYPE = "authType";
     public static final String BATCH_ID = "batchId";
+    public static final String PARTY_LOOKUP_FAILED = "partyLookupFailed";
 }

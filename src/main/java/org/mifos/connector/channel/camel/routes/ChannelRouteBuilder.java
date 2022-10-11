@@ -136,7 +136,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         jobRoutes();
         workflowRoutes();
         acknowledgementRoutes();
-        validationRoutes();
+        paybillRoutes();
     }
     private void handleExceptions(){
         onException(BeanValidationException.class)
@@ -544,9 +544,9 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     }
                 });
     }
-    private void validationRoutes()
+    private void paybillRoutes()
     {
-        from("rest:POST:/accounts/{primaryIdentifierName}/{primaryIdentifierVal}")
+        from("rest:POST:/accounts/validate/{primaryIdentifierName}/{primaryIdentifierVal}")
                 .id("validation-ams")
                 .log(LoggingLevel.INFO, "Validation Check for identifier type paygops")
                 .process(e -> {
@@ -564,6 +564,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     {
                         amsURL=env.getProperty("paybill.roster");
                     }
+                    amsURL="http://localhost:5002/";
                     logger.info("Final Value for ams : " + finalAmsVal);
                     logger.info("AMS URL : {}",amsURL);
                     e.getIn().setBody(body.toString());
@@ -571,14 +572,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     e.setProperty("finalAmsVal",finalAmsVal);
                 }).log("${header.amsURL},${header.finalAmsVal}")
                 .removeHeaders("*")
-                .toD("${header.amsURL}/api/v1/paybill/${header.finalAmsVal}?bridgeEndpoint=true")
-                .process(e->{
-                    //Start Workflow
-                    // Starting confimation workflow
-                    String paybillRequestBodyString = e.getIn().getBody(String.class);
-                    logger.info("Paybill Request Body : {}",paybillRequestBodyString);
-                    zeebeProcessStarter.startZeebeWorkflow("paybill", paybillRequestBodyString, new HashMap<>());
-                });
+                .toD("${header.amsURL}/api/v1/paybill/validate/${header.finalAmsVal}?bridgeEndpoint=true");
     }
 
     private String getVariableValue(Iterator<Object> iterator, String variableName) {

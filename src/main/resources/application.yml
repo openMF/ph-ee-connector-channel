@@ -1,5 +1,5 @@
 camel:
-  server-port: 5000
+  server-port: 5001
   springboot:
     main-run-controller: true
   dataformat:
@@ -37,6 +37,9 @@ bpmn:
     international-remittance-payer: "international-remittance-payer-process-{dfspid}"
     mpesa-flow: "mpesa_flow_{ams}-{dfspid}"
 
+paybill:
+    - paygopsHost: "http://localhost:5002/"
+    - rosterHost: "http://localhost:5004/"
 
 ams:
   groups:
@@ -58,6 +61,9 @@ zeebe:
 #    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
   broker:
     contactpoint: "localhost:26500"
+
+server:
+  port: 8081
 
 rest:
   authorization:

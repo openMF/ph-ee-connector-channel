@@ -85,10 +85,10 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private RestTemplate restTemplate;
     private String timer;
 
-    @Value("${paybill.paygopsHost}")
+    @Value("${paygops.host}")
     private String paygopsHost;
 
-    @Value("${paybill.rosterHost}")
+    @Value("${roster.host}")
     private String rosterHost;
 
 
@@ -569,8 +569,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     {
                         amsURL=rosterHost;
                     }
-                    logger.info("Final Value for ams : " + finalAmsVal);
-                    logger.info("AMS URL : {}",amsURL);
+                    logger.debug("Final Value for ams : " + finalAmsVal);
+                    logger.debug("AMS URL : {}",amsURL);
                     e.getIn().setBody(body.toString());
                     e.setProperty("amsURL",amsURL);
                     e.setProperty("finalAmsVal",finalAmsVal);

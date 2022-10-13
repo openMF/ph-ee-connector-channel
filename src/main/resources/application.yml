@@ -37,9 +37,11 @@ bpmn:
     international-remittance-payer: "international-remittance-payer-process-{dfspid}"
     mpesa-flow: "mpesa_flow_{ams}-{dfspid}"
 
-paybill:
-    - paygopsHost: "http://localhost:5002/"
-    - rosterHost: "http://localhost:5004/"
+paygops:
+  host: "http://localhost:5002/"
+
+roster:
+  host: "http://localhost:5004/"
 
 ams:
   groups:

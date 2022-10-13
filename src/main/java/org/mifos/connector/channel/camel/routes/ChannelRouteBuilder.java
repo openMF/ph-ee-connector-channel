@@ -84,8 +84,13 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private ClientProperties clientProperties;
     private RestTemplate restTemplate;
     private String timer;
-    @Autowired
-    private Environment env;
+
+    @Value("${paybill.paygopsHost}")
+    private String paygopsHost;
+
+    @Value("${paybill.rosterHost}")
+    private String rosterHost;
+
 
     public ChannelRouteBuilder(@Value("#{'${dfspids}'.split(',')}") List<String> dfspIds,
                                @Value("${bpmn.flows.payment-transfer}") String paymentTransferFlow,
@@ -558,13 +563,12 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     String finalAmsVal = amsUtils.getAMSName(body);
                     if(finalAmsVal.equalsIgnoreCase("paygops"))
                     {
-                        amsURL=env.getProperty("paybill.paygops");
+                        amsURL=paygopsHost;
                     }
                     else if(finalAmsVal.equalsIgnoreCase("roster"))
                     {
-                        amsURL=env.getProperty("paybill.roster");
+                        amsURL=rosterHost;
                     }
-                    amsURL="http://localhost:5002/";
                     logger.info("Final Value for ams : " + finalAmsVal);
                     logger.info("AMS URL : {}",amsURL);
                     e.getIn().setBody(body.toString());

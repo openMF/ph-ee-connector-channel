@@ -38,8 +38,8 @@ bpmn:
     mpesa-flow: "mpesa_flow_{ams}-{dfspid}"
 
 paybill:
-    - paygops: "http://localhost:5002/"
-    - roster: "http://localhost:5004/"
+    - paygopsHost: "http://localhost:5002/"
+    - rosterHost: "http://localhost:5004/"
 
 ams:
   groups:

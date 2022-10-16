@@ -15,10 +15,7 @@ import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.gsma.dto.GSMATransaction;
 import org.mifos.connector.common.gsma.dto.GsmaParty;
 import org.mifos.connector.common.gsma.dto.RequestStateDTO;
-import org.mifos.connector.common.mojaloop.dto.MoneyData;
-import org.mifos.connector.common.mojaloop.dto.Party;
-import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
-import org.mifos.connector.common.mojaloop.dto.TransactionType;
+import org.mifos.connector.common.mojaloop.dto.*;
 import org.mifos.connector.common.mojaloop.type.IdentifierType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,6 +132,13 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     Map<String, Object> extraVariables = new HashMap<>();
                     extraVariables.put(IS_RTP_REQUEST, false);
                     extraVariables.put(TRANSACTION_TYPE, "transfer");
+                    extraVariables.put("initiator", transactionType.getInitiator().name());
+                    extraVariables.put("initiatorType", transactionType.getInitiatorType().name());
+                    extraVariables.put("scenario", transactionType.getScenario().name());
+                    extraVariables.put("amount", new FspMoneyData(channelRequest.getAmount().getAmountDecimal(),
+                            channelRequest.getAmount().getCurrency()));
+                    extraVariables.put("processType","api");
+                    extraVariables.put("payeeTenantId", "lion");
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     extraVariables.put(TENANT_ID, tenantId);
@@ -145,8 +149,9 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(PARTY_ID, requestedParty.getPartyIdentifier());
 
                     extraVariables.put(GSMA_CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaChannelRequest));
-
-                    String transactionId = zeebeProcessStarter.startZeebeWorkflow(baseTransaction,
+                    logger.info("Payee Tenant ID {}", extraVariables.get("payeeTenantId"));
+                    String tenantSpecificBpmn = baseTransaction.replace("{dfspid}", tenantId);
+                    String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             objectMapper.writeValueAsString(channelRequest),
                             extraVariables);
                     JSONObject response = new JSONObject();

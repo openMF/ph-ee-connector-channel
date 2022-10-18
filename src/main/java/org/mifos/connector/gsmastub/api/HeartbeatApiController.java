@@ -1,8 +1,8 @@
 package org.mifos.connector.gsmastub.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.*;
 import org.mifos.connector.gsmastub.model.ResponseHeartbeat;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.slf4j.Logger;
@@ -18,6 +18,7 @@ import java.io.IOException;
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 @RestController
+@Hidden
 public class HeartbeatApiController implements HeartbeatApi {
 
     private static final Logger log = LoggerFactory.getLogger(HeartbeatApiController.class);

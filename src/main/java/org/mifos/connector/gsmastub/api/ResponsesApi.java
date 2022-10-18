@@ -26,7 +26,7 @@ import javax.validation.constraints.Pattern;
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 @Validated
-public interface ResponsesApi {
+public interface ResponsesApi extends BaseGsmaApi  {
 
     @Operation(summary = "View A Response", description = "This endpoint returns a specific response.", tags={ "Supporting" })
     @ApiResponses(value = { 

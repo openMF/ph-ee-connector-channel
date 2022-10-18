@@ -24,7 +24,7 @@ import java.util.List;
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 @Validated
-public interface TransactionsApi {
+public interface TransactionsApi extends BaseGsmaApi  {
 
     @Operation(summary = "Create a Transaction", description = "Provided with a valid object representation, this endpoint allows for a new transaction to be created", tags={ "Transactions" })
     @ApiResponses(value = { 

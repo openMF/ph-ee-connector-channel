@@ -193,13 +193,13 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
 
     private void indexRoutes(){
-        from("rest:GET:/")
+        from("direct:get-index")
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200))
                 .setBody(constant(""));
     }
 
     private void transferRoutes(){
-        from("rest:GET:/channel/transfer/{transactionId}")
+        from("direct:get-transfer-transaction-id")
                 .id("transfer-details")
                 .log(LoggingLevel.INFO, "## CHANNEL -> inbound transferDetail request for ${header.transactionId}")
                 .process(e -> {
@@ -260,7 +260,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 });
 
         //fetch transfer details based on client correlation id
-        from("rest:GET:/channel/txnState/{X-CorrelationID}")
+        from("direct:get-txnState-correlationId")
                 .id("transfer-details-correlationId")
                 .log(LoggingLevel.INFO, "## CHANNEL -> request for txn with client correlation Id" +
                         " ${header.X-CorrelationID}")
@@ -299,7 +299,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     }e.getIn().setBody(objectMapper.writeValueAsString(response));
                 });
 
-        from("rest:POST:/channel/transfer")
+        from("direct:post-transfer")
                 .id("inbound-transaction-request")
                 .log(LoggingLevel.INFO, "## CHANNEL -> PAYER inbound transfer request: ${body}")
                 .unmarshal().json(JsonLibrary.Jackson, TransactionChannelRequestDTO.class)
@@ -366,10 +366,10 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
 
     private void collectionRoutes(){
-        from("rest:POST:/channel/collection")
+        from("direct:post-collection")
                 .id("mpesa-payment-request")
                 .log(LoggingLevel.INFO, "## CHANNEL -> MPESA transaction request")
-                .to("bean-validator:request")
+                .to("bean-validator:request") // todo revisit function is breaking
                 .process(exchange -> {
 
                     amsUtils.postConstruct();
@@ -454,11 +454,11 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
 
     private void transactionRoutes(){
-        from("rest:POST:/channel/transactionRequest")
+        from("direct:post-transaction-request")
                 .id("inbound-payment-request")
                 .log(LoggingLevel.INFO, "## CHANNEL -> PAYEE inbound transaction request")
                 .unmarshal().json(JsonLibrary.Jackson, TransactionChannelRequestDTO.class)
-                .to("bean-validator:request")
+                .to("bean-validator:request")// todo revisit function is breaking
                 .process(exchange -> {
                     Map<String, Object> extraVariables = new HashMap<>();
                     TransactionType transactionType = new TransactionType();
@@ -492,8 +492,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     exchange.getIn().setBody(response.toString());
                 });
 
-        from("rest:POST:/channel/transaction/{" + TRANSACTION_ID + "}/resolve")
-                .id("transaction-resolve")
+        from("rest:POST:/channel/transaction/{" + TRANSACTION_ID + "}/resolve")                .id("transaction-resolve")
                 .log(LoggingLevel.INFO, "## operator transaction resolve")
                 .process(e -> {
                     Map<String, Object> variables = new HashMap<>();
@@ -514,7 +513,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
 
     private void partyRegistrationRoutes(){
-        from("rest:POST:/channel/partyRegistration")
+        from("direct:post-party-registration")
                 .id("inbound-party-registration-request")
                 .log(LoggingLevel.INFO, "## CHANNEL -> PHEE inbound party registration request")
                 .unmarshal().json(JsonLibrary.Jackson, RegisterAliasRequestDTO.class)
@@ -540,7 +539,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
 
     private void jobRoutes(){
-        from("rest:POST:/channel/job/resolve")
+        from("direct:post-job-resolve")
                 .id("job-resolve")
                 .log(LoggingLevel.INFO, "## operator job resolve")
                 .process(e -> {
@@ -571,7 +570,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
 
     private void workflowRoutes(){
-        from("rest:POST:/channel/workflow/resolve")
+        from("direct:post-workflow-resolve")
                 .id("workflow-resolve")
                 .log(LoggingLevel.INFO, "## operator workflow resolve")
                 .process(e -> {
@@ -594,7 +593,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 })
                 .setBody(constant((Object) null));
 
-        from("rest:POST:/channel/workflow/{workflowInstanceKey}/cancel")
+        from("direct:post-workflow-instanceKey-cancel")
                 .id("workflow-cancel")
                 .log(LoggingLevel.INFO, "## operator workflow cancel ${header.workflowInstanceKey}")
                 .process(e -> zeebeClient.newCancelInstanceCommand(Long.parseLong(e.getIn().getHeader("workflowInstanceKey", String.class)))
@@ -663,7 +662,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .removeHeaders("*")
                 .toD("${header.amsURL}/api/v1/paybill/validate/${header.finalAmsVal}?bridgeEndpoint=true");
 
-        from("rest:POST:/channel/gsma/transaction")
+        from("direct:post-gsma-transaction")
                 .id("gsma-transfer")
                 .unmarshal().json(JsonLibrary.Jackson, GsmaTransfer.class)
                 .log(LoggingLevel.INFO,"GSMA Transfer Body")

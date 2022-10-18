@@ -23,7 +23,7 @@ import org.threeten.bp.OffsetDateTime;
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 @Validated
-public interface HeartbeatApi {
+public interface HeartbeatApi extends BaseGsmaApi  {
 
     @Operation(summary = "Check API availability", description = "This endpoint returns the current status of the API", tags={ "Supporting" })
     @ApiResponses(value = { 

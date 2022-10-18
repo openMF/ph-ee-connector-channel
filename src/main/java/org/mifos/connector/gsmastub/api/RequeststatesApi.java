@@ -26,7 +26,7 @@ import java.util.List;
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 @Validated
-public interface RequeststatesApi {
+public interface RequeststatesApi extends BaseGsmaApi  {
 
     @Operation(summary = "View A Request State", description = "This endpoint returns a specific request state", tags={ "Supporting" })
     @ApiResponses(value = { 

@@ -26,7 +26,7 @@ import javax.validation.constraints.Size;
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 @Validated
-public interface QuotationsApi {
+public interface QuotationsApi extends BaseGsmaApi  {
 
     @Operation(summary = "Create A New Quotation", description = "Provided with a valid object representation, this endpoint allows for a new quotation to be created.", tags={ "Quotations" })
     @ApiResponses(value = { 

@@ -26,7 +26,7 @@ import javax.validation.constraints.Size;
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 @Validated
-public interface BillsApi {
+public interface BillsApi extends BaseGsmaApi  {
 
     @Operation(summary = "View Payments for a Bill", description = "This endpoint allows for bill payments for a given bill reference to be returned", tags={ "Bills" })
     @ApiResponses(value = { 

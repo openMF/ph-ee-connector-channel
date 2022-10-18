@@ -1,5 +1,5 @@
 camel:
-  server-port: 5001
+  server-port: 5000
   springboot:
     main-run-controller: true
   dataformat:
@@ -65,7 +65,7 @@ zeebe:
     contactpoint: "localhost:26500"
 
 server:
-  port: 8081
+  port: 8080
 
 rest:
   authorization:

@@ -6,9 +6,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 import javax.servlet.http.HttpServletResponse;
 
-public interface CollectionApi {
+public interface PartyRegistrationApi {
 
-    @PostMapping("/channel/collection")
-    String collection(@RequestHeader(value="Platform-TenantId") String tenant, @RequestBody String requestBody, HttpServletResponse response);
-
+    @PostMapping("/channel/partyRegistration")
+    Object partyRegistration(@RequestHeader(value="Platform-TenantId") String tenant, @RequestBody String requestBody);
 }

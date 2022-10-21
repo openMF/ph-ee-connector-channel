@@ -200,7 +200,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
 
     private void transferRoutes(){
-        from("rest:GET:/channel/transfer/{transactionId}")
+        from("direct:get-transfer-transaction-id")
                 .id("transfer-details")
                 .log(LoggingLevel.INFO, "## CHANNEL -> inbound transferDetail request for ${header.transactionId}")
                 .process(e -> {
@@ -300,7 +300,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     }e.getIn().setBody(objectMapper.writeValueAsString(response));
                 });
 
-        from("rest:POST:/channel/transfer")
+        from("direct:post-transfer")
                 .id("inbound-transaction-request")
                 .log(LoggingLevel.INFO, "## CHANNEL -> PAYER inbound transfer request: ${body}")
                 .unmarshal().json(JsonLibrary.Jackson, TransactionChannelRequestDTO.class)
@@ -455,11 +455,11 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
 
     private void transactionRoutes(){
-        from("rest:POST:/channel/transactionRequest")
+        from("direct:post-transaction-request")
                 .id("inbound-payment-request")
                 .log(LoggingLevel.INFO, "## CHANNEL -> PAYEE inbound transaction request")
                 .unmarshal().json(JsonLibrary.Jackson, TransactionChannelRequestDTO.class)
-                .to("bean-validator:request")
+               // .to("bean-validator:request")
                 .process(exchange -> {
                     Map<String, Object> extraVariables = new HashMap<>();
                     TransactionType transactionType = new TransactionType();
@@ -492,8 +492,11 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     response.put("transactionId", transactionId);
                     exchange.getIn().setBody(response.toString());
                 });
+//                .process(exchange -> {
+//                    System.out.println(" Dhruv1234 \n\n" + exchange.getIn().getBody() );
+//                });
 
-        from("rest:POST:/channel/transaction/{" + TRANSACTION_ID + "}/resolve")
+        from("direct:post-transaction-transaction-id-resolve")
                 .id("transaction-resolve")
                 .log(LoggingLevel.INFO, "## operator transaction resolve")
                 .process(e -> {
@@ -515,7 +518,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
 
     private void partyRegistrationRoutes(){
-        from("rest:POST:/channel/partyRegistration")
+        from("direct:post-party-registration")
                 .id("inbound-party-registration-request")
                 .log(LoggingLevel.INFO, "## CHANNEL -> PHEE inbound party registration request")
                 .unmarshal().json(JsonLibrary.Jackson, RegisterAliasRequestDTO.class)
@@ -541,7 +544,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
 
     private void jobRoutes(){
-        from("rest:POST:/channel/job/resolve")
+        from("direct:post-job-resolve")
                 .id("job-resolve")
                 .log(LoggingLevel.INFO, "## operator job resolve")
                 .process(e -> {
@@ -572,7 +575,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
 
     private void workflowRoutes(){
-        from("rest:POST:/channel/workflow/resolve")
+        from("direct:post-workflow-resolve")
                 .id("workflow-resolve")
                 .log(LoggingLevel.INFO, "## operator workflow resolve")
                 .process(e -> {
@@ -595,7 +598,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 })
                 .setBody(constant((Object) null));
 
-        from("rest:POST:/channel/workflow/{workflowInstanceKey}/cancel")
+        from("direct:post-workflow-instanceKey-cancel")
                 .id("workflow-cancel")
                 .log(LoggingLevel.INFO, "## operator workflow cancel ${header.workflowInstanceKey}")
                 .process(e -> zeebeClient.newCancelInstanceCommand(Long.parseLong(e.getIn().getHeader("workflowInstanceKey", String.class)))

@@ -1,12 +1,12 @@
 camel:
-  server-port: 5000
+  server-port: 5001
   springboot:
     main-run-controller: true
   dataformat:
     json-jackson:
       auto-discover-object-mapper: true
 
-dfspids: "ibank-usa"
+dfspids: "DFSPID"
 
 transaction-id-length: -1
 
@@ -68,6 +68,12 @@ zeebe:
   broker:
     contactpoint: "localhost:26500"
 
+<<<<<<< HEAD
+=======
+server:
+  port: 8081
+
+>>>>>>> ee2bd70 (Reverted Unnescessary changes)
 rest:
   authorization:
     enabled: false

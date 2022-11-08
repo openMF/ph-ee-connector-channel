@@ -370,7 +370,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         from("direct:post-collection")
                 .id("mpesa-payment-request")
                 .log(LoggingLevel.INFO, "## CHANNEL -> MPESA transaction request")
-                //.to("bean-validator:request")
+                .to("bean-validator:request") // todo revisit function is breaking
                 .process(exchange -> {
 
                     amsUtils.postConstruct();
@@ -459,7 +459,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .id("inbound-payment-request")
                 .log(LoggingLevel.INFO, "## CHANNEL -> PAYEE inbound transaction request")
                 .unmarshal().json(JsonLibrary.Jackson, TransactionChannelRequestDTO.class)
-               // .to("bean-validator:request")
+                .to("bean-validator:request")// todo revisit function is breaking
                 .process(exchange -> {
                     Map<String, Object> extraVariables = new HashMap<>();
                     TransactionType transactionType = new TransactionType();
@@ -492,9 +492,6 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     response.put("transactionId", transactionId);
                     exchange.getIn().setBody(response.toString());
                 });
-//                .process(exchange -> {
-//                    System.out.println(" Dhruv1234 \n\n" + exchange.getIn().getBody() );
-//                });
 
         from("direct:post-transaction-transaction-id-resolve")
                 .id("transaction-resolve")

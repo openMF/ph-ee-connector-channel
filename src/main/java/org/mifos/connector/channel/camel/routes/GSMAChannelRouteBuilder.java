@@ -115,7 +115,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .process(exchange -> {
                     GSMATransaction gsmaChannelRequest = exchange.getIn().getBody(GSMATransaction.class); // GSMA Object
                     TransactionChannelRequestDTO channelRequest = new TransactionChannelRequestDTO(); // Fineract Object
-
+                    String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);
                     Party payer = partyMapper(gsmaChannelRequest.getDebitParty());
                     Party payee = partyMapper(gsmaChannelRequest.getCreditParty());
                     MoneyData amount = amountMapper(gsmaChannelRequest.getAmount(), gsmaChannelRequest.getCurrency());
@@ -139,6 +139,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             channelRequest.getAmount().getCurrency()));
                     extraVariables.put("processType","api");
                     extraVariables.put("payeeTenantId", "lion");
+                    extraVariables.put("clientCorrelationId", clientCorrelationId);
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     extraVariables.put(TENANT_ID, tenantId);
@@ -214,7 +215,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .process(exchange -> {
                     GSMATransaction gsmaChannelRequest = exchange.getIn().getBody(GSMATransaction.class); // GSMA Object
                     TransactionChannelRequestDTO channelRequest = new TransactionChannelRequestDTO(); // Fineract Object
-
+                    String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);
                     Party payer = partyMapper(gsmaChannelRequest.getDebitParty());
                     Party payee = partyMapper(gsmaChannelRequest.getCreditParty());
                     MoneyData amount = amountMapper(gsmaChannelRequest.getAmount(), gsmaChannelRequest.getCurrency());
@@ -241,6 +242,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     gsmaResponse.setNotificationMethod("polling");
                     gsmaResponse.setObjectReference("");
                     gsmaResponse.setPollLimit("");
+                    extraVariables.put("clientCorrelationId", clientCorrelationId);
 
                     exchange.getIn().setBody(objectMapper.writeValueAsString(gsmaResponse));
                     exchange.getIn().setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));

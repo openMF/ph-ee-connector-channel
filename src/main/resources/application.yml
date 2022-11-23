@@ -64,9 +64,6 @@ zeebe:
   broker:
     contactpoint: "localhost:26500"
 
-server:
-  port: 8080
-
 rest:
   authorization:
     enabled: false

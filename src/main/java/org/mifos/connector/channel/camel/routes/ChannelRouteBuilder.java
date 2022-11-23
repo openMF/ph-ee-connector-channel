@@ -59,7 +59,6 @@ import static org.mifos.connector.common.mojaloop.type.TransactionRole.PAYEE;
 import static org.mifos.connector.common.mojaloop.type.TransactionRole.PAYER;
 
 @Component
-
 public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
 
@@ -85,10 +84,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private RestTemplate restTemplate;
     private String timer;
 
-    @Value("${paygops.host}")
     private String paygopsHost;
 
-    @Value("${roster.host}")
     private String rosterHost;
 
 
@@ -103,6 +100,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                @Value("${mpesa.notification.success.enabled}") Boolean isNotificationSuccessServiceEnabled,
                                @Value("${mpesa.notification.failure.enabled}") Boolean isNotificationFailureServiceEnabled,
                                @Value("${timer}") String timer,
+                               @Value("${paygops.host}") String paygopsHost,
+                               @Value("${roster.host}") String rosterHost,
                                ZeebeClient zeebeClient,
                                ZeebeProcessStarter zeebeProcessStarter,
                                @Autowired(required = false) AuthProcessor authProcessor,
@@ -128,6 +127,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         this.isNotificationSuccessServiceEnabled = isNotificationSuccessServiceEnabled;
         this.isNotificationFailureServiceEnabled = isNotificationFailureServiceEnabled;
         this.timer = timer;
+        this.paygopsHost=paygopsHost;
+        this.rosterHost=rosterHost;
     }
 
     @Override

@@ -38,10 +38,10 @@ bpmn:
     mpesa-flow: "mpesa_flow_{ams}-{dfspid}"
 
 paygops:
-  host: "http://localhost:5002/"
+  host: http://ph-ee-connector-ams-paygops
 
 roster:
-  host: "http://localhost:5004/"
+  host: http://ph-ee-connector-ams-roster
 
 ams:
   groups:
@@ -63,9 +63,6 @@ zeebe:
 #    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
   broker:
     contactpoint: "localhost:26500"
-
-server:
-  port: 8080
 
 rest:
   authorization:

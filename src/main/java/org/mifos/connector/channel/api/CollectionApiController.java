@@ -1,5 +1,6 @@
 package org.mifos.connector.channel.api;
 
+import io.swagger.v3.oas.annotations.Operation;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.support.DefaultExchange;
@@ -20,10 +21,6 @@ public class CollectionApiController implements CollectionApi {
         exchange.getIn().setBody(requestBody);
         exchange.getIn().setHeader("Platform-TenantId", tenant);
         producerTemplate.send("direct:post-collection", exchange);
-
-        try {
-            response.setStatus(exchange.getIn().getHeader(Exchange.HTTP_RESPONSE_CODE, Integer.class));
-        } catch (Exception e) { }
 
         return exchange.getIn().getBody(String.class);
     }

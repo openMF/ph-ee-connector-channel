@@ -15,7 +15,6 @@ public class PartyRegistrationApiController implements PartyRegistrationApi {
 
     @Override
     public Object partyRegistration(String tenant, String requestBody){
-//        System.out.println("Body- .." + requestBody);
         Exchange exchange = new DefaultExchange(producerTemplate.getCamelContext());
         exchange.getIn().setBody(requestBody);
         exchange.getIn().setHeader("Platform-TenantId", tenant);

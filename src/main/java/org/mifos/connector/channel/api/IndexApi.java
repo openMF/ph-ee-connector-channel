@@ -7,6 +7,6 @@ import javax.servlet.http.HttpServletResponse;
 public interface IndexApi {
 
     @GetMapping("/")
-    String index(HttpServletResponse response);
+    String index(HttpServletResponse response) throws Exception;
 
 }

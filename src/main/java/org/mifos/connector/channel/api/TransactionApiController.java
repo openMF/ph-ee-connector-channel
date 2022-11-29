@@ -17,13 +17,11 @@ public class TransactionApiController implements TransactionApi {
 
     @Override
     public String transaction(String tenant, String requestBody){
-//        System.out.println("Body- .." + requestBody);
         Exchange exchange = new DefaultExchange(producerTemplate.getCamelContext());
         exchange.getIn().setBody(requestBody);
         exchange.getIn().setHeader("Platform-TenantId", tenant);
         producerTemplate.send("direct:post-transaction-request", exchange);
 
-//        System.out.println(" DHruv \n\n" + exchange.getIn().getBody());
         return exchange.getIn().getBody(String.class);
     }
 

@@ -40,6 +40,8 @@ dependencies {
     implementation 'io.springfox:springfox-swagger-ui:3.0.0'
     implementation 'io.springfox:springfox-oas:3.0.0'
     implementation 'com.github.joschi.jackson:jackson-datatype-threetenbp:2.6.4'
+    implementation "org.springdoc:springdoc-openapi-ui:1.6.11"
+    implementation 'io.springfox:springfox-swagger2:3.0.0'
 }
 
 group = 'org.mifos'

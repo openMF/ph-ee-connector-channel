@@ -14,14 +14,13 @@ public class IndexApiController implements IndexApi {
     private ProducerTemplate producerTemplate;
 
     @Override
-    public String index(HttpServletResponse response) {
+    public String index(HttpServletResponse response) throws Exception {
 
         Exchange exchange = new DefaultExchange(producerTemplate.getCamelContext());
         producerTemplate.send("direct:get-index", exchange);
 
-        try {
-            response.setStatus(exchange.getIn().getHeader(Exchange.HTTP_RESPONSE_CODE, Integer.class));
-        } catch (Exception e) { }
+        response.setStatus(exchange.getIn().getHeader(Exchange.HTTP_RESPONSE_CODE, Integer.class));
+
 
         return exchange.getIn().getBody(String.class);
     }

@@ -38,10 +38,10 @@ bpmn:
     mpesa-flow: "mpesa_flow_{ams}-{dfspid}"
 
 paygops:
-  host: "http://localhost:5002/"
+  host: http://ph-ee-connector-ams-paygops
 
 roster:
-  host: "http://localhost:5004/"
+  host: http://ph-ee-connector-ams-roster
 
 ams:
   groups:

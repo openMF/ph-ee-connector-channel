@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -21,6 +22,15 @@ public class AMSUtils {
 
     List<AMSProps.AMS> ams;
 
+    @Value("${paygops.host}")
+    private String paygopsHost;
+
+    @Value("${roster.host}")
+    private String rosterHost;
+    enum AMS {
+        paygops,
+        roster
+    }
     public AMSUtils(){
     }
 
@@ -61,6 +71,15 @@ public class AMSUtils {
         }//end for loop
         logger.info("Identifier name and value {} : {} ",primaryIdentifierName,primaryIdentifierVal);
         return finalAmsVal;
+    }
+    public String getAmsUrl(String finalAmsVal) {
+        String amsUrl="";
+        if (finalAmsVal.equalsIgnoreCase(AMS.paygops.toString())) {
+            amsUrl=paygopsHost;
+        } else if (finalAmsVal.equalsIgnoreCase(AMS.roster.toString())) {
+            amsUrl=rosterHost;
+        }
+        return amsUrl;
     }
 
 }

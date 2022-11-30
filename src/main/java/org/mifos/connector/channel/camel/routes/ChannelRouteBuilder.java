@@ -84,11 +84,6 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private RestTemplate restTemplate;
     private String timer;
 
-    private String paygopsHost;
-
-    private String rosterHost;
-
-
     public ChannelRouteBuilder(@Value("#{'${dfspids}'.split(',')}") List<String> dfspIds,
                                @Value("${bpmn.flows.payment-transfer}") String paymentTransferFlow,
                                @Value("${bpmn.flows.special-payment-transfer}") String specialPaymentTransferFlow,
@@ -127,8 +122,6 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         this.isNotificationSuccessServiceEnabled = isNotificationSuccessServiceEnabled;
         this.isNotificationFailureServiceEnabled = isNotificationFailureServiceEnabled;
         this.timer = timer;
-        this.paygopsHost=paygopsHost;
-        this.rosterHost=rosterHost;
     }
 
     @Override
@@ -554,24 +547,16 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
     private void paybillRoutes()
     {
-        from("rest:POST:/accounts/validate/{primaryIdentifierName}/{primaryIdentifierVal}")
+        from("rest:POST:/accounts/validate/{secondaryIdentifierName}/{secondaryIdentifierVal}")
                 .id("validation-ams")
                 .log(LoggingLevel.INFO, "Validation Check for identifier type paygops")
                 .process(e -> {
                     String paybillRequestBodyString = e.getIn().getBody(String.class);
-                    logger.info("Payload : {}",paybillRequestBodyString);
+                    logger.debug("Payload : {}",paybillRequestBodyString);
                     JSONObject body = new JSONObject(paybillRequestBodyString);
-                    String amsURL="";
                     // Finding the AMS connector
                     String finalAmsVal = amsUtils.getAMSName(body);
-                    if(finalAmsVal.equalsIgnoreCase("paygops"))
-                    {
-                        amsURL=paygopsHost;
-                    }
-                    else if(finalAmsVal.equalsIgnoreCase("roster"))
-                    {
-                        amsURL=rosterHost;
-                    }
+                    String amsURL = amsUtils.getAmsUrl(finalAmsVal);
                     logger.debug("Final Value for ams : " + finalAmsVal);
                     logger.debug("AMS URL : {}",amsURL);
                     e.getIn().setBody(body.toString());

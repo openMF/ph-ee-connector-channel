@@ -23,4 +23,6 @@ public class ZeebeVariables {
     public static final String GSMA_CHANNEL_REQUEST = "gsmaChannelRequest";
     public static final String SAMPLED_TX_IDS = "sampledTransactionIds";
 
+    public static final String NOTE = "note";
+
 }

@@ -220,7 +220,6 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     GSMATransaction gsmaChannelRequest = exchange.getIn().getBody(GSMATransaction.class); // GSMA Object
                     TransactionChannelRequestDTO channelRequest = new TransactionChannelRequestDTO(); // Fineract Object
                     String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);
-//                    String note = exchange.getIn().getBody("note", String.class);
                     Party payer = partyMapper(gsmaChannelRequest.getDebitParty());
                     Party payee = partyMapper(gsmaChannelRequest.getCreditParty());
                     MoneyData amount = amountMapper(gsmaChannelRequest.getAmount(), gsmaChannelRequest.getCurrency());

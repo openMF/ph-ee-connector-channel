@@ -11,7 +11,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mifos.connector.channel.zeebe.ZeebeProcessStarter;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
+import org.mifos.connector.common.channel.dto.PhErrorDTO;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
+import org.mifos.connector.common.exception.PaymentHubError;
 import org.mifos.connector.common.gsma.dto.GSMATransaction;
 import org.mifos.connector.common.gsma.dto.GsmaParty;
 import org.mifos.connector.common.gsma.dto.RequestStateDTO;
@@ -117,11 +119,23 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .to("bean-validator:request")
                 .process(exchange -> {
                     GSMATransaction gsmaChannelRequest = exchange.getIn().getBody(GSMATransaction.class); // GSMA Object
+
+                    // validation of request
+                    PhErrorDTO validationResponse = validateGsmaRequest(exchange);
+                    if (validationResponse != null) {
+                        // validation failed, means request has some validation faults
+                        exchange.getIn().setBody(objectMapper.writeValueAsString(validationResponse));
+                        exchange.getIn().setHeader(Exchange.HTTP_RESPONSE_CODE, 400);
+                        logger.info("Validation failed: {}", validationResponse);
+                        return;
+                    }
+
                     TransactionChannelRequestDTO channelRequest = new TransactionChannelRequestDTO(); // Fineract Object
                     String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);
                     Party payer = partyMapper(gsmaChannelRequest.getDebitParty());
                     Party payee = partyMapper(gsmaChannelRequest.getCreditParty());
                     MoneyData amount = amountMapper(gsmaChannelRequest.getAmount(), gsmaChannelRequest.getCurrency());
+
 
                     channelRequest.setPayer(payer);
                     channelRequest.setPayee(payee);
@@ -251,6 +265,58 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     exchange.getIn().setHeader(Exchange.HTTP_RESPONSE_CODE, constant(202));
                 });
 
+    }
+
+    // validates and return errorDTO if validation is failed or else null
+    private PhErrorDTO validateGsmaRequest(Exchange exchange) {
+        GSMATransaction gsmaChannelRequest = exchange.getIn().getBody(GSMATransaction.class);
+
+        String defaultMessageInCaseOfMissingMandatoryField = gsmaMandatoryFieldValidation(gsmaChannelRequest);
+        if (defaultMessageInCaseOfMissingMandatoryField != null) {
+            return new PhErrorDTO.PhErrorDTOBuilder(PaymentHubError.MandatoryValueNotSupplied)
+                    .developerMessage("Make sure all mandatory fields are provided, check the API spec for more info.")
+                    .defaultUserMessage(defaultMessageInCaseOfMissingMandatoryField).build();
+        }
+
+        double amount;
+        try {
+            amount = Double.parseDouble(gsmaChannelRequest.getAmount());
+        } catch (Exception e) {
+            return new PhErrorDTO.PhErrorDTOBuilder(PaymentHubError.FormatError)
+                    .developerMessage("Amount field supports decimal values, with non negative value.")
+                    .defaultUserMessage("Invalid amount format.").build();
+        }
+        if (amount <= 0) {
+            return new PhErrorDTO.PhErrorDTOBuilder(PaymentHubError.NegativeValue)
+                    .developerMessage("Amount field supports decimal values, with non negative value.")
+                    .defaultUserMessage("Invalid amount format.").build();
+        }
+        if (gsmaChannelRequest.getDebitParty()[0].getKey().equals(gsmaChannelRequest.getCreditParty()[0].getKey()) &&
+        gsmaChannelRequest.getDebitParty()[0].getValue().equals(gsmaChannelRequest.getCreditParty()[0].getValue())) {
+            return new PhErrorDTO.PhErrorDTOBuilder(PaymentHubError.SamePartiesError)
+                    .developerMessage("Credit and Debit MSISDNs can't be same")
+                    .defaultUserMessage(PaymentHubError.SamePartiesError.getErrorDescription()).build();
+        }
+
+        return null;
+    }
+
+    // check if mandatory field is non-empty or returns developer message
+    public String gsmaMandatoryFieldValidation(GSMATransaction gsmaChannelRequest) {
+        if (gsmaChannelRequest.getAmount().isEmpty()) {
+            return "Amount can't be empty";
+        }
+        if (gsmaChannelRequest.getCreditParty().length == 0) {
+            return "Credit party can't pe empty";
+        }
+        if (gsmaChannelRequest.getDebitParty().length == 0) {
+            return "Debit party can't be empty";
+        }
+        if (gsmaChannelRequest.getCurrency().isEmpty()) {
+            return "Currency can't be empty";
+        }
+
+        return null;
     }
 
     public Party partyMapper(GsmaParty[] gsmaParties) {

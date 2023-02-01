@@ -11,6 +11,7 @@ import org.mifos.connector.gsmastub.configuration.LocalDateTimeConverter;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
@@ -22,6 +23,7 @@ import org.threeten.bp.OffsetDateTime;
 import org.threeten.bp.ZonedDateTime;
 
 @SpringBootApplication
+@EnableCaching
 public class ChannelConnectorApplication {
 
     @Bean

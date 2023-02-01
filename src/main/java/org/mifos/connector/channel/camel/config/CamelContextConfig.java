@@ -14,7 +14,6 @@ public class CamelContextConfig {
 
     @Value("${camel.server-port}")
     private int serverPort;
-
     @Bean
     CamelContextConfiguration contextConfiguration() {
         return new CamelContextConfiguration() {

@@ -20,6 +20,7 @@ import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.RegisterAliasRequestDTO;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.channel.dto.TransactionStatusResponseDTO;
+import org.mifos.connector.common.gsma.dto.GsmaTransfer;
 import org.mifos.connector.common.mojaloop.dto.FspMoneyData;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
 import org.mifos.connector.common.mojaloop.type.TransferState;
@@ -46,14 +47,7 @@ import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.stream.StreamSupport.stream;
 import static org.mifos.connector.channel.camel.config.CamelProperties.*;
 import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.ACCOUNT;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_AUTHORISATION_REQUIRED;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_RTP_REQUEST;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID_TYPE;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.AMS;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.TENANT_ID;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSACTION_ID;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.*;
 import static org.mifos.connector.common.mojaloop.type.InitiatorType.CONSUMER;
 import static org.mifos.connector.common.mojaloop.type.Scenario.TRANSFER;
 import static org.mifos.connector.common.mojaloop.type.TransactionRole.PAYEE;
@@ -557,32 +551,90 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
     private void paybillRoutes()
     {
-        from("rest:POST:/accounts/validate/{primaryIdentifierName}/{primaryIdentifierVal}")
-                .id("validation-ams")
-                .log(LoggingLevel.INFO, "Validation Check for identifier type paygops")
-                .process(e -> {
-                    String paybillRequestBodyString = e.getIn().getBody(String.class);
-                    logger.info("Payload : {}",paybillRequestBodyString);
-                    JSONObject body = new JSONObject(paybillRequestBodyString);
-                    String amsURL="";
-                    // Finding the AMS connector
-                    String finalAmsVal = amsUtils.getAMSName(body);
-                    if(finalAmsVal.equalsIgnoreCase("paygops"))
-                    {
-                        amsURL=paygopsHost;
-                    }
-                    else if(finalAmsVal.equalsIgnoreCase("roster"))
-                    {
-                        amsURL=rosterHost;
-                    }
-                    logger.debug("Final Value for ams : " + finalAmsVal);
-                    logger.debug("AMS URL : {}",amsURL);
+        from("rest:POST:/api/v1/paybill/gsma/transaction")
+                .id("c2b-transfer")
+                .log(LoggingLevel.INFO,"Payload for c2b transfer")
+                .process(e->{
+                    String c2bRequestBodyString = e.getIn().getBody(String.class);
+                    logger.info("Payload : {}",c2bRequestBodyString);
+
+                    JSONObject body = new JSONObject(c2bRequestBodyString);
+                    String amsConnectorHost=e.getIn().getHeader("amsUrl").toString();
+                    String accountHoldingInstitutionType = e.getIn().getHeader("accountHoldingInstitutionType").toString();
+                    String accountHoldingInstitutionId= e.getIn().getHeader("accountHoldingInstitutionId").toString();
+
                     e.getIn().setBody(body.toString());
-                    e.setProperty("amsURL",amsURL);
-                    e.setProperty("finalAmsVal",finalAmsVal);
-                }).log("${header.amsURL},${header.finalAmsVal}")
+                    e.setProperty("amsURL",amsConnectorHost);
+                    e.setProperty("finalAmsVal",accountHoldingInstitutionType);
+                    e.getIn().setHeader("accountHoldingInstitutionId",accountHoldingInstitutionId);
+                })
                 .removeHeaders("*")
-                .toD("${header.amsURL}/api/v1/paybill/validate/${header.finalAmsVal}?bridgeEndpoint=true");
+                .toD("${header.amsURL}/api/v1/validate/${header.finalAmsVal}?bridgeEndpoint=true")
+                .choice()
+                .when(header("CamelHttpResponseCode").isEqualTo("200"))
+                .log(LoggingLevel.INFO, "Request sent to AMS")
+                .process(e -> {
+                    String amsResponseBodyString = e.getIn().getBody(String.class);
+                    logger.info("AMS Response Body : {}", amsResponseBodyString);
+                    JSONObject amsResponse = new JSONObject(amsResponseBodyString);
+                    logger.info("Reconciled : {}", amsResponse.getBoolean("reconciled"));
+
+                    Map<String, Object> variables = new HashMap<>();
+                    variables.put("timer", timer);
+                    variables.put("amsResponseBody", amsResponseBodyString);
+                    variables.put("validationFailed", !(amsResponse.getBoolean("reconciled")));
+                    variables.put("confirmationReceived", false);
+                    //Starting the paybill workflow
+                    String subtype=amsResponse.getString("subtype");
+                    String type=amsResponse.getString("type");
+                    String amsName=amsResponse.getString("AMS");
+                    String accountHoldingInstitutionId=amsResponse.getString("accountHoldingInstitutionId");
+
+                    String workflowName=subtype+"-"+type+"-"+amsName+"-"+accountHoldingInstitutionId;
+
+                    e.setProperty("VALIDATION_SUCCESS", amsResponse.getBoolean("reconciled"));
+                    String transactionId = zeebeProcessStarter.startZeebeWorkflowC2B(workflowName, variables);
+
+                    String mpesaTransactionId = amsResponse.getString("transaction_id");
+
+                    // Sending mpesa specific response
+                    JSONObject responseObject = new JSONObject();
+                    responseObject.put("reconciled", (amsResponse.getBoolean("reconciled")));
+                    responseObject.put("mpesaTransactionId", mpesaTransactionId);
+                    responseObject.put("workflowTransactionId", transactionId);
+                    responseObject.put("AMS", amsName);
+                    responseObject.put("subtype",subtype);
+                    responseObject.put("type",type);
+                    responseObject.put("accountHoldingInstitutionId",accountHoldingInstitutionId);
+                    e.getIn().setBody(responseObject.toString());
+                })
+                .otherwise()
+                .log(LoggingLevel.INFO, "Request failed to sent to channel")
+                .process(e -> {
+                    e.setProperty("VALIDATION_SUCCESS", false);
+                    e.setProperty("ERROR_DESCRIPTION", e.getIn().getBody(String.class));
+                    e.setProperty("ERROR_CODE", e.getIn().getHeader(e.HTTP_RESPONSE_CODE));
+                });
+        from("rest:POST:/api/v1/gsma/transaction")
+                .id("gsma-transfer")
+                .unmarshal().json(JsonLibrary.Jackson, GsmaTransfer.class)
+                .log(LoggingLevel.INFO,"GSMA Transfer Body")
+                .process(e->{
+                    GsmaTransfer gsmaTranfer=e.getIn().getBody(GsmaTransfer.class);
+                    logger.info("Gsma Transfer DTO : {}",String.valueOf(gsmaTranfer));
+                    String subtype=gsmaTranfer.getSubType();
+                    String type=gsmaTranfer.getType();
+                    String amsName= e.getIn().getHeader("amsName").toString();
+                    String accountHoldingInstitutionId=e.getIn().getHeader("accountHoldingInstitutionId").toString();
+                    // inbound-transfer-mifos-lion
+                    Map<String, Object> variables = new HashMap<>();
+                    variables.put(TENANT_ID,accountHoldingInstitutionId);
+                    variables.put(CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaTranfer));
+                    String workflowName=subtype+"_"+type+"-"+amsName+"-"+accountHoldingInstitutionId;
+                    logger.info("Workflow Name:{}",workflowName);
+                    String transactionId = zeebeProcessStarter.startZeebeWorkflowC2B(workflowName, variables);
+                    e.getIn().setBody(transactionId);
+                });
     }
 
     private String getVariableValue(Iterator<Object> iterator, String variableName) {

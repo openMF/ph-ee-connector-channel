@@ -103,4 +103,20 @@ public class ZeebeProcessStarter {
         return uuid12digits + randomString;
 
     }
+    public String startZeebeWorkflowC2B(String workflowId, Map<String, Object> variables) {
+
+        String transactionId = generateTransactionId();
+        variables.put(ZeebeVariables.TRANSACTION_ID, transactionId);
+
+        logger.info("starting workflow HERE:");
+        ProcessInstanceEvent instance = zeebeClient.newCreateInstanceCommand()
+                .bpmnProcessId(workflowId)
+                .latestVersion()
+                .variables(variables)
+                .send()
+                .join();
+
+        logger.info("zeebee workflow instance from process {} started with transactionId {}, instance key: {}", workflowId, transactionId, instance.getProcessInstanceKey());
+        return transactionId;
+    }
 }

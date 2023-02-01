@@ -63,6 +63,9 @@ public class AMSUtils {
         return finalAmsVal;
     }
 
+    public void mapTransactionId(String mpesaTransactionId, String transactionId) {
+
+    }
 }
 
 

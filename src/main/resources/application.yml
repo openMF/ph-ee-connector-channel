@@ -1,5 +1,5 @@
 camel:
-  server-port: 5000
+  server-port: 5001
   springboot:
     main-run-controller: true
   dataformat:
@@ -69,11 +69,18 @@ zeebe:
     contactpoint: "localhost:26500"
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 server:
   port: 8080
 
 >>>>>>> ee2bd70 (Reverted Unnescessary changes)
+=======
+
+server:
+  port: 8081
+
+>>>>>>> 5dbb53a (conflicts resolved while rebase)
 rest:
   authorization:
     enabled: false
@@ -95,12 +102,5 @@ logging:
   pattern:
     console: "%clr(%d{dd-MM-yyyy HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr([%35.35t]){faint} %clr(%-28.28logger{28}){cyan} %clr(:){faint}%X{BUSINESS-LOG} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"
 
-<<<<<<< HEAD
-gsma:
-  payee:
-    tenant: "lion"
-
-=======
 springdoc:
   writer-with-order-by-keys: true
->>>>>>> 804b252 (migration of camel api to spring)

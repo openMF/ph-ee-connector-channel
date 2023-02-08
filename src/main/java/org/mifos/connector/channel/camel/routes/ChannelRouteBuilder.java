@@ -51,6 +51,7 @@ import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_AUTHORISATION_
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_RTP_REQUEST;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID_TYPE;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.AMS;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.TENANT_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.common.mojaloop.type.InitiatorType.CONSUMER;
@@ -300,6 +301,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("initiatorType", "BUSINESS");
                     extraVariables.put("scenario", "MPESA");
 
+
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);
                     if (tenantId == null || !dfspIds.contains(tenantId)) {
@@ -348,6 +350,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     }//end for loop
 
                     logger.info("Final Value for ams : " + finalAmsVal);
+                    extraVariables.put(AMS,finalAmsVal);
                     tenantSpecificBpmn = mpesaFlow.replace("{dfspid}", tenantId)
                                  .replace("{ams}",finalAmsVal);
 

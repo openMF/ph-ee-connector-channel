@@ -20,6 +20,7 @@ import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.RegisterAliasRequestDTO;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.channel.dto.TransactionStatusResponseDTO;
+import org.mifos.connector.common.gsma.dto.GsmaTransfer;
 import org.mifos.connector.common.mojaloop.dto.FspMoneyData;
 import org.mifos.connector.common.mojaloop.dto.TransactionType;
 import org.mifos.connector.common.mojaloop.type.TransferState;
@@ -46,14 +47,7 @@ import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.stream.StreamSupport.stream;
 import static org.mifos.connector.channel.camel.config.CamelProperties.*;
 import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.ACCOUNT;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_AUTHORISATION_REQUIRED;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_RTP_REQUEST;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID_TYPE;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.AMS;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.TENANT_ID;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSACTION_ID;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.*;
 import static org.mifos.connector.common.mojaloop.type.InitiatorType.CONSUMER;
 import static org.mifos.connector.common.mojaloop.type.Scenario.TRANSFER;
 import static org.mifos.connector.common.mojaloop.type.TransactionRole.PAYEE;
@@ -583,6 +577,27 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 }).log("${header.amsURL},${header.finalAmsVal}")
                 .removeHeaders("*")
                 .toD("${header.amsURL}/api/v1/paybill/validate/${header.finalAmsVal}?bridgeEndpoint=true");
+
+        from("rest:POST:/api/v1/gsma/transaction")
+                .id("gsma-transfer")
+                .unmarshal().json(JsonLibrary.Jackson, GsmaTransfer.class)
+                .log(LoggingLevel.INFO,"GSMA Transfer Body")
+                .process(e->{
+                    GsmaTransfer gsmaTranfer=e.getIn().getBody(GsmaTransfer.class);
+                    logger.info("Gsma Transfer DTO : {}",String.valueOf(gsmaTranfer));
+                    String subtype=gsmaTranfer.getSubType();
+                    String type=gsmaTranfer.getType();
+                    String amsName= e.getIn().getHeader("amsName").toString();
+                    String accountHoldingInstitutionId=e.getIn().getHeader("accountHoldingInstitutionId").toString();
+                    // inbound-transfer-mifos-lion
+                    Map<String, Object> variables = new HashMap<>();
+                    variables.put(TENANT_ID,accountHoldingInstitutionId);
+                    variables.put(CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaTranfer));
+                    String workflowName=subtype+"_"+type+"-"+amsName+"-"+accountHoldingInstitutionId;
+                    logger.info("Workflow Name:{}",workflowName);
+                    String transactionId = zeebeProcessStarter.startZeebeWorkflowC2B(workflowName, variables);
+                    e.getIn().setBody(transactionId);
+                });
     }
 
     private String getVariableValue(Iterator<Object> iterator, String variableName) {

@@ -574,6 +574,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     e.getIn().setBody(body.toString());
                     e.setProperty("amsURL",amsURL);
                     e.setProperty("finalAmsVal",finalAmsVal);
+                    e.setProperty("dfspId", e.getProperty("dfspId"));
                 }).log("${header.amsURL},${header.finalAmsVal}")
                 .removeHeaders("*")
                 .toD("${header.amsURL}/api/v1/paybill/validate/${header.finalAmsVal}?bridgeEndpoint=true");
@@ -593,7 +594,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     Map<String, Object> variables = new HashMap<>();
                     variables.put(TENANT_ID,accountHoldingInstitutionId);
                     variables.put(CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaTranfer));
-                    String workflowName=subtype+"_"+type+"-"+amsName+"-"+accountHoldingInstitutionId;
+                    String workflowName=new StringBuilder().append(subtype).append("_").append(type).append("-").append(amsName).append("-").append(accountHoldingInstitutionId).toString();
                     logger.info("Workflow Name:{}",workflowName);
                     String transactionId = zeebeProcessStarter.startZeebeWorkflowC2B(workflowName, variables);
                     e.getIn().setBody(transactionId);

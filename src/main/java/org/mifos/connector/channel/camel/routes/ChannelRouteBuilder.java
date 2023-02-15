@@ -47,7 +47,14 @@ import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.stream.StreamSupport.stream;
 import static org.mifos.connector.channel.camel.config.CamelProperties.*;
 import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.*;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.ACCOUNT;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_AUTHORISATION_REQUIRED;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_RTP_REQUEST;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID_TYPE;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.AMS;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.TENANT_ID;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.common.mojaloop.type.InitiatorType.CONSUMER;
 import static org.mifos.connector.common.mojaloop.type.Scenario.TRANSFER;
 import static org.mifos.connector.common.mojaloop.type.TransactionRole.PAYEE;
@@ -574,7 +581,6 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     e.getIn().setBody(body.toString());
                     e.setProperty("amsURL",amsURL);
                     e.setProperty("finalAmsVal",finalAmsVal);
-                    e.setProperty("dfspId", e.getProperty("dfspId"));
                 }).log("${header.amsURL},${header.finalAmsVal}")
                 .removeHeaders("*")
                 .toD("${header.amsURL}/api/v1/paybill/validate/${header.finalAmsVal}?bridgeEndpoint=true");

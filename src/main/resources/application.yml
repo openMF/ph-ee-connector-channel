@@ -21,6 +21,10 @@ timer: "PT45S"
 
 operations:
   url: "http://bb-operations.mifos.io/api/v1"
+  auth_enabled: false
+  endpoint:
+    transfers: "/transfers?page=0&size=1&"
+    transactionReq: "/transactionRequests/?"
 
 bpmn:
   flows:
@@ -68,6 +72,7 @@ rest:
   authorization:
     enabled: false
     host: http://localhost:8080
+    header: "Basic Y2xpZW50Og=="
 
 management:
   endpoint:

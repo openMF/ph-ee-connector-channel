@@ -27,14 +27,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSession;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -75,6 +78,9 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private String mpesaFlow;
     private String restAuthHost;
     private String operationsUrl;
+    private Boolean operationsAuthEnabled;
+    private String transfersEndpoint;
+    private String transactionEndpoint;
     private Boolean isNotificationSuccessServiceEnabled;
     private Boolean isNotificationFailureServiceEnabled;
     private ZeebeProcessStarter zeebeProcessStarter;
@@ -84,6 +90,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private ClientProperties clientProperties;
     private RestTemplate restTemplate;
     private String timer;
+    private String restAuthHeader;
 
     private String paygopsHost;
 
@@ -98,11 +105,15 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                @Value("${bpmn.flows.mpesa-flow}") String mpesaFlow,
                                @Value("${rest.authorization.host}") String restAuthHost,
                                @Value("${operations.url}") String operationsUrl,
+                               @Value("${operations.auth_enabled}") Boolean operationsAuthEnabled,
+                               @Value("${operations.endpoint.transfers}") String transfersEndpoint,
+                               @Value("${operations.endpoint.transactionReq}") String transactionEndpoint,
                                @Value("${mpesa.notification.success.enabled}") Boolean isNotificationSuccessServiceEnabled,
                                @Value("${mpesa.notification.failure.enabled}") Boolean isNotificationFailureServiceEnabled,
                                @Value("${timer}") String timer,
                                @Value("${paygops.host}") String paygopsHost,
                                @Value("${roster.host}") String rosterHost,
+                               @Value("${rest.authorization.header}") String restAuthHeader,
                                ZeebeClient zeebeClient,
                                ZeebeProcessStarter zeebeProcessStarter,
                                @Autowired(required = false) AuthProcessor authProcessor,
@@ -125,11 +136,15 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         this.restTemplate = restTemplate;
         this.restAuthHost = restAuthHost;
         this.operationsUrl = operationsUrl;
+        this.transfersEndpoint = transfersEndpoint;
+        this.transactionEndpoint = transactionEndpoint;
         this.isNotificationSuccessServiceEnabled = isNotificationSuccessServiceEnabled;
         this.isNotificationFailureServiceEnabled = isNotificationFailureServiceEnabled;
         this.timer = timer;
         this.paygopsHost=paygopsHost;
         this.rosterHost=rosterHost;
+        this.restAuthHeader = restAuthHeader;
+        this.operationsAuthEnabled = operationsAuthEnabled;
     }
 
     @Override
@@ -242,6 +257,46 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     e.getIn().setBody(objectMapper.writeValueAsString(response));
                 });
 
+        //fetch transfer details based on client correlation id
+        from("rest:GET:/channel/txnState/{correlationId}")
+                .id("transfer-details-correlationId")
+                .log(LoggingLevel.INFO, "## CHANNEL -> request for txn with client correlation Id" +
+                        " ${header.correlationId}")
+                .process(e -> {
+                    String tenantId = e.getIn().getHeader("Platform-TenantId", String.class);
+                    if (tenantId == null || !dfspIds.contains(tenantId)) {
+                        throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");}
+                    Client client = clientProperties.getClient(tenantId);
+                    String requestType = getRequestType(e.getIn().getHeader("requestType", String.class));
+                    HttpEntity<String> entity = buildHeader(tenantId, null);
+                    if(operationsAuthEnabled){
+                        UriComponentsBuilder builder = buildParams(client);
+                        ResponseEntity<String> exchange = callAuthApi(builder,entity);
+                        JSONObject jsonObject = new JSONObject(exchange.getBody());
+                        String token = jsonObject.getString("access_token");
+                        entity = buildHeader(tenantId, token);
+                    }
+                    else {
+                        entity = buildHeader(tenantId,null);
+                    }
+                    String correlationId = e.getIn().getHeader(CLIENTCORRELATIONID, String.class);
+                    ResponseEntity<String> exchange = callOpsTxnApi(requestType,correlationId,entity);
+                    JSONArray contents = new JSONObject(exchange.getBody()).getJSONArray("content");
+                    TransactionStatusResponseDTO response = new TransactionStatusResponseDTO();
+                    if (contents.length() != 1) {
+                        response = setTxnNotFound(response, correlationId);
+                    } else {
+                        JSONObject transfer = contents.getJSONObject(0);
+                        response = setTxnFound(response, transfer);
+                        exchange = fetchApibyWorkflowKey(entity,transfer.getLong("workflowInstanceKey"));
+                        JSONArray variables = new JSONObject(exchange.getBody()).getJSONArray("variables");
+                        String transferCode = getVariableValue(variables.iterator(), "transferCode");
+                        response.setTransferId(transferCode == null ? null :
+                                transferCode.replace("\"", ""));
+                        response.setClientRefId(correlationId);
+                    }e.getIn().setBody(objectMapper.writeValueAsString(response));
+                });
+
         from("rest:POST:/channel/transfer")
                 .id("inbound-transaction-request")
                 .log(LoggingLevel.INFO, "## CHANNEL -> PAYER inbound transfer request: ${body}")
@@ -284,6 +339,28 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     response.put("transactionId", transactionId);
                     exchange.getIn().setBody(response.toString());
                 });
+    }
+
+    private ResponseEntity<String> fetchApibyWorkflowKey(HttpEntity<String> entity, long workflowInstanceKey) {
+        return restTemplate.exchange(operationsUrl + "/transfer/" +
+              workflowInstanceKey, HttpMethod.GET, entity, String.class);
+    }
+
+    private ResponseEntity<String> callOpsTxnApi(String requestType, String correlationId, HttpEntity<String> entity) {
+        return restTemplate.exchange(operationsUrl + requestType +"clientCorrelationId=" +
+                correlationId, HttpMethod.GET, entity, String.class);
+    }
+
+    private ResponseEntity<String> callAuthApi(UriComponentsBuilder builder, HttpEntity<String> entity) {
+       return restTemplate.exchange(builder.toUriString(), HttpMethod.POST,
+                entity, String.class);
+    }
+
+    private String getRequestType(String requestType) {
+        requestType = requestType.isEmpty() ? "transfers" : requestType;
+        requestType = requestType.equalsIgnoreCase("transfers") ? transfersEndpoint :
+                transactionEndpoint;
+        return requestType;
     }
 
     private void collectionRoutes(){
@@ -592,7 +669,53 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .findFirst()
                 .map(v -> v.getString("value"))
                 .orElse(null);
-        logger.info("Variable {} found, value: {}", variableName, value);
+        logger.debug("Variable {} found, value: {}", variableName, value);
         return value;
+    }
+
+    private TransactionStatusResponseDTO setTxnFound(TransactionStatusResponseDTO response, JSONObject transfer) {
+        String status = transfer.has("status")  ? transfer.getString("status") :
+                transfer.getString("state");
+        response.setCompletedTimestamp(transfer.isNull("completedAt") ? null :
+                LocalDateTime.ofInstant(Instant.ofEpochMilli(transfer.getLong("completedAt")), ZoneId.systemDefault()));
+        response.setTransactionId(transfer.getString("transactionId"));
+        response.setTransferState("COMPLETED".equals(status) ? TransferState.COMMITTED : TransferState.RECEIVED);
+        return response;
+    }
+
+    private TransactionStatusResponseDTO setTxnNotFound(TransactionStatusResponseDTO response, String correlationId) {
+        logger.debug("Transaction not found for correlationId: {}", correlationId);
+        response.setClientRefId(correlationId);
+        response.setCompletedTimestamp(null);
+        response.setTransactionId(null);
+        response.setTransferState(TransferState.RECEIVED);
+        response.setTransferId(null);
+        return response;
+    }
+
+    private UriComponentsBuilder buildParams(Client client) {
+        HttpsURLConnection.setDefaultHostnameVerifier((restAuthHost, session) -> true);
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(restAuthHost + "/oauth/token")
+                // Add query parameter
+                .queryParam("username", client.getClientId())
+                .queryParam("password", client.getClientSecret())
+                .queryParam("grant_type", "password");
+        logger.debug("Builder : {}", builder.toUriString());
+        return builder;
+    }
+
+    private HttpEntity<String> buildHeader(String tenantId, String token) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        if (token == null) {
+            httpHeaders.add("Platform-TenantId", tenantId);
+            httpHeaders.add("Authorization", restAuthHeader);
+            logger.debug("Headers {}", httpHeaders.toSingleValueMap());
+        } else {
+            httpHeaders.add("Platform-TenantId", tenantId);
+            httpHeaders.remove("Authorization");
+            httpHeaders.add("Authorization", "Bearer " + token);
+        }
+        HttpEntity<String> entity = new HttpEntity<String>(null, httpHeaders);
+        return entity;
     }
 }

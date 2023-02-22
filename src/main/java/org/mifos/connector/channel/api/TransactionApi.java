@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 public interface TransactionApi {
 
     @PostMapping("/channel/transactionRequest")
-    String transaction(@RequestHeader(value="Platform-TenantId") String tenant, @RequestBody String requestBody);
+    String transaction(@RequestHeader(value="Platform-TenantId") String tenant, @RequestBody TransactionChannelRequestDTO requestBody);
 
     @PostMapping("/channel/transaction/TRANSACTION_ID/resolve")
     Object transactionId(@RequestBody String requestBody, @PathVariable String transactionId);

@@ -1,5 +1,5 @@
 camel:
-  server-port: 5000
+  server-port: 5002
   springboot:
     main-run-controller: true
   dataformat:
@@ -78,7 +78,7 @@ server:
 =======
 
 server:
-  port: 8080
+  port: 8082
 
 >>>>>>> 5dbb53a (conflicts resolved while rebase)
 rest:

@@ -16,7 +16,7 @@ public class TransactionApiController implements TransactionApi {
     private ProducerTemplate producerTemplate;
 
     @Override
-    public String transaction(String tenant, String requestBody){
+    public String transaction(String tenant, TransactionChannelRequestDTO requestBody){
         Exchange exchange = new DefaultExchange(producerTemplate.getCamelContext());
         exchange.getIn().setBody(requestBody);
         exchange.getIn().setHeader("Platform-TenantId", tenant);

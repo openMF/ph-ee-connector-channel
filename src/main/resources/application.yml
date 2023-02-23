@@ -6,7 +6,7 @@ camel:
     json-jackson:
       auto-discover-object-mapper: true
 
-dfspids: "DFSPID"
+dfspids: "gorilla"
 
 transaction-id-length: -1
 
@@ -18,6 +18,9 @@ mpesa:
       enabled: true
 
 timer: "PT45S"
+
+server:
+  port: 8081
 
 operations:
   url: "http://bb-operations.mifos.io/api/v1"
@@ -68,19 +71,8 @@ zeebe:
   broker:
     contactpoint: "localhost:26500"
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-server:
-  port: 8080
 
->>>>>>> ee2bd70 (Reverted Unnescessary changes)
-=======
 
-server:
-  port: 8082
-
->>>>>>> 5dbb53a (conflicts resolved while rebase)
 rest:
   authorization:
     enabled: false

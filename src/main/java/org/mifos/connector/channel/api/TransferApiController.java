@@ -1,5 +1,7 @@
 package org.mifos.connector.channel.api;
 
+import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.databind.*;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.support.DefaultExchange;
@@ -15,10 +17,14 @@ public class TransferApiController implements TransferApi{
     @Autowired
     private ProducerTemplate producerTemplate;
 
+    @Autowired
+    ObjectMapper objectMapper;
+
     @Override
-    public String transfer(String tenant, TransactionChannelRequestDTO requestBody) {
+    public String transfer(String tenant, TransactionChannelRequestDTO requestBody) throws JsonProcessingException {
         Exchange exchange = new DefaultExchange(producerTemplate.getCamelContext());
-        exchange.getIn().setBody(requestBody);
+        exchange.getIn().setBody(objectMapper.writeValueAsString(requestBody));
+        exchange.getIn().setHeader("Platform-TenantId", tenant);
         producerTemplate.send("direct:post-transfer", exchange);
 
         return exchange.getIn().getBody(String.class);

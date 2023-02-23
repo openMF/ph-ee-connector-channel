@@ -19,10 +19,12 @@ public class TransactionApiController implements TransactionApi {
     public String transaction(String tenant, TransactionChannelRequestDTO requestBody){
         Exchange exchange = new DefaultExchange(producerTemplate.getCamelContext());
         exchange.getIn().setBody(requestBody);
+        System.out.println("request = " + requestBody);
         exchange.getIn().setHeader("Platform-TenantId", tenant);
         producerTemplate.send("direct:post-transaction-request", exchange);
 
         return exchange.getIn().getBody(String.class);
+
     }
 
     @Override

@@ -1,14 +1,16 @@
 package org.mifos.connector.channel.api;
 
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
+import com.fasterxml.jackson.core.*;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.concurrent.*;
 
 public interface CollectionApi {
 
     @PostMapping("/channel/collection")
-    String collection(@RequestHeader(value="Platform-TenantId") String tenant, @RequestBody String requestBody, HttpServletResponse response);
+    String collection(@RequestHeader(value="Platform-TenantId") String tenant,
+                      @RequestHeader(value="X-CorrelationID") String correlationId,
+                      @RequestBody CollectionRequestDTO requestBody) throws ExecutionException, InterruptedException, JsonProcessingException;
 
 }

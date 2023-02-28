@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 public interface PartyRegistrationApi {
 
     @PostMapping("/channel/partyRegistration")
-    Object partyRegistration(@RequestHeader(value="Platform-TenantId") String tenant,
+    void partyRegistration(@RequestHeader(value="Platform-TenantId") String tenant,
                              @RequestBody RegisterAliasRequestDTO requestBody)
             throws JsonProcessingException;
 }

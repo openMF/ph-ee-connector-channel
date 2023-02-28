@@ -22,10 +22,7 @@ public class GSMATransactionApiController implements GSMATransactionApi {
     public GsmaP2PResponseDto gsmatransaction(GsmaTransfer requestBody) throws JsonProcessingException {
         Exchange exchange = new DefaultExchange(producerTemplate.getCamelContext());
         exchange.getIn().setBody(objectMapper.writeValueAsString(requestBody));
-//        Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(),
-//                objectMapper.writeValueAsString(requestBody));
         producerTemplate.send("direct:post-gsma-transaction", exchange);
-
         String body = exchange.getIn().getBody(String.class);
         return objectMapper.readValue(body,GsmaP2PResponseDto.class);
     }

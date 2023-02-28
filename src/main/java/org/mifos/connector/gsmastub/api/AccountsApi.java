@@ -5,6 +5,7 @@
  */
 package org.mifos.connector.gsmastub.api;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import org.mifos.connector.gsmastub.model.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,6 +28,7 @@ import java.util.List;
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 @Validated
+@Hidden
 public interface AccountsApi extends BaseGsmaApi {
 
     @Operation(summary = "Update an Account Identity.", description = "This endpoint updates an account identity. identityStatus, kycVerificationStatus, kycVerificationEntity and kycLevel field updates are permitted.", tags={ "Accounts" })

@@ -490,7 +490,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     exchange.getIn().setBody(response.toString());
                 });
 
-        from("rest:POST:/channel/transaction/{" + TRANSACTION_ID + "}/resolve")                .id("transaction-resolve")
+        from("rest:POST:/channel/transaction/{" + TRANSACTION_ID + "}/resolve")
+                .id("transaction-resolve")
                 .log(LoggingLevel.INFO, "## operator transaction resolve")
                 .process(e -> {
                     Map<String, Object> variables = new HashMap<>();

@@ -21,14 +21,12 @@ public class PartyRegistrationApiController implements PartyRegistrationApi {
     ObjectMapper objectMapper;
 
     @Override
-    public Object partyRegistration(String tenant, RegisterAliasRequestDTO requestBody) throws JsonProcessingException {
+    public void partyRegistration(String tenant, RegisterAliasRequestDTO requestBody) throws JsonProcessingException {
         Headers headers = new Headers.HeaderBuilder()
                 .addHeader("Platform-TenantId", tenant)
                 .build();
         Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(),
                 headers, objectMapper.writeValueAsString(requestBody));
         producerTemplate.send("direct:post-party-registration", exchange);
-
-        return exchange.getIn().getBody();
     }
 }

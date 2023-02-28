@@ -108,7 +108,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(400))
                 .stop();
 
-        from("rest:GET:/channel/gsma")
+        from("direct:get-channel-gsma")
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200))
                 .setBody(constant("It Works!"));
 
@@ -179,7 +179,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 });
 
 
-        from("rest:POST:/channel/gsma/inttransfer")
+        from("direct:post-gsma-payer-int-transfer")
                 .id("gsma-payer-inttransfer")
                 .log(LoggingLevel.INFO, "## CHANNEL -> GSMA PAYER initiated international transfer")
                 .unmarshal().json(JsonLibrary.Jackson, GSMATransaction.class)

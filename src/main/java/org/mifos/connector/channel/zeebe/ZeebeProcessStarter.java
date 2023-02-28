@@ -2,7 +2,7 @@ package org.mifos.connector.channel.zeebe;
 
 import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.api.response.ProcessInstanceEvent;
-import org.mifos.connector.channel.camel.utils.MpesaUtils;
+import org.mifos.connector.channel.utils.MpesaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

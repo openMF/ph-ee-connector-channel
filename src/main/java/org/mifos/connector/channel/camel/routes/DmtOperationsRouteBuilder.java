@@ -1,7 +1,7 @@
 package org.mifos.connector.channel.camel.routes;
 
 import org.apache.camel.LoggingLevel;
-import org.mifos.connector.channel.camel.utils.CamelDslString;
+import org.mifos.connector.channel.utils.CamelDslString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

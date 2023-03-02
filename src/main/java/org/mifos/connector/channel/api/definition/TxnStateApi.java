@@ -8,7 +8,7 @@ import static org.mifos.connector.channel.camel.config.CamelProperties.CLIENTCOR
 
 public interface TxnStateApi {
 
-    @GetMapping("/channel/txnState/{correlationId}")
+    @GetMapping("/channel/txnState/{X-CorrelationID}")
     TxnStateResponseDTO txnState(@RequestHeader (value="Platform-TenantId") String tenant,
                                  @PathVariable(value=CLIENTCORRELATIONID) String correlationId,
                                  @RequestHeader(value = "requestType") String requestType) throws JsonProcessingException;

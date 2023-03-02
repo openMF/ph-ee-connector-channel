@@ -5,10 +5,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContexts;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Info;
 import org.mifos.connector.gsmastub.configuration.CustomInstantDeserializer;
 import org.mifos.connector.gsmastub.configuration.LocalDateConverter;
 import org.mifos.connector.gsmastub.configuration.LocalDateTimeConverter;
@@ -34,6 +32,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 
 @SpringBootApplication
+@OpenAPIDefinition(info = @Info(title = "Channel connector APIs"))
 public class ChannelConnectorApplication {
 
     @Bean

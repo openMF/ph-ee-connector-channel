@@ -26,7 +26,7 @@ import java.util.List;
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 @Validated
-public interface BillcompaniesApi {
+public interface BillcompaniesApi extends BaseGsmaApi  {
 
     @Operation(summary = "View Bill Companies", description = "The Bill Companies API is used to return a list of Service Providers that accept Bill Payments.", tags={ "Bills" })
     @ApiResponses(value = { 

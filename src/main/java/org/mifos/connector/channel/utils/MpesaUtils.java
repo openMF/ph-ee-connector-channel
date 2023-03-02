@@ -1,4 +1,4 @@
-package org.mifos.connector.channel.camel.utils;
+package org.mifos.connector.channel.utils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;

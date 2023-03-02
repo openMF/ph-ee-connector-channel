@@ -25,7 +25,7 @@ import java.util.List;
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 @Validated
-public interface BatchtransactionsApi {
+public interface BatchtransactionsApi extends BaseGsmaApi  {
 
     @Operation(summary = "View Batch Completions", description = "This endpoint returns completed transactions for a specific batch", tags={ "Transactions" })
     @ApiResponses(value = { 

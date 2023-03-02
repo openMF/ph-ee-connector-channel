@@ -1,4 +1,4 @@
-package org.mifos.connector.channel.camel.utils;
+package org.mifos.connector.channel.utils;
 
 /**
  * The static class for getting the camel specific REST DSL paths for different http request type.

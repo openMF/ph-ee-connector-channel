@@ -19,6 +19,9 @@ mpesa:
 
 timer: "PT45S"
 
+server:
+  port: 8080
+
 operations:
   url: "http://bb-operations.mifos.io/api/v1"
   auth-enabled: false
@@ -88,6 +91,9 @@ logging:
     root: INFO
   pattern:
     console: "%clr(%d{dd-MM-yyyy HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr([%35.35t]){faint} %clr(%-28.28logger{28}){cyan} %clr(:){faint}%X{BUSINESS-LOG} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"
+
+springdoc:
+  writer-with-order-by-keys: true
 
 gsma:
   payee:

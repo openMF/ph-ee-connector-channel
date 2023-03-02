@@ -1,5 +1,5 @@
 camel:
-  server-port: 8080
+  server-port: 5000
   springboot:
     main-run-controller: true
   dataformat:
@@ -20,7 +20,7 @@ mpesa:
 timer: "PT45S"
 
 server:
-  port: 5000
+  port: 8080
 
 operations:
   url: "http://bb-operations.mifos.io/api/v1"

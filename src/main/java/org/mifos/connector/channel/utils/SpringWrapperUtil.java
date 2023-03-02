@@ -3,8 +3,6 @@ package org.mifos.connector.channel.utils;
 import org.apache.camel.*;
 import org.apache.camel.support.*;
 
-import java.util.*;
-
 public class SpringWrapperUtil {
     public static Exchange getDefaultWrappedExchange(CamelContext camelContext,
                                                      Headers headers,

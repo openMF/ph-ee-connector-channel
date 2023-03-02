@@ -20,7 +20,7 @@ public class JobApiController implements JobApi {
         Headers headers = new Headers.HeaderBuilder()
                 .build();
         Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(),
-                null,requestBody);
+                headers,requestBody);
         producerTemplate.send("direct:post-job-resolve", exchange);
         return exchange.getIn().getBody(null);
     }

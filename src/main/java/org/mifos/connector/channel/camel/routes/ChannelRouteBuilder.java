@@ -107,7 +107,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                @Value("${bpmn.flows.mpesa-flow}") String mpesaFlow,
                                @Value("${rest.authorization.host}") String restAuthHost,
                                @Value("${operations.url}") String operationsUrl,
-                               @Value("${operations.auth_enabled}") Boolean operationsAuthEnabled,
+                               @Value("${operations.auth-enabled}") Boolean operationsAuthEnabled,
                                @Value("${operations.endpoint.transfers}") String transfersEndpoint,
                                @Value("${operations.endpoint.transactionReq}") String transactionEndpoint,
                                @Value("${mpesa.notification.success.enabled}") Boolean isNotificationSuccessServiceEnabled,
@@ -260,10 +260,10 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 });
 
         //fetch transfer details based on client correlation id
-        from("rest:GET:/channel/txnState/{correlationId}")
+        from("rest:GET:/channel/txnState/{X-CorrelationID}")
                 .id("transfer-details-correlationId")
                 .log(LoggingLevel.INFO, "## CHANNEL -> request for txn with client correlation Id" +
-                        " ${header.correlationId}")
+                        " ${header.X-CorrelationID}")
                 .process(e -> {
                     String tenantId = e.getIn().getHeader("Platform-TenantId", String.class);
                     if (tenantId == null || !dfspIds.contains(tenantId)) {

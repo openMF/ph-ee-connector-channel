@@ -9,6 +9,7 @@ import org.apache.camel.component.bean.validator.BeanValidationException;
 import org.apache.camel.model.dataformat.JsonLibrary;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.mifos.connector.channel.GSMA_API.GsmaP2PResponseDto;
 import org.mifos.connector.channel.camel.config.Client;
 import org.mifos.connector.channel.camel.config.ClientProperties;
 import org.mifos.connector.channel.utils.AMSProps;
@@ -674,7 +675,12 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     String workflowName=new StringBuilder().append(subtype).append("_").append(type).append("-").append(amsName).append("-").append(accountHoldingInstitutionId).toString();
                     logger.info("Workflow Name:{}",workflowName);
                     String transactionId = zeebeProcessStarter.startZeebeWorkflowC2B(workflowName, variables);
-                    e.getIn().setBody(transactionId);
+                    GsmaP2PResponseDto responseDto = new GsmaP2PResponseDto();
+                    responseDto.transactionId = transactionId;
+
+                    JSONObject response = new JSONObject();
+                    response.put("transactionId", transactionId);
+                    e.getIn().setBody(response.toString());
                 });
     }
 

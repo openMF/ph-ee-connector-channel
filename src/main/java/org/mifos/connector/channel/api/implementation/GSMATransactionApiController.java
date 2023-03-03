@@ -3,12 +3,15 @@ package org.mifos.connector.channel.api.implementation;
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 import org.apache.camel.*;
-import org.apache.camel.support.*;
 import org.mifos.connector.channel.api.definition.GSMATransactionApi;
 import org.mifos.connector.channel.GSMA_API.*;
+import org.mifos.connector.channel.utils.Headers;
+import org.mifos.connector.channel.utils.SpringWrapperUtil;
 import org.mifos.connector.common.gsma.dto.*;
 import org.springframework.beans.factory.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
 
+@RestController
 public class GSMATransactionApiController implements GSMATransactionApi {
 
 
@@ -19,9 +22,15 @@ public class GSMATransactionApiController implements GSMATransactionApi {
     ObjectMapper objectMapper;
 
     @Override
-    public GsmaP2PResponseDto gsmatransaction(GsmaTransfer requestBody) throws JsonProcessingException {
-        Exchange exchange = new DefaultExchange(producerTemplate.getCamelContext());
-        exchange.getIn().setBody(objectMapper.writeValueAsString(requestBody));
+    public GsmaP2PResponseDto gsmatransaction(GsmaTransfer requestBody,String tenant, String correlationId,String amsName,String accountHoldId) throws JsonProcessingException {
+        Headers headers = new Headers.HeaderBuilder()
+                .addHeader("Platform-TenantId", tenant)
+                .addHeader("X-CorrelationID", correlationId)
+                .addHeader("amsName",amsName)
+                .addHeader("accountHoldingInstitutionId",accountHoldId)
+                .build();
+        Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(),
+                headers,objectMapper.writeValueAsString(requestBody));
         producerTemplate.send("direct:post-gsma-transaction", exchange);
         String body = exchange.getIn().getBody(String.class);
         return objectMapper.readValue(body,GsmaP2PResponseDto.class);

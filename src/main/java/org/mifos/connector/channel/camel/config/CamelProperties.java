@@ -8,5 +8,4 @@ public class CamelProperties {
     public static final String BATCH_ID = "batchId";
     public static final String PARTY_LOOKUP_FAILED = "partyLookupFailed";
     public static final String CLIENTCORRELATIONID = "X-CorrelationID";
-
-    public static final String TENANT_ID = "X-CorrelationID";}
+}

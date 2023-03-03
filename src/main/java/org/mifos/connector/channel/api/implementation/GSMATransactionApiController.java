@@ -22,9 +22,8 @@ public class GSMATransactionApiController implements GSMATransactionApi {
     ObjectMapper objectMapper;
 
     @Override
-    public GsmaP2PResponseDto gsmatransaction(GsmaTransfer requestBody,String tenant, String correlationId,String amsName,String accountHoldId) throws JsonProcessingException {
+    public GsmaP2PResponseDto gsmatransaction(GsmaTransfer requestBody, String correlationId,String amsName,String accountHoldId) throws JsonProcessingException {
         Headers headers = new Headers.HeaderBuilder()
-                .addHeader("Platform-TenantId", tenant)
                 .addHeader("X-CorrelationID", correlationId)
                 .addHeader("amsName",amsName)
                 .addHeader("accountHoldingInstitutionId",accountHoldId)

@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 public interface GSMATransactionApi {
     @PostMapping("/channel/gsma/transaction")
     GsmaP2PResponseDto gsmatransaction(@RequestBody GsmaTransfer requestBody,
-                                       @RequestHeader(value = "Platform-TenantId") String tenant,
                                        @RequestHeader(value = "X-CorrelationID") String correlationId,
                                        @RequestHeader(value = "amsName") String amsName,
                                        @RequestHeader(value = "accountHoldingInstitutionId") String accountHoldId) throws JsonProcessingException;

@@ -656,7 +656,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .removeHeaders("*")
                 .toD("${header.amsURL}/api/v1/paybill/validate/${header.finalAmsVal}?bridgeEndpoint=true");
 
-        from("rest:POST:/channel/gsma/transaction")
+        from("direct:post-gsma-transaction")
                 .id("gsma-transfer")
                 .unmarshal().json(JsonLibrary.Jackson, GsmaTransfer.class)
                 .log(LoggingLevel.INFO,"GSMA Transfer Body")

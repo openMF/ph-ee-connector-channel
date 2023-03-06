@@ -2,13 +2,16 @@ package org.mifos.connector.channel.utils;
 
 
 import org.json.JSONObject;
+import org.mifos.connector.common.gsma.dto.CustomData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @Component
@@ -63,6 +66,15 @@ public class AMSUtils {
         return finalAmsVal;
     }
 
+    public Map<String, Object> setZeebeVariables(List<CustomData> customData) {
+        Map<String,Object>variables=new HashMap<>();
+        for(CustomData obj:customData){
+            String key=obj.getKey();
+            String value=obj.getValue();
+            variables.put(key,value);
+        }
+        return variables;
+    }
 }
 
 

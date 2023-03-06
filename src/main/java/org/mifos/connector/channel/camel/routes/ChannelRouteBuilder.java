@@ -646,23 +646,17 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     String paybillRequestBodyString = e.getIn().getBody(String.class);
                     logger.info("Payload : {}",paybillRequestBodyString);
                     JSONObject body = new JSONObject(paybillRequestBodyString);
-                    String amsURL="";
-                    // Finding the AMS connector
-                    String finalAmsVal = amsUtils.getAMSName(body);
-                    if(finalAmsVal.equalsIgnoreCase("paygops"))
-                    {
-                        amsURL=paygopsHost;
-                    }
-                    else if(finalAmsVal.equalsIgnoreCase("roster"))
-                    {
-                        amsURL=rosterHost;
-                    }
+                    String amsURL = e.getIn().getHeader("amsUrl").toString();
+                    String finalAmsVal = e.getIn().getHeader("amsName").toString();
+                    String dfspId=e.getIn().getHeader("accountHoldingInstitutionId").toString();
                     logger.debug("Final Value for ams : " + finalAmsVal);
                     logger.debug("AMS URL : {}",amsURL);
                     e.getIn().setBody(body.toString());
                     e.setProperty("amsURL",amsURL);
                     e.setProperty("finalAmsVal",finalAmsVal);
-                }).log("${header.amsURL},${header.finalAmsVal}")
+                    e.setProperty("dfspId",dfspId);
+                })
+                .log("${header.amsURL},${header.finalAmsVal}")
                 .removeHeaders("*")
                 .toD("${header.amsURL}/api/v1/paybill/validate/${header.finalAmsVal}?bridgeEndpoint=true");
 
@@ -678,7 +672,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     String amsName= e.getIn().getHeader("amsName").toString();
                     String accountHoldingInstitutionId=e.getIn().getHeader("accountHoldingInstitutionId").toString();
                     // inbound-transfer-mifos-lion
-                    Map<String, Object> variables = new HashMap<>();
+                    Map<String, Object> variables = amsUtils.setZeebeVariables(gsmaTranfer.getCustomData());
                     variables.put(TENANT_ID,accountHoldingInstitutionId);
                     variables.put(CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaTranfer));
                     String workflowName=new StringBuilder().append(subtype).append("_").append(type).append("-").append(amsName).append("-").append(accountHoldingInstitutionId).toString();

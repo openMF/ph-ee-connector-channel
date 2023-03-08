@@ -73,6 +73,8 @@ public class AMSUtils {
             String value=obj.getValue();
             variables.put(key,value);
         }
+        // Also publishing custom data list
+        variables.put("customData",customData);
         return variables;
     }
 }

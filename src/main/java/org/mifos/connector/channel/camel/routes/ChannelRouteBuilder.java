@@ -641,20 +641,21 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     {
         from("direct:post-validation-ams")
                 .id("validation-ams")
-                .log(LoggingLevel.INFO, "Validation Check for identifier type paygops")
+                .log(LoggingLevel.INFO, "Validation Check")
                 .process(e -> {
                     String paybillRequestBodyString = e.getIn().getBody(String.class);
                     logger.info("Payload : {}",paybillRequestBodyString);
                     JSONObject body = new JSONObject(paybillRequestBodyString);
                     String amsURL = e.getIn().getHeader("amsUrl").toString();
                     String finalAmsVal = e.getIn().getHeader("amsName").toString();
-                    String dfspId=e.getIn().getHeader("accountHoldingInstitutionId").toString();
+                    String accountHoldingInstitutionId=e.getIn().getHeader("accountHoldingInstitutionId").toString();
                     logger.debug("Final Value for ams : " + finalAmsVal);
                     logger.debug("AMS URL : {}",amsURL);
+                    logger.info("accountHoldingInstitutionId: {}",accountHoldingInstitutionId);
                     e.getIn().setBody(body.toString());
                     e.setProperty("amsURL",amsURL);
                     e.setProperty("finalAmsVal",finalAmsVal);
-                    e.setProperty("dfspId",dfspId);
+                    e.setProperty("accountHoldingInstitutionId", accountHoldingInstitutionId);
                 })
                 .log("${header.amsURL},${header.finalAmsVal}")
                 .removeHeaders("*")

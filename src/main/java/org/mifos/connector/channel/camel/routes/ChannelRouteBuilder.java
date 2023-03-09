@@ -307,6 +307,10 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     Map<String, Object> extraVariables = new HashMap<>();
                     extraVariables.put(IS_RTP_REQUEST, false);
 
+                    // adding batchId zeebeVariable form header
+                    String batchIdHeader = exchange.getIn().getHeader(BATCH_ID, String.class);
+                    extraVariables.put(BATCH_ID, batchIdHeader);
+
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     if (tenantId == null || !dfspIds.contains(tenantId)) {
                         throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");

@@ -5,10 +5,13 @@ import org.mifos.connector.channel.GSMA_API.*;
 import org.mifos.connector.common.channel.dto.*;
 import org.springframework.web.bind.annotation.*;
 
+import static org.mifos.connector.channel.camel.config.CamelProperties.BATCH_ID_HEADER;
+
 public interface TransferApi {
 
     @PostMapping("/channel/transfer")
     GsmaP2PResponseDto transfer(@RequestHeader(value = "Platform-TenantId") String tenant,
+                                @RequestHeader(value = BATCH_ID_HEADER, required = false) String batchId,
                                 @RequestBody TransactionChannelRequestDTO requestBody) throws JsonProcessingException;
 
     @GetMapping("/channel/transfer/{transactionId}")

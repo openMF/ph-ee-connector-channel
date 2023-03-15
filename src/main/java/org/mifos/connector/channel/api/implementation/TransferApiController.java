@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.*;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.mifos.connector.channel.api.definition.TransferApi;
+import org.mifos.connector.channel.utils.GsmaP2PResponseDto;
 import org.mifos.connector.channel.utils.Headers;
 import org.mifos.connector.channel.utils.SpringWrapperUtil;
-import org.mifos.connector.channel.GSMA_API.*;
 import org.mifos.connector.common.channel.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,7 +23,7 @@ public class TransferApiController implements TransferApi {
     ObjectMapper objectMapper;
 
     @Override
-    public GsmaP2PResponseDto transfer(String tenant,String batchId, TransactionChannelRequestDTO requestBody) throws JsonProcessingException {
+    public GsmaP2PResponseDto transfer(String tenant, String batchId, TransactionChannelRequestDTO requestBody) throws JsonProcessingException {
         Headers headers = new Headers.HeaderBuilder()
                 .addHeader("Platform-TenantId", tenant)
                 .addHeader(BATCH_ID, batchId)

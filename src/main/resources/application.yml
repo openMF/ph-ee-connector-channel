@@ -1,12 +1,12 @@
 camel:
-  server-port: 5000
+  server-port: 5001
   springboot:
     main-run-controller: true
   dataformat:
     json-jackson:
       auto-discover-object-mapper: true
 
-dfspids: "DFSPID"
+dfspids: "gorilla,lion"
 
 transaction-id-length: -1
 

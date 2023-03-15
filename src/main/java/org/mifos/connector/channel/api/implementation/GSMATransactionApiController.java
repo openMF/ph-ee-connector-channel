@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 import org.apache.camel.*;
 import org.mifos.connector.channel.api.definition.GSMATransactionApi;
-import org.mifos.connector.channel.GSMA_API.*;
+import org.mifos.connector.channel.utils.GsmaP2PResponseDto;
 import org.mifos.connector.channel.utils.Headers;
 import org.mifos.connector.channel.utils.SpringWrapperUtil;
 import org.mifos.connector.common.gsma.dto.*;
@@ -22,7 +22,7 @@ public class GSMATransactionApiController implements GSMATransactionApi {
     ObjectMapper objectMapper;
 
     @Override
-    public GsmaP2PResponseDto gsmatransaction(GsmaTransfer requestBody, String correlationId,String amsName,String accountHoldId) throws JsonProcessingException {
+    public GsmaP2PResponseDto gsmatransaction(GsmaTransfer requestBody, String correlationId, String amsName, String accountHoldId) throws JsonProcessingException {
         Headers headers = new Headers.HeaderBuilder()
                 .addHeader("X-CorrelationID", correlationId)
                 .addHeader("amsName",amsName)

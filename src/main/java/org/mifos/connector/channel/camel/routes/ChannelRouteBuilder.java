@@ -663,6 +663,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     e.setProperty("amsURL",amsURL);
                     e.setProperty("finalAmsVal",finalAmsVal);
                 }).log("${header.amsURL},${header.finalAmsVal}")
+                .removeHeaders("*")
                 .toD("${header.amsURL}/api/v1/paybill/validate/${header.finalAmsVal}?bridgeEndpoint=true");
 
         from("direct:post-gsma-transaction")

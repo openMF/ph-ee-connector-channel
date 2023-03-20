@@ -26,7 +26,6 @@ public class GSMATransactionApiController implements GSMATransactionApi {
 
     @Override
     public GsmaP2PResponseDto gsmatransaction(GsmaTransfer requestBody, String correlationId,String amsName,String accountHoldId) throws JsonProcessingException {
-        logger.info("Inside gsma api");
         Headers headers = new Headers.HeaderBuilder()
                 .addHeader("X-CorrelationID", correlationId)
                 .addHeader("amsName",amsName)

@@ -639,7 +639,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
     private void paybillRoutes()
     {
-        from("rest:POST:/accounts/validate/{primaryIdentifierName}/{primaryIdentifierVal}")
+        from("direct:post-validation-ams")
                 .id("validation-ams")
                 .log(LoggingLevel.INFO, "Validation Check for identifier type paygops")
                 .process(e -> {

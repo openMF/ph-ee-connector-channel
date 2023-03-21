@@ -649,15 +649,15 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     String amsURL = e.getIn().getHeader("amsUrl").toString();
                     String finalAmsVal = e.getIn().getHeader("amsName").toString();
                     String accountHoldingInstitutionId=e.getIn().getHeader("accountHoldingInstitutionId").toString();
-                    logger.info("Final Value for ams : " + finalAmsVal);
-                    logger.info("AMS URL : {}",amsURL);
-                    logger.info("accountHoldingInstitutionId: {}",accountHoldingInstitutionId);
+                    logger.debug("Final Value for ams : " + finalAmsVal);
+                    logger.debug("AMS URL : {}",amsURL);
+                    logger.debug("accountHoldingInstitutionId: {}",accountHoldingInstitutionId);
                     e.getIn().setBody(body.toString());
                     e.setProperty("amsURL",amsURL);
                     e.setProperty("finalAmsVal",finalAmsVal);
                     e.getIn().removeHeaders("*");
                     e.getIn().setHeader("accountHoldingInstitutionId", accountHoldingInstitutionId);
-                    logger.info("Header:{}",e.getIn().getHeaders());
+                    logger.debug("Header:{}",e.getIn().getHeaders());
                 })
                 .log("${header.amsURL},${header.finalAmsVal}")
                 .toD("${header.amsURL}"+"/api/v1/paybill/validate/"+"${header.finalAmsVal}"+"?bridgeEndpoint=true");

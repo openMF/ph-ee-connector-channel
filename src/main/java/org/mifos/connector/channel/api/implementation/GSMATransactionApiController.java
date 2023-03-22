@@ -8,6 +8,8 @@ import org.mifos.connector.channel.GSMA_API.*;
 import org.mifos.connector.channel.utils.Headers;
 import org.mifos.connector.channel.utils.SpringWrapperUtil;
 import org.mifos.connector.common.gsma.dto.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,6 +22,7 @@ public class GSMATransactionApiController implements GSMATransactionApi {
 
     @Autowired
     ObjectMapper objectMapper;
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
     public GsmaP2PResponseDto gsmatransaction(GsmaTransfer requestBody, String correlationId,String amsName,String accountHoldId) throws JsonProcessingException {

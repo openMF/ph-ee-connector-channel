@@ -235,8 +235,10 @@ public class ZeebeWorkers {
                 .handler((client, job) -> {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                     Map<String, Object> variables = job.getVariablesAsMap();
-                    client.newCompleteCommand(job.getKey()).send().join();
-
+                    logger.info("Message received: {}", variables.get("message"));
+                    client.newCompleteCommand(job.getKey())
+                            .send()
+                            .join();
                 })
                 .name("worker-test")
                 .maxJobsActive(workerMaxJobs)

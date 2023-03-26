@@ -644,7 +644,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .log(LoggingLevel.INFO, "Validation Check")
                 .process(e -> {
                     String paybillRequestBodyString = e.getIn().getBody(String.class);
-                    logger.info("Payload : {}",paybillRequestBodyString);
+                    logger.debug("Payload : {}",paybillRequestBodyString);
                     JSONObject body = new JSONObject(paybillRequestBodyString);
                     String amsURL = e.getIn().getHeader("amsUrl").toString();
                     String finalAmsVal = e.getIn().getHeader("amsName").toString();

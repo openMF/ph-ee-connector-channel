@@ -44,12 +44,6 @@ bpmn:
     international-remittance-payer: "international_remittance_payer_process-{dfspid}"
     mpesa-flow: "mpesa_flow_{ams}-{dfspid}"
 
-paygops:
-  host: "http://localhost:5002/"
-
-roster:
-  host: "http://localhost:5004/"
-
 ams:
   groups:
     - identifier: "accountid"
@@ -58,8 +52,6 @@ ams:
       value: "paygops"
     - identifier: "default"
       value : "paygops"
-
-
 
 zeebe:
   client:

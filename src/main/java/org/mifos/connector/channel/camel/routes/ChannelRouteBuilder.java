@@ -1,5 +1,6 @@
 package org.mifos.connector.channel.camel.routes;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import io.camunda.zeebe.client.ZeebeClient;
@@ -12,6 +13,7 @@ import org.json.JSONObject;
 import org.mifos.connector.channel.GSMA_API.GsmaP2PResponseDto;
 import org.mifos.connector.channel.camel.config.Client;
 import org.mifos.connector.channel.camel.config.ClientProperties;
+import org.mifos.connector.channel.model.ValidationResponseDTO;
 import org.mifos.connector.channel.utils.AMSProps;
 import org.mifos.connector.channel.utils.AMSUtils;
 import org.mifos.connector.channel.zeebe.ZeebeProcessStarter;
@@ -644,7 +646,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 .log(LoggingLevel.INFO, "Validation Check")
                 .process(e -> {
                     String paybillRequestBodyString = e.getIn().getBody(String.class);
-                    logger.info("Payload : {}",paybillRequestBodyString);
+                    logger.debug("Payload : {}",paybillRequestBodyString);
                     JSONObject body = new JSONObject(paybillRequestBodyString);
                     String amsURL = e.getIn().getHeader("amsUrl").toString();
                     String finalAmsVal = e.getIn().getHeader("amsName").toString();
@@ -660,7 +662,18 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     logger.debug("Header:{}",e.getIn().getHeaders());
                 })
                 .log("${header.amsURL},${header.finalAmsVal}")
-                .toD("${header.amsURL}"+"/api/v1/paybill/validate/"+"${header.finalAmsVal}"+"?bridgeEndpoint=true");
+                .toD("${header.amsURL}"+"/api/v1/paybill/validate/"+"${header.finalAmsVal}"+"?bridgeEndpoint=true")
+                .id("ams-validation-response")
+                .unmarshal().json(JsonLibrary.Jackson, ValidationResponseDTO.class)
+                .log(LoggingLevel.INFO, "## AMS Validation response DTO")
+                .setBody(e -> {
+                    ValidationResponseDTO validationResponseDTO=e.getIn().getBody(ValidationResponseDTO.class);
+                    try {
+                        return objectMapper.writeValueAsString(validationResponseDTO);
+                    } catch (JsonProcessingException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                });
 
         from("direct:post-gsma-transaction")
                 .id("gsma-transfer")
@@ -677,7 +690,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     Map<String, Object> variables = amsUtils.setZeebeVariables(gsmaTranfer.getCustomData());
                     variables.put(TENANT_ID,accountHoldingInstitutionId);
                     variables.put(CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaTranfer));
-                    String workflowName=new StringBuilder().append(subtype).append("_").append(type).append("-").append(amsName).append("-").append(accountHoldingInstitutionId).toString();
+                    String workflowName=new StringBuilder().append(subtype).append("_").append(type).append("_").append(amsName).append("-").append(accountHoldingInstitutionId).toString();
                     logger.info("Workflow Name:{}",workflowName);
                     String transactionId = zeebeProcessStarter.startZeebeWorkflowC2B(workflowName, variables);
                     GsmaP2PResponseDto responseDto = new GsmaP2PResponseDto();

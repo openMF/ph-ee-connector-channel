@@ -25,13 +25,11 @@ public class GSMATransactionApiController implements GSMATransactionApi {
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
-    public GsmaP2PResponseDto gsmatransaction(GsmaTransfer requestBody, String correlationId,String amsName,String accountHoldId,String reconciled,String mpesaTxnId) throws JsonProcessingException {
+    public GsmaP2PResponseDto gsmatransaction(GsmaTransfer requestBody, String correlationId,String amsName,String accountHoldId) throws JsonProcessingException {
         Headers headers = new Headers.HeaderBuilder()
                 .addHeader("X-CorrelationID", correlationId)
                 .addHeader("amsName",amsName)
                 .addHeader("accountHoldingInstitutionId",accountHoldId)
-                .addHeader("reconciled",reconciled)
-                .addHeader("mpesaTxnId",mpesaTxnId)
                 .build();
         Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(),
                 headers,objectMapper.writeValueAsString(requestBody));

@@ -95,11 +95,6 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private String timer;
     private String restAuthHeader;
 
-    private String paygopsHost;
-
-    private String rosterHost;
-
-
     public ChannelRouteBuilder(@Value("#{'${dfspids}'.split(',')}") List<String> dfspIds,
                                @Value("${bpmn.flows.payment-transfer}") String paymentTransferFlow,
                                @Value("${bpmn.flows.special-payment-transfer}") String specialPaymentTransferFlow,
@@ -114,8 +109,6 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                @Value("${mpesa.notification.success.enabled}") Boolean isNotificationSuccessServiceEnabled,
                                @Value("${mpesa.notification.failure.enabled}") Boolean isNotificationFailureServiceEnabled,
                                @Value("${timer}") String timer,
-                               @Value("${paygops.host}") String paygopsHost,
-                               @Value("${roster.host}") String rosterHost,
                                @Value("${rest.authorization.header}") String restAuthHeader,
                                ZeebeClient zeebeClient,
                                ZeebeProcessStarter zeebeProcessStarter,
@@ -144,8 +137,6 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         this.isNotificationSuccessServiceEnabled = isNotificationSuccessServiceEnabled;
         this.isNotificationFailureServiceEnabled = isNotificationFailureServiceEnabled;
         this.timer = timer;
-        this.paygopsHost=paygopsHost;
-        this.rosterHost=rosterHost;
         this.restAuthHeader = restAuthHeader;
         this.operationsAuthEnabled = operationsAuthEnabled;
     }
@@ -687,7 +678,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     String amsName= e.getIn().getHeader("amsName").toString();
                     String accountHoldingInstitutionId=e.getIn().getHeader("accountHoldingInstitutionId").toString();
                     // inbound-transfer-mifos-lion
-                    Map<String, Object> variables = amsUtils.setZeebeVariables(gsmaTranfer.getCustomData());
+                    Map<String, Object> variables = amsUtils.setZeebeVariables(gsmaTranfer.getCustomData(),timer);
                     variables.put(TENANT_ID,accountHoldingInstitutionId);
                     variables.put(CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaTranfer));
                     String workflowName=new StringBuilder().append(subtype).append("_").append(type).append("_").append(amsName).append("-").append(accountHoldingInstitutionId).toString();

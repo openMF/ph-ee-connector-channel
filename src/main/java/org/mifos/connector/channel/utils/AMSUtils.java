@@ -66,7 +66,7 @@ public class AMSUtils {
         return finalAmsVal;
     }
 
-    public Map<String, Object> setZeebeVariables(List<CustomData> customData) {
+    public Map<String, Object> setZeebeVariables(List<CustomData> customData, String timer) {
         Map<String,Object>variables=new HashMap<>();
         for(CustomData obj:customData){
             String key=obj.getKey();
@@ -75,6 +75,7 @@ public class AMSUtils {
         }
         // Also publishing custom data list
         variables.put("customData",customData);
+        variables.put("timer",timer);
         return variables;
     }
 }

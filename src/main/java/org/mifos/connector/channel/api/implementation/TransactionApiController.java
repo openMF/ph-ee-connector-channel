@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.*;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.mifos.connector.channel.api.definition.TransactionApi;
-import org.mifos.connector.channel.GSMA_API.*;
+import org.mifos.connector.channel.utils.GsmaP2PResponseDto;
 import org.mifos.connector.channel.utils.Headers;
 import org.mifos.connector.channel.utils.SpringWrapperUtil;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;

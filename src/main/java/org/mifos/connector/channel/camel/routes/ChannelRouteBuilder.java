@@ -10,7 +10,7 @@ import org.apache.camel.component.bean.validator.BeanValidationException;
 import org.apache.camel.model.dataformat.JsonLibrary;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.mifos.connector.channel.GSMA_API.GsmaP2PResponseDto;
+import org.mifos.connector.channel.utils.GsmaP2PResponseDto;
 import org.mifos.connector.channel.camel.config.Client;
 import org.mifos.connector.channel.camel.config.ClientProperties;
 import org.mifos.connector.channel.model.ValidationResponseDTO;

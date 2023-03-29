@@ -70,7 +70,7 @@ public class AMSUtils {
         Map<String,Object>variables=new HashMap<>();
         for(CustomData obj:customData){
             String key=obj.getKey();
-            String value=obj.getValue();
+            Object value=obj.getValue();
             variables.put(key,value);
         }
         // Also publishing custom data list

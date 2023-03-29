@@ -8,7 +8,7 @@ pipeline {
             }
         }
         
-        stage('docker') {
+        stage('docker build') {
             steps {
                 sh 'docker build . -t paymenthubee.azurecr.io/phee/connector-channel'
                 sh 'docker push paymenthubee.azurecr.io/phee/connector-channel'

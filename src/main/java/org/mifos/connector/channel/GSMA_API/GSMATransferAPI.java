@@ -13,7 +13,7 @@ public interface GSMATransferAPI {
 
     @PostMapping("/channel/gsma/transfer")
     ResponseEntity<Object> gsmatransfer(@RequestHeader(value="Platform-TenantId") String tenant,
-                                @RequestHeader(value="X-CorrelationID") String correlationId,
+                                @RequestHeader(value="X-CorrelationID",required=false) String correlationId,
                                 @RequestBody GSMATransaction requestBody)
             throws JsonProcessingException;
 

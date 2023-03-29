@@ -231,7 +231,7 @@ public class ZeebeWorkers {
 
     private void workerTestWorkflows() {
         zeebeClient.newWorker()
-                .jobType("worker-test")
+                .jobType("test-worker")
                 .handler((client, job) -> {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                     Map<String, Object> variables = job.getVariablesAsMap();
@@ -240,7 +240,7 @@ public class ZeebeWorkers {
                             .send()
                             .join();
                 })
-                .name("worker-test")
+                .name("test-worker")
                 .maxJobsActive(workerMaxJobs)
                 .open();
     }

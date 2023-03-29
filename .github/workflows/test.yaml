@@ -7,6 +7,10 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v3
         with:
+          path: master
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
           repository: openmf/ph-ee-connector-integration-test
           path: ph-ee-connector-integration-test
       - name: Assemble project

@@ -56,6 +56,7 @@ public class ZeebeWorkers {
         workerSendPayeeSuccessToChannel();
         workerSendPayeeFailureToChannel();
         workerInvokeAcknowledgementWorkflows();
+        workerTestWorkflows();
     }
 
     private void workerSendErrorToChannel(){
@@ -224,6 +225,22 @@ public class ZeebeWorkers {
                             .join();
                 })
                 .name("send-payee-failure-to-channel")
+                .maxJobsActive(workerMaxJobs)
+                .open();
+    }
+
+    private void workerTestWorkflows() {
+        zeebeClient.newWorker()
+                .jobType("test-worker")
+                .handler((client, job) -> {
+                    logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+                    Map<String, Object> variables = job.getVariablesAsMap();
+                    logger.info("Message received: {}", variables.get("message"));
+                    client.newCompleteCommand(job.getKey())
+                            .send()
+                            .join();
+                })
+                .name("test-worker")
                 .maxJobsActive(workerMaxJobs)
                 .open();
     }

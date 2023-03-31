@@ -235,7 +235,7 @@ public class ZeebeWorkers {
                 .handler((client, job) -> {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                     Map<String, Object> variables = job.getVariablesAsMap();
-                    logger.info("Message received: {}", variables.get("message"));
+                    logger.info("Message received: {}", variables.toString());
                     client.newCompleteCommand(job.getKey())
                             .send()
                             .join();

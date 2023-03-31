@@ -6,7 +6,9 @@ import org.mifos.connector.channel.api.definition.ZeebeTestApi;
 import org.mifos.connector.channel.utils.Headers;
 import org.mifos.connector.channel.utils.SpringWrapperUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RestController;
 
+@RestController
 public class ZeebeTestApiController implements ZeebeTestApi {
 
     @Autowired
@@ -14,6 +16,7 @@ public class ZeebeTestApiController implements ZeebeTestApi {
 
     @Override
     public Object workflow(String requestBody) {
+
         Headers headers = new Headers.HeaderBuilder().build();
         Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(),
                 headers,requestBody);

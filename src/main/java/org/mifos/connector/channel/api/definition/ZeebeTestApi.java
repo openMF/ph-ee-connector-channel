@@ -5,7 +5,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 public interface ZeebeTestApi {
 
-
-    @PostMapping("/channel/workflow/zeebe-test")
+    @PostMapping("/channel/workflow/zeebetest")
     Object workflow(@RequestBody String requestBody);
 }

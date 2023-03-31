@@ -749,7 +749,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private void zeebeTestRoutes(){
 
         from("direct:zeebe-flow-test")
-                .id("zeebe-test")
+                .id("zeebetest")
                 .log(LoggingLevel.INFO, "## operator workflow resolve")
                 .process(e -> {
 //                    JSONObject request = new JSONObject(e.getIn().getBody(String.class));
@@ -764,7 +764,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 //                            .variables(newVariables)
 //                            .send()
 //                    ;
-                    String zeebeTestBpmn = "zeebe-test";
+                    String zeebeTestBpmn = "zeebetest";
                     Map<String, Object> extraVariables = new HashMap<>();
                     String instanceId = zeebeProcessStarter.startZeebeWorkflow(zeebeTestBpmn,
                             e.getIn().getBody(String.class),

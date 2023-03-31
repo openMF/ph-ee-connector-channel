@@ -160,6 +160,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         workflowRoutes();
         acknowledgementRoutes();
         paybillRoutes();
+        zeebeTestRoutes();
     }
     private void handleExceptions(){
         onException(BeanValidationException.class)

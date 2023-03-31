@@ -745,4 +745,40 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         HttpEntity<String> entity = new HttpEntity<String>(null, httpHeaders);
         return entity;
     }
+
+    private void zeebeTestRoutes(){
+
+        from("direct:zeebe-flow-test")
+                .id("zeebe-test")
+                .log(LoggingLevel.INFO, "## operator workflow resolve")
+                .process(e -> {
+//                    JSONObject request = new JSONObject(e.getIn().getBody(String.class));
+//                    JSONObject incident = request.getJSONObject("incident");
+//                    Map<String, Object> newVariables = new HashMap<>();
+//                    JSONObject requestedVariables = request.getJSONObject("variables");
+//                    requestedVariables.keys().forEachRemaining(k -> {
+//                        newVariables.put(k, requestedVariables.get(k));
+//                    });
+//
+//                    zeebeClient.newSetVariablesCommand(incident.getLong("elementInstanceKey"))
+//                            .variables(newVariables)
+//                            .send()
+//                    ;
+                    String zeebeTestBpmn = "zeebe-test";
+                    Map<String, Object> extraVariables = new HashMap<>();
+                    String instanceId = zeebeProcessStarter.startZeebeWorkflow(zeebeTestBpmn,
+                            e.getIn().getBody(String.class),
+                            extraVariables);
+
+//                    zeebeClient.newResolveIncidentCommand(incident.getLong("key"))
+//                            .send()
+                    ;
+                    JSONObject response = new JSONObject();
+                    response.put("instanceId", instanceId);
+//                    response.put("transactionId", transactionId);
+//                    response.put("batchId", batchId);
+                    e.getIn().setBody(response.toString());
+                });
+//                .setBody(constant((Object) null));
+    }
 }

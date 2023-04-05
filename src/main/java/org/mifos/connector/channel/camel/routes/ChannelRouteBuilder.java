@@ -98,7 +98,6 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
     private String rosterHost;
     private String notificationFlow;
-    private String messageGatewayFlow;
 
     public ChannelRouteBuilder(@Value("#{'${dfspids}'.split(',')}") List<String> dfspIds,
                                @Value("${bpmn.flows.payment-transfer}") String paymentTransferFlow,
@@ -116,7 +115,6 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                @Value("${timer}") String timer,
                                @Value("${rest.authorization.header}") String restAuthHeader,
                                @Value("${bpmn.flows.notification}") String notificationFlow,
-                               @Value("${bpmn.flows.messagegateway}") String messageGatewayFlow,
                                ZeebeClient zeebeClient,
                                ZeebeProcessStarter zeebeProcessStarter,
                                @Autowired(required = false) AuthProcessor authProcessor,
@@ -146,7 +144,6 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         this.timer = timer;
         this.restAuthHeader = restAuthHeader;
         this.notificationFlow = notificationFlow;
-        this.messageGatewayFlow = messageGatewayFlow;
         this.operationsAuthEnabled = operationsAuthEnabled;
     }
 
@@ -163,7 +160,6 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         acknowledgementRoutes();
         paybillRoutes();
         notificationRoutes();
-        messageGatewayRoutes();
     }
     private void handleExceptions(){
         onException(BeanValidationException.class)
@@ -705,7 +701,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
 
     private void notificationRoutes(){
-        from("rest:POST:/channel/sendNotifications")
+        from("direct:sendNotifications")
                 .id("notification-messagegateway")
                 .log(LoggingLevel.INFO, "Notification Workflow Started")
                 .process(exchange -> {
@@ -723,33 +719,6 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 //                    extraVariables.put("internalId",body.getLong("internalId"));
 
                     String transactionId = zeebeProcessStarter.startZeebeWorkflow(notificationFlow,
-                            exchange.getIn().getBody(String.class),
-                            extraVariables);
-                    JSONObject response = new JSONObject();
-                    response.put("transactionId", transactionId);
-                    exchange.getIn().setBody(response.toString());
-                });
-    }
-    private void messageGatewayRoutes(){
-        from("rest:POST:/channel/sendMessage")
-                .id("message_gateway_notification-messagegateway")
-                .log(LoggingLevel.INFO, "Message Gateway Workflow Started")
-                .process(exchange -> {
-                    String notificationBodyString = exchange.getIn().getBody(String.class);
-                    logger.info("Payload : {}",notificationBodyString);
-                    JSONObject body = new JSONObject(notificationBodyString);
-                    Map<String, Object> extraVariables = new HashMap<>();
-                    extraVariables.put("accountId", body.getString("account"));
-                    extraVariables.put(TRANSACTION_ID, body.getString("account"));
-                    extraVariables.put("amount", body.getString("amount"));
-                    extraVariables.put("phoneNumber", body.getString("phoneNumber"));
-                    extraVariables.put("originDate",body.getLong("originDate"));
-                    extraVariables.put("messageType",body.getString("messageType"));
-                    extraVariables.put("parentWorkflowId",body.getString("parentWorkflowId"));
-//                    extraVariables.put("internalId",body.getLong("internalId"));
-                    extraVariables.put("deliveryMessage",body.getString("deliveryMessage"));
-
-                    String transactionId = zeebeProcessStarter.startZeebeWorkflow(messageGatewayFlow,
                             exchange.getIn().getBody(String.class),
                             extraVariables);
                     JSONObject response = new JSONObject();

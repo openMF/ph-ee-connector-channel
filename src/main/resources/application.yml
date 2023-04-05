@@ -43,7 +43,8 @@ bpmn:
     international-remittance-payee: "international_remittance_payee_process-{dfspid}"
     international-remittance-payer: "international_remittance_payer_process-{dfspid}"
     mpesa-flow: "mpesa_flow_{ams}-{dfspid}"
-    notification: "notification"
+    notification: "notification-messagegateway"
+    messagegateway: "message_gateway_notification-messagegateway"
 
 ams:
   groups:

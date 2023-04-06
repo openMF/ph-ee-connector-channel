@@ -74,7 +74,9 @@ public class AMSUtils {
             variables.put(key,value);
         }
         // Also publishing custom data list
-        variables.put("customData",customData);
+        if(!customData.isEmpty()){
+            variables.put("customData",customData.toString());
+        }
         variables.put("timer",timer);
         return variables;
     }

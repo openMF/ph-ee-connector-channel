@@ -1,6 +1,8 @@
 package org.mifos.connector.channel.utils;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONObject;
 import org.mifos.connector.common.gsma.dto.CustomData;
 import org.slf4j.Logger;
@@ -23,6 +25,9 @@ public class AMSUtils {
     private AMSProps amsProps;
 
     List<AMSProps.AMS> ams;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public AMSUtils(){
     }
@@ -66,7 +71,7 @@ public class AMSUtils {
         return finalAmsVal;
     }
 
-    public Map<String, Object> setZeebeVariables(List<CustomData> customData, String timer) {
+    public Map<String, Object> setZeebeVariables(List<CustomData> customData, String timer) throws JsonProcessingException {
         Map<String,Object>variables=new HashMap<>();
         for(CustomData obj:customData){
             String key=obj.getKey();
@@ -74,8 +79,9 @@ public class AMSUtils {
             variables.put(key,value);
         }
         // Also publishing custom data list
+        String customDataToSTring=objectMapper.writeValueAsString(customData);
         if(!customData.isEmpty()){
-            variables.put("customData",customData.toString());
+            variables.put("customData",customDataToSTring);
         }
         variables.put("timer",timer);
         return variables;

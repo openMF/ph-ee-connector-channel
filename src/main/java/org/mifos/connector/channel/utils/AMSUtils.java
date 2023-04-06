@@ -79,9 +79,9 @@ public class AMSUtils {
             variables.put(key,value);
         }
         // Also publishing custom data list
-        String customDataToSTring=objectMapper.writeValueAsString(customData);
+        String customDataToString=objectMapper.writeValueAsString(customData);
         if(!customData.isEmpty()){
-            variables.put("customData",customDataToSTring);
+            variables.put("customData",customDataToString);
         }
         variables.put("timer",timer);
         return variables;

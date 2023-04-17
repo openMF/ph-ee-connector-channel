@@ -48,6 +48,7 @@ public class ZeebeProcessStarter {
                 .join();
 
         logger.info("zeebee workflow instance from process {} started with transactionId {}, instance key: {}", workflowId, transactionId, instance.getProcessInstanceKey());
+        transactionId = String.valueOf(instance.getProcessInstanceKey());
         return transactionId;
     }
 

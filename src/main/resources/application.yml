@@ -6,7 +6,7 @@ camel:
     json-jackson:
       auto-discover-object-mapper: true
 
-dfspids: "gorilla"
+dfspids: "DFSPID"
 
 transaction-id-length: -1
 

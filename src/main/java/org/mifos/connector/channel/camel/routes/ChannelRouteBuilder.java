@@ -305,6 +305,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(BATCH_ID, batchIdHeader);
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
+                    String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);
                     if (tenantId == null || !dfspIds.contains(tenantId)) {
                         throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
                     }
@@ -474,7 +475,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     if (tenantId == null || !dfspIds.contains(tenantId)) {
                         throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
                     }
-                    extraVariables.put(TENANT_ID, tenantId);
+                    String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);
+                    extraVariables.put("clientCorrelationId",clientCorrelationId);
                     String tenantSpecificBpmn = transactionRequestFlow.replace("{dfspid}", tenantId);
 
                     TransactionChannelRequestDTO channelRequest = exchange.getIn().getBody(TransactionChannelRequestDTO.class);
@@ -677,10 +679,12 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     String type=gsmaTranfer.getType();
                     String amsName= e.getIn().getHeader("amsName").toString();
                     String accountHoldingInstitutionId=e.getIn().getHeader("accountHoldingInstitutionId").toString();
+                    String clientCorrelationId = e.getIn().getHeader("X-CorrelationID", String.class);
                     // inbound-transfer-mifos-lion
                     Map<String, Object> variables = amsUtils.setZeebeVariables(gsmaTranfer.getCustomData(),timer);
                     variables.put(TENANT_ID,accountHoldingInstitutionId);
                     variables.put(CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaTranfer));
+                    variables.put("clientCorrelationId",clientCorrelationId);
                     String workflowName=new StringBuilder().append(subtype).append("_").append(type).append("_").append(amsName).append("-").append(accountHoldingInstitutionId).toString();
                     logger.info("Workflow Name:{}",workflowName);
                     String transactionId = zeebeProcessStarter.startZeebeWorkflowC2B(workflowName, variables);

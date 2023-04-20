@@ -12,6 +12,8 @@ import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
+import static org.mifos.connector.channel.camel.config.CamelProperties.CLIENTCORRELATIONID;
+
 @RestController
 public class TransactionApiController implements TransactionApi {
 
@@ -21,9 +23,10 @@ public class TransactionApiController implements TransactionApi {
     private ProducerTemplate producerTemplate;
 
     @Override
-    public GsmaP2PResponseDto transaction(String tenant, TransactionChannelRequestDTO requestBody) throws JsonProcessingException {
+    public GsmaP2PResponseDto transaction(String tenant, String correlationId,TransactionChannelRequestDTO requestBody) throws JsonProcessingException {
         Headers headers = new Headers.HeaderBuilder()
                 .addHeader("Platform-TenantId", tenant)
+                .addHeader(CLIENTCORRELATIONID, correlationId)
                 .build();
         Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(),
                 headers, objectMapper.writeValueAsString(requestBody));

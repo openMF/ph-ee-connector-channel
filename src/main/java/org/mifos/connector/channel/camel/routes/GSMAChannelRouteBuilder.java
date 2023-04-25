@@ -9,6 +9,8 @@ import org.apache.camel.component.bean.validator.BeanValidationException;
 import org.apache.camel.model.dataformat.JsonLibrary;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.mifos.connector.channel.properties.TenantImplementation;
+import org.mifos.connector.channel.properties.TenantImplementationProperties;
 import org.mifos.connector.channel.zeebe.ZeebeProcessStarter;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
 import org.mifos.connector.common.channel.dto.PhErrorDTO;
@@ -21,6 +23,7 @@ import org.mifos.connector.common.mojaloop.dto.*;
 import org.mifos.connector.common.mojaloop.type.IdentifierType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -36,6 +39,8 @@ import static org.mifos.connector.common.mojaloop.type.TransactionRole.PAYER;
 @Component
 public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
+
+
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private String baseTransaction;
@@ -50,6 +55,9 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private List<String> dfspIds;
     private ObjectMapper objectMapper;
     private String payeeTenantName;
+
+    @Autowired
+    TenantImplementationProperties tenantImplementationProperties;
 
     public GSMAChannelRouteBuilder(@Value("#{'${dfspids}'.split(',')}") List<String> dfspIds,
                                @Value("${bpmn.flows.gsma-base-transaction}") String baseTransaction,
@@ -169,7 +177,9 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(GSMA_CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaChannelRequest));
                     extraVariables.put(NOTE,gsmaChannelRequest.getDescriptionText());
                     logger.info("Payee Tenant ID {}", extraVariables.get("payeeTenantId"));
-                    String tenantSpecificBpmn = baseTransaction.replace("{dfspid}", tenantId);
+                    String bpmn = getWorkflowForTenant(tenantId);
+                    String tenantSpecificBpmn = bpmn.equals("default")?baseTransaction:bpmn
+                            .replace("{dfspid}", tenantId);
                     String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             objectMapper.writeValueAsString(channelRequest),
                             extraVariables);
@@ -207,7 +217,9 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     extraVariables.put(TENANT_ID, tenantId);
-                    String tenantSpecificBpmn = internationalRemittancePayer.replace("{dfspid}", tenantId);
+                    String bpmn = getWorkflowForTenant(tenantId);
+                    String tenantSpecificBpmn = bpmn.equals("default")?internationalRemittancePayer:bpmn
+                            .replace("{dfspid}", tenantId);
                     channelRequest.setTransactionType(transactionType);
 
                     PartyIdInfo requestedParty = (boolean)extraVariables.get(IS_RTP_REQUEST) ? channelRequest.getPayer().getPartyIdInfo() : channelRequest.getPayee().getPartyIdInfo();
@@ -246,7 +258,9 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     extraVariables.put(TENANT_ID, tenantId);
-                    String tenantSpecificBpmn = internationalRemittancePayee.replace("{dfspid}", tenantId);
+                    String bpmn = getWorkflowForTenant(tenantId);
+                    String tenantSpecificBpmn = bpmn.equals("default")?internationalRemittancePayee:bpmn
+                            .replace("{dfspid}", tenantId);
 
                     extraVariables.put(GSMA_CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaChannelRequest));
                     extraVariables.put(NOTE,gsmaChannelRequest.getDescriptionText());
@@ -355,5 +369,11 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
         return moneyData;
     }
-
+    public String getWorkflowForTenant(String tenantId) {
+        for (TenantImplementation tenant : tenantImplementationProperties.getTenants()) {
+            if (tenant.getId().equals(tenantId)) {
+                return tenant.getFlows().get("payment-transfer");
+            }}
+        return "default";
+    }
 }

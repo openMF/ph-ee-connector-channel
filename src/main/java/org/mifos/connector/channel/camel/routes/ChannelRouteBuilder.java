@@ -14,6 +14,8 @@ import org.mifos.connector.channel.GSMA_API.GsmaP2PResponseDto;
 import org.mifos.connector.channel.camel.config.Client;
 import org.mifos.connector.channel.camel.config.ClientProperties;
 import org.mifos.connector.channel.model.ValidationResponseDTO;
+import org.mifos.connector.channel.properties.TenantImplementation;
+import org.mifos.connector.channel.properties.TenantImplementationProperties;
 import org.mifos.connector.channel.utils.AMSProps;
 import org.mifos.connector.channel.utils.AMSUtils;
 import org.mifos.connector.channel.zeebe.ZeebeProcessStarter;
@@ -73,6 +75,9 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
     @Autowired
     private AMSUtils amsUtils;
+
+    @Autowired
+    TenantImplementationProperties tenantImplementationProperties;
 
     private String paymentTransferFlow;
     private String specialPaymentTransferFlow;
@@ -323,11 +328,15 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("amount", new FspMoneyData(channelRequest.getAmount().getAmountDecimal(), channelRequest.getAmount().getCurrency()));
 
                     String tenantSpecificBpmn;
+                    String bpmn = getWorkflowForTenant(tenantId);
                     if(channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier().startsWith("6666")) {
-                        tenantSpecificBpmn = specialPaymentTransferFlow.replace("{dfspid}", tenantId);
+                        tenantSpecificBpmn = bpmn.equals("default")?specialPaymentTransferFlow.replace("{dfspid}", tenantId)
+                                :bpmn.replace("{dfspid}", tenantId);
                         extraVariables.put("specialTermination", true);
                     } else {
-                        tenantSpecificBpmn = paymentTransferFlow.replace("{dfspid}", tenantId);
+                        tenantSpecificBpmn =  bpmn.equals("default")
+                                ?paymentTransferFlow.replace("{dfspid}", tenantId)
+                                :bpmn.replace("{dfspid}", tenantId);
                         extraVariables.put("specialTermination", false);
                     }
 
@@ -752,5 +761,14 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         }
         HttpEntity<String> entity = new HttpEntity<String>(null, httpHeaders);
         return entity;
+    }
+    public String getWorkflowForTenant(String tenantId) {
+
+        for (TenantImplementation tenant : tenantImplementationProperties.getTenants()) {
+            if (tenant.getId().equals(tenantId)) {
+                return tenant.getFlows().get("payment-transfer");
+            }
+            }
+        return "default";
     }
 }

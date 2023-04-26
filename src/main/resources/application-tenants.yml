@@ -1,0 +1,11 @@
+bpmns:
+  tenants:
+    - id: "lion"
+      flows:
+        payment-transfer: "mock_payment_transfer-{dfspid}"
+    - id: "rhino"
+      flows:
+        payment-transfer: "MockPayerFundTransfer-{dfspid}"
+    - id: "gorilla"
+      flows:
+        payment-transfer: "PayerFundTransfer-{dfspid}"

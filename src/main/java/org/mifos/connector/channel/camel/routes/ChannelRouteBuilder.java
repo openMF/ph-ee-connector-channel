@@ -440,7 +440,11 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                  .replace("{ams}",finalAmsVal);
 
                     String amount = body.getJSONObject("amount").getString("amount");
+                    Object customData= body.get("customData");
+                    String customDataToString = objectMapper.writeValueAsString(customData);
+                    logger.info("Custom Data String : {}",customDataToString);
 
+                    extraVariables.put("customData",customDataToString);
                     extraVariables.put("accountId", secondaryIdentifierVal);
                     extraVariables.put("phoneNumber", primaryIdentifierVal);
                     extraVariables.put("amount", amount);

@@ -24,9 +24,4 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: openmf/ph-ee-connector-integration-test
-          path: ph-ee-connector-integration-test
-      - name: Assemble project
-        run: ./gradlew clean build
-      - name: Build Docker image
-        run: docker build . -t paymenthubee.mifos.io/phee/connector-channel
              

@@ -35,12 +35,17 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
 
-      - run: ./gradlew dependencies
+      - run: ./gradlew build
 
       - save_cache:
           paths:
             - ~/.gradle
           key: v1-dependencies-{{ checksum "build.gradle" }}
+          
+      - run:
+          name: Build application Docker image
+          command: |
+            docker build --cache-from=channel -t channel 
 
       # run tests!
-      - run: ./gradlew test
+      #- run: ./gradlew test

@@ -75,10 +75,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
     @Autowired
     private AMSUtils amsUtils;
-
     @Autowired
     TenantImplementationProperties tenantImplementationProperties;
-
     private String paymentTransferFlow;
     private String specialPaymentTransferFlow;
     private String transactionRequestFlow;
@@ -322,6 +320,12 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     transactionType.setInitiatorType(CONSUMER);
                     transactionType.setScenario(TRANSFER);
                     channelRequest.setTransactionType(transactionType);
+
+                    String customDataString = String.valueOf(channelRequest.getCustomData());
+                    String currency = channelRequest.getAmount().getCurrency();
+
+                    extraVariables.put("customData",customDataString);
+                    extraVariables.put("currency",currency);
                     extraVariables.put("initiator", transactionType.getInitiator().name());
                     extraVariables.put("initiatorType", transactionType.getInitiatorType().name());
                     extraVariables.put("scenario", transactionType.getScenario().name());
@@ -433,6 +437,13 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                         }
                     }//end for loop
+                    JSONObject amountObj = body.getJSONObject("amount");
+                    String currency = amountObj.getString("currency");
+                    Object customDataObj = body.get("customData");
+                    String customDataString = String.valueOf(customDataObj);
+
+                    extraVariables.put("customData",customDataString);
+                    extraVariables.put("currency",currency);
 
                     logger.info("Final Value for ams : " + finalAmsVal);
                     extraVariables.put(AMS,finalAmsVal);

@@ -75,8 +75,10 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
     @Autowired
     private AMSUtils amsUtils;
+
     @Autowired
     TenantImplementationProperties tenantImplementationProperties;
+
     private String paymentTransferFlow;
     private String specialPaymentTransferFlow;
     private String transactionRequestFlow;
@@ -442,20 +444,15 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     Object customDataObj = body.get("customData");
                     String customDataString = String.valueOf(customDataObj);
 
-                    extraVariables.put("customData",customDataString);
-                    extraVariables.put("currency",currency);
-
                     logger.info("Final Value for ams : " + finalAmsVal);
                     extraVariables.put(AMS,finalAmsVal);
                     tenantSpecificBpmn = mpesaFlow.replace("{dfspid}", tenantId)
                                  .replace("{ams}",finalAmsVal);
 
                     String amount = body.getJSONObject("amount").getString("amount");
-                    Object customData= body.get("customData");
-                    String customDataToString = objectMapper.writeValueAsString(customData);
-                    logger.info("Custom Data String : {}",customDataToString);
 
-                    extraVariables.put("customData",customDataToString);
+                    extraVariables.put("customData",customDataString);
+                    extraVariables.put("currency",currency);
                     extraVariables.put("accountId", secondaryIdentifierVal);
                     extraVariables.put("phoneNumber", primaryIdentifierVal);
                     extraVariables.put("amount", amount);

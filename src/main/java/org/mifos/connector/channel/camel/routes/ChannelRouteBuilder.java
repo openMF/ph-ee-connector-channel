@@ -14,6 +14,8 @@ import org.mifos.connector.channel.GSMA_API.GsmaP2PResponseDto;
 import org.mifos.connector.channel.camel.config.Client;
 import org.mifos.connector.channel.camel.config.ClientProperties;
 import org.mifos.connector.channel.model.ValidationResponseDTO;
+import org.mifos.connector.channel.properties.TenantImplementation;
+import org.mifos.connector.channel.properties.TenantImplementationProperties;
 import org.mifos.connector.channel.utils.AMSProps;
 import org.mifos.connector.channel.utils.AMSUtils;
 import org.mifos.connector.channel.zeebe.ZeebeProcessStarter;
@@ -73,6 +75,9 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
     @Autowired
     private AMSUtils amsUtils;
+
+    @Autowired
+    TenantImplementationProperties tenantImplementationProperties;
 
     private String paymentTransferFlow;
     private String specialPaymentTransferFlow;
@@ -305,6 +310,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(BATCH_ID, batchIdHeader);
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
+                    String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);
                     if (tenantId == null || !dfspIds.contains(tenantId)) {
                         throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
                     }
@@ -322,11 +328,15 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("amount", new FspMoneyData(channelRequest.getAmount().getAmountDecimal(), channelRequest.getAmount().getCurrency()));
 
                     String tenantSpecificBpmn;
+                    String bpmn = getWorkflowForTenant(tenantId);
                     if(channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier().startsWith("6666")) {
-                        tenantSpecificBpmn = specialPaymentTransferFlow.replace("{dfspid}", tenantId);
+                        tenantSpecificBpmn = bpmn.equals("default")?specialPaymentTransferFlow.replace("{dfspid}", tenantId)
+                                :bpmn.replace("{dfspid}", tenantId);
                         extraVariables.put("specialTermination", true);
                     } else {
-                        tenantSpecificBpmn = paymentTransferFlow.replace("{dfspid}", tenantId);
+                        tenantSpecificBpmn =  bpmn.equals("default")
+                                ?paymentTransferFlow.replace("{dfspid}", tenantId)
+                                :bpmn.replace("{dfspid}", tenantId);
                         extraVariables.put("specialTermination", false);
                     }
 
@@ -474,7 +484,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     if (tenantId == null || !dfspIds.contains(tenantId)) {
                         throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
                     }
-                    extraVariables.put(TENANT_ID, tenantId);
+                    String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);
+                    extraVariables.put("clientCorrelationId",clientCorrelationId);
                     String tenantSpecificBpmn = transactionRequestFlow.replace("{dfspid}", tenantId);
 
                     TransactionChannelRequestDTO channelRequest = exchange.getIn().getBody(TransactionChannelRequestDTO.class);
@@ -677,10 +688,12 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     String type=gsmaTranfer.getType();
                     String amsName= e.getIn().getHeader("amsName").toString();
                     String accountHoldingInstitutionId=e.getIn().getHeader("accountHoldingInstitutionId").toString();
+                    String clientCorrelationId = e.getIn().getHeader("X-CorrelationID", String.class);
                     // inbound-transfer-mifos-lion
                     Map<String, Object> variables = amsUtils.setZeebeVariables(gsmaTranfer.getCustomData(),timer);
                     variables.put(TENANT_ID,accountHoldingInstitutionId);
                     variables.put(CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaTranfer));
+                    variables.put("clientCorrelationId",clientCorrelationId);
                     String workflowName=new StringBuilder().append(subtype).append("_").append(type).append("_").append(amsName).append("-").append(accountHoldingInstitutionId).toString();
                     logger.info("Workflow Name:{}",workflowName);
                     String transactionId = zeebeProcessStarter.startZeebeWorkflowC2B(workflowName, variables);
@@ -748,5 +761,14 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         }
         HttpEntity<String> entity = new HttpEntity<String>(null, httpHeaders);
         return entity;
+    }
+    public String getWorkflowForTenant(String tenantId) {
+
+        for (TenantImplementation tenant : tenantImplementationProperties.getTenants()) {
+            if (tenant.getId().equals(tenantId)) {
+                return tenant.getFlows().get("payment-transfer");
+            }
+            }
+        return "default";
     }
 }

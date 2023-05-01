@@ -90,3 +90,14 @@ springdoc:
 gsma:
   payee:
     tenant: "lion"
+
+redis:
+  host: "127.0.0.1"
+  port: 6379
+  password: "RHVViU1ip9"
+  database: 1
+  cacheRetencyDuration: 30 # in days
+  idempotency:
+    enabled: true
+    keyFormat: "clientCorrelationId_tenant_api"
+    apiList: "/channel/transfer,/channel/collection,/channel/gsma/transaction,/channel/transactionRequest"

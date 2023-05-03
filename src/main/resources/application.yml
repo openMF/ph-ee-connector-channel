@@ -20,6 +20,12 @@ mpesa:
 timer: "PT45S"
 
 server:
+  ssl:
+    key-alias: "tomcat-https"
+    key-store: "classpath:keystore.jks"
+    key-store-type: JKS
+    key-password: "<replace-with-password>"
+    key-store-password: "<replace-with-password>"
   port: 8080
 
 operations:

@@ -317,6 +317,12 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     transactionType.setInitiatorType(CONSUMER);
                     transactionType.setScenario(TRANSFER);
                     channelRequest.setTransactionType(transactionType);
+
+                    String customDataString = String.valueOf(channelRequest.getCustomData());
+                    String currency = channelRequest.getAmount().getCurrency();
+
+                    extraVariables.put("customData",customDataString);
+                    extraVariables.put("currency",currency);
                     extraVariables.put("initiator", transactionType.getInitiator().name());
                     extraVariables.put("initiatorType", transactionType.getInitiatorType().name());
                     extraVariables.put("scenario", transactionType.getScenario().name());
@@ -424,6 +430,10 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                         }
                     }//end for loop
+                    JSONObject amountObj = body.getJSONObject("amount");
+                    String currency = amountObj.getString("currency");
+                    Object customDataObj = body.get("customData");
+                    String customDataString = String.valueOf(customDataObj);
 
                     logger.info("Final Value for ams : " + finalAmsVal);
                     extraVariables.put(AMS,finalAmsVal);
@@ -432,6 +442,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     String amount = body.getJSONObject("amount").getString("amount");
 
+                    extraVariables.put("customData",customDataString);
+                    extraVariables.put("currency",currency);
                     extraVariables.put("accountId", secondaryIdentifierVal);
                     extraVariables.put("phoneNumber", primaryIdentifierVal);
                     extraVariables.put("amount", amount);

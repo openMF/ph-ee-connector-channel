@@ -76,7 +76,7 @@ public class ZeebeWorkers {
 
                     Map<String, Object> existingVariables = job.getVariablesAsMap();
 
-                    existingVariables.put("transferCreateFailed", "false");
+                    existingVariables.put(TRANSFER_CREATE_FAILED, "false");
 
                     client.newCompleteCommand(job.getKey())
                             .variables(existingVariables)

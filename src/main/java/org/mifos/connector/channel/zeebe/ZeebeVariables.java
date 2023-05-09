@@ -25,5 +25,6 @@ public class ZeebeVariables {
     public static final String AMS = "ams";
 
     public static final String NOTE = "note";
+    public static final String TRANSFER_CREATE_FAILED = "transferCreateFailed";
 
 }

@@ -83,7 +83,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private String specialPaymentTransferFlow;
     private String transactionRequestFlow;
     private String partyRegistration;
-    private String mpesaFlow;
+    private String inboundTransactionReqFlow;
     private String restAuthHost;
     private String operationsUrl;
     private Boolean operationsAuthEnabled;
@@ -105,7 +105,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                @Value("${bpmn.flows.special-payment-transfer}") String specialPaymentTransferFlow,
                                @Value("${bpmn.flows.transaction-request}") String transactionRequestFlow,
                                @Value("${bpmn.flows.party-registration}") String partyRegistration,
-                               @Value("${bpmn.flows.mpesa-flow}") String mpesaFlow,
+                               @Value("${bpmn.flows.inboundTransactionReq-flow}") String inboundTransactionReqFlow,
                                @Value("${rest.authorization.host}") String restAuthHost,
                                @Value("${operations.url}") String operationsUrl,
                                @Value("${operations.auth-enabled}") Boolean operationsAuthEnabled,
@@ -127,7 +127,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         this.paymentTransferFlow = paymentTransferFlow;
         this.specialPaymentTransferFlow = specialPaymentTransferFlow;
         this.transactionRequestFlow = transactionRequestFlow;
-        this.mpesaFlow = mpesaFlow;
+        this.inboundTransactionReqFlow = inboundTransactionReqFlow;
         this.partyRegistration = partyRegistration;
         this.zeebeProcessStarter = zeebeProcessStarter;
         this.zeebeClient = zeebeClient;
@@ -157,7 +157,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         jobRoutes();
         workflowRoutes();
         acknowledgementRoutes();
-        paybillRoutes();
+        inboundTransferC2bImplementationRoutes();
     }
     private void handleExceptions(){
         onException(BeanValidationException.class)
@@ -373,7 +373,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
     private void collectionRoutes(){
         from("direct:post-collection")
-                .id("mpesa-payment-request")
+                .id("inboundTransactionReqFlow-payment-request")
                 .log(LoggingLevel.INFO, "## CHANNEL -> MPESA transaction request")
                 .to("bean-validator:request") // todo revisit function is breaking
                 .process(exchange -> {
@@ -436,7 +436,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     logger.info("Final Value for ams : " + finalAmsVal);
                     extraVariables.put(AMS,finalAmsVal);
-                    tenantSpecificBpmn = mpesaFlow.replace("{dfspid}", tenantId)
+                    tenantSpecificBpmn = inboundTransactionReqFlow.replace("{dfspid}", tenantId)
                                  .replace("{ams}",finalAmsVal);
 
                     String amount = body.getJSONObject("amount").getString("amount");
@@ -450,7 +450,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("clientCorrelationId", clientCorrelationId);
 
 
-                    String transactionId = zeebeProcessStarter.startMpesaZeebeWorkflow(tenantSpecificBpmn,
+                    String transactionId = zeebeProcessStarter.startInboundTransactionZeebeWorkflow(tenantSpecificBpmn,
                             channelRequestBodyString,
                             extraVariables);
                     JSONObject response = new JSONObject();
@@ -628,7 +628,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                         }
                         extraVariables.put(TENANT_ID, tenantId);
 
-                        String tenantSpecificBpmn = mpesaFlow.replace("{dfspid}", tenantId);
+                        String tenantSpecificBpmn = inboundTransactionReqFlow.replace("{dfspid}", tenantId);
 
                         String instanceId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                                 exchange.getIn().getBody(String.class),
@@ -641,7 +641,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     }
                 });
     }
-    private void paybillRoutes()
+    private void inboundTransferC2bImplementationRoutes()
     {
         from("direct:post-validation-ams")
                 .id("validation-ams")

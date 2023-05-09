@@ -58,7 +58,7 @@ public class ZeebeWorkers {
         workerSendPayeeSuccessToChannel();
         workerSendPayeeFailureToChannel();
         workerInvokeAcknowledgementWorkflows();
-        workerTestWorkflows();
+        zeebeConsistencyWorker();
     }
 
     private void workerSendErrorToChannel(){
@@ -231,9 +231,9 @@ public class ZeebeWorkers {
                 .open();
     }
 
-    private void workerTestWorkflows() {
+    private void zeebeConsistencyWorker() {
         zeebeClient.newWorker()
-                .jobType("test-worker")
+                .jobType("zeebe-consistency-worker")
                 .handler((client, job) -> {
                     logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
                     Map<String, Object> variables = job.getVariablesAsMap();
@@ -242,7 +242,7 @@ public class ZeebeWorkers {
                             .send()
                             .join();
                 })
-                .name("test-worker")
+                .name("zeebe-consistency-worker")
                 .maxJobsActive(workerMaxJobs)
                 .open();
     }

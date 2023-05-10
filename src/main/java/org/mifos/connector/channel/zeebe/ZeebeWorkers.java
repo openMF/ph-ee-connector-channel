@@ -74,7 +74,12 @@ public class ZeebeWorkers {
                                 errorInformation.getString("errorDescription"));
                     }
 
+                    Map<String, Object> existingVariables = job.getVariablesAsMap();
+
+                    existingVariables.put(TRANSFER_CREATE_FAILED, "false");
+
                     client.newCompleteCommand(job.getKey())
+                            .variables(existingVariables)
                             .send()
                     ;
                 })

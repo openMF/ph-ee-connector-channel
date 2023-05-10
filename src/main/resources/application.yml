@@ -20,7 +20,13 @@ mpesa:
 timer: "PT45S"
 
 server:
-  port: 8080
+  ssl:
+    key-alias: "tomcat-https"
+    key-store: "classpath:keystore.jks"
+    key-store-type: JKS
+    key-password: "<replace-with-password>"
+    key-store-password: "<replace-with-password>"
+  port: 8443
 
 operations:
   url: "http://bb-operations.mifos.io/api/v1"

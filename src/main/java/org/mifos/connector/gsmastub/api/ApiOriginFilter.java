@@ -15,6 +15,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
 
+import static org.mifos.connector.channel.camel.config.CamelProperties.PLATFORM_TENANT_ID;
+
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 @Component
 public class ApiOriginFilter implements Filter {
@@ -24,9 +26,8 @@ public class ApiOriginFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest) request;
-        String tenant = req.getHeader("Platform-TenantId");
-        Optional<String> tenantVal = Optional.ofNullable(tenant);
-        if (tenantVal.isPresent()) {
+        String tenant = req.getHeader(PLATFORM_TENANT_ID);
+        if (!tenant.isEmpty()) {
             logger.info("Tenant Name is : {}", tenant);
         }
         HttpServletResponse res = (HttpServletResponse) response;

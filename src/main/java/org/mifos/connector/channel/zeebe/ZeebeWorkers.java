@@ -46,6 +46,8 @@ public class ZeebeWorkers {
     public static final String TRANSFER_FAILED = "transferFailed";
     public static final String TRANSFER_STATE = "transferState";
 
+    public static final String MESSAGE = "message";
+
     @PostConstruct
     public void setupWorkers() {
         workerSendErrorToChannel();
@@ -56,6 +58,7 @@ public class ZeebeWorkers {
         workerSendPayeeSuccessToChannel();
         workerSendPayeeFailureToChannel();
         workerInvokeAcknowledgementWorkflows();
+        zeebeConsistencyWorker();
     }
 
     private void workerSendErrorToChannel(){
@@ -229,6 +232,22 @@ public class ZeebeWorkers {
                             .join();
                 })
                 .name("send-payee-failure-to-channel")
+                .maxJobsActive(workerMaxJobs)
+                .open();
+    }
+
+    private void zeebeConsistencyWorker() {
+        zeebeClient.newWorker()
+                .jobType("zeebe-consistency-worker")
+                .handler((client, job) -> {
+                    logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+                    Map<String, Object> variables = job.getVariablesAsMap();
+                    variables.put(MESSAGE, "hello world");
+                    client.newCompleteCommand(job.getKey())
+                            .send()
+                            .join();
+                })
+                .name("zeebe-consistency-worker")
                 .maxJobsActive(workerMaxJobs)
                 .open();
     }

@@ -42,7 +42,7 @@ public class IdInterceptor  implements HandlerInterceptor {
     @Value("${redis.idempotency.enabled}")
     Boolean redisIdempotencyEnabled;
 
-    @Value("'${redis.idempotency.apiList}'.split(',')")
+    @Value("${redis.idempotency.apiList}.split(',')")
     private Set<String>  apiList;
 
     @Value("${redis.idempotency.keyFormat}")

@@ -10,6 +10,7 @@ public class ZeebeVariables {
     public static final String CHANNEL_REQUEST = "channelRequest";
     public static final String MPESA_CHANNEL_REQUEST = "mpesaChannelRequest";
     public static final String ERROR_INFORMATION = "errorInformation";
+    public static final String ERROR_DESCRIPTION = "errorDescription";
     public static final String IS_AUTHORISATION_REQUIRED = "isAuthorisationRequired";
     public static final String IS_RTP_REQUEST = "isRtpRequest";
     public static final String OPERATOR_MANUAL_OVERRIDE = "operatorManualOverride"; // TODO validate in request?
@@ -26,5 +27,6 @@ public class ZeebeVariables {
 
     public static final String NOTE = "note";
     public static final String TRANSFER_CREATE_FAILED = "transferCreateFailed";
+    public static final String TRANSACTION_VALID = "isTxnValid";
 
 }

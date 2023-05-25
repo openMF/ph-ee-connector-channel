@@ -178,8 +178,8 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(NOTE,gsmaChannelRequest.getDescriptionText());
                     logger.info("Payee Tenant ID {}", extraVariables.get("payeeTenantId"));
                     String bpmn = getWorkflowForTenant(tenantId);
-                    String tenantSpecificBpmn = bpmn.equals("default")?baseTransaction:bpmn
-                            .replace("{dfspid}", tenantId);
+                    String tenantSpecificBpmn = bpmn.equals("default")?baseTransaction .replace("{dfspid}",
+                            tenantId):bpmn.replace("{dfspid}", tenantId);
                     String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
                             objectMapper.writeValueAsString(channelRequest),
                             extraVariables);
@@ -372,7 +372,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     public String getWorkflowForTenant(String tenantId) {
         for (TenantImplementation tenant : tenantImplementationProperties.getTenants()) {
             if (tenant.getId().equals(tenantId)) {
-                return tenant.getFlows().get("payment-transfer");
+                return tenant.getFlows().getOrDefault("gsma-base-transaction", "default");
             }}
         return "default";
     }

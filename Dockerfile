@@ -1,4 +1,4 @@
-FROM openjdk:13
+FROM openjdk:17
 EXPOSE 8080
 
 COPY build/libs/*.jar ./

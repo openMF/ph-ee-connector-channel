@@ -27,9 +27,7 @@ public class ApiOriginFilter implements Filter {
                          FilterChain chain) throws IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest) request;
         String tenant = req.getHeader(PLATFORM_TENANT_ID);
-        if (!tenant.isEmpty()) {
-            logger.debug("Tenant Name is : {}", tenant);
-        }
+        logger.debug("Tenant Name is : {}", tenant);
         HttpServletResponse res = (HttpServletResponse) response;
         res.addHeader("Access-Control-Allow-Origin", "*");
         res.addHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT");

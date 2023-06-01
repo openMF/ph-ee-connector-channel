@@ -54,7 +54,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private ZeebeClient zeebeClient;
     private List<String> dfspIds;
     private ObjectMapper objectMapper;
-    private String payeeTenantName;
+    private String payeeDfspid;
 
     @Autowired
     TenantImplementationProperties tenantImplementationProperties;
@@ -65,7 +65,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                @Value("${bpmn.flows.gsma-payee-process}") String payeeProcess,
                                @Value("${bpmn.flows.gsma-bill-payment}") String billPayment,
                                @Value("${bpmn.flows.gsma-link-based-payment}") String linkBasedPayment,
-                               @Value("${gsma.payee.tenant}") String payeeTenantName,
+                               @Value("${destination.dfspid}") String payeeDfspid,
                                @Value("${bpmn.flows.international-remittance-payee}") String internationalRemittancePayee,
                                @Value("${bpmn.flows.international-remittance-payer}") String internationalRemittancePayer,
                                ZeebeClient zeebeClient,
@@ -83,7 +83,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         this.zeebeClient = zeebeClient;
         this.dfspIds = dfspIds;
         this.objectMapper = objectMapper;
-        this.payeeTenantName = payeeTenantName;
+        this.payeeDfspid = payeeDfspid;
     }
 
     @Override
@@ -163,7 +163,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("amount", new FspMoneyData(channelRequest.getAmount().getAmountDecimal(),
                             channelRequest.getAmount().getCurrency()));
                     extraVariables.put("processType","api");
-                    extraVariables.put("payeeTenantId", payeeTenantName);
+                    extraVariables.put("payeeTenantId", payeeDfspid);
                     extraVariables.put("clientCorrelationId", clientCorrelationId);
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);

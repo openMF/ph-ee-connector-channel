@@ -5,7 +5,7 @@ bpmns:
         payment-transfer: "mock_payment_transfer-{dfspid}"
     - id: "rhino"
       flows:
-        payment-transfer: "MockPayerFundTransfer-{dfspid}"
+        payment-transfer: "minimal_mock_fund_transfer_account_lookup-{dfspid}"
     - id: "gorilla"
       flows:
         payment-transfer: "PayerFundTransfer-{dfspid}"

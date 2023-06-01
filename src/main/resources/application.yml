@@ -93,9 +93,8 @@ logging:
 springdoc:
   writer-with-order-by-keys: true
 
-gsma:
-  payee:
-    tenant: "lion"
+destination:
+    dfspid: "lion"
 
 redis:
   host: "127.0.0.1"

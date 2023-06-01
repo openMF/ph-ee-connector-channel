@@ -99,6 +99,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     private RestTemplate restTemplate;
     private String timer;
     private String restAuthHeader;
+    String destinationDfspId;
 
     public ChannelRouteBuilder(@Value("#{'${dfspids}'.split(',')}") List<String> dfspIds,
                                @Value("${bpmn.flows.payment-transfer}") String paymentTransferFlow,
@@ -115,6 +116,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                                @Value("${mpesa.notification.failure.enabled}") Boolean isNotificationFailureServiceEnabled,
                                @Value("${timer}") String timer,
                                @Value("${rest.authorization.header}") String restAuthHeader,
+                               @Value("${destination.dfspid}") String destinationDfspId,
                                ZeebeClient zeebeClient,
                                ZeebeProcessStarter zeebeProcessStarter,
                                @Autowired(required = false) AuthProcessor authProcessor,
@@ -144,6 +146,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         this.timer = timer;
         this.restAuthHeader = restAuthHeader;
         this.operationsAuthEnabled = operationsAuthEnabled;
+        this.destinationDfspId = destinationDfspId;
     }
 
     @Override
@@ -322,7 +325,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     transactionType.setInitiatorType(CONSUMER);
                     transactionType.setScenario(TRANSFER);
                     channelRequest.setTransactionType(transactionType);
-
+                    channelRequest.getPayer().getPartyIdInfo().setFspId(destinationDfspId);
                     String customDataString = String.valueOf(channelRequest.getCustomData());
                     String currency = channelRequest.getAmount().getCurrency();
 
@@ -332,7 +335,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("initiatorType", transactionType.getInitiatorType().name());
                     extraVariables.put("scenario", transactionType.getScenario().name());
                     extraVariables.put("amount", new FspMoneyData(channelRequest.getAmount().getAmountDecimal(), channelRequest.getAmount().getCurrency()));
-
+                    extraVariables.put("clientCorrelationId", clientCorrelationId);
+                    extraVariables.put("initiatorFspId", channelRequest.getPayer().getPartyIdInfo().getFspId());
                     String tenantSpecificBpmn;
                     String bpmn = getWorkflowForTenant(tenantId);
                     if(channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier().startsWith("6666")) {

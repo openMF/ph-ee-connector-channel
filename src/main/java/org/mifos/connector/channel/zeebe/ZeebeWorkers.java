@@ -1,5 +1,6 @@
 package org.mifos.connector.channel.zeebe;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import io.camunda.zeebe.client.ZeebeClient;
 import org.apache.camel.CamelContext;
@@ -7,6 +8,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.support.DefaultExchange;
 import org.json.JSONObject;
+import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +61,8 @@ public class ZeebeWorkers {
         workerSendPayeeFailureToChannel();
         workerInvokeAcknowledgementWorkflows();
         zeebeConsistencyWorker();
+        validateTransactionalData();
+
     }
 
     private void workerSendErrorToChannel(){
@@ -250,5 +254,54 @@ public class ZeebeWorkers {
                 .name("zeebe-consistency-worker")
                 .maxJobsActive(workerMaxJobs)
                 .open();
+    }
+    //validate transactional data
+    private void validateTransactionalData(){
+        zeebeClient.newWorker()
+                .jobType("validate-transactional-data")
+                .handler((client, job) -> {
+                    logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+                    Map<String, Object> variables = job.getVariablesAsMap();
+                    ObjectMapper mapper = new ObjectMapper();
+                    TransactionChannelRequestDTO channelRequestDTO = mapper.readValue(variables.get(CHANNEL_REQUEST).toString(),
+                            TransactionChannelRequestDTO.class);
+                    boolean valid = validateTxn(channelRequestDTO);
+                    if(!valid){
+                        variables.put(TRANSACTION_VALID, false);
+                        variables.put(ERROR_INFORMATION, "Custom Error: Transaction Invalid");
+                        variables.put(ERROR_DESCRIPTION,"Transaction data was wrong or incomplete");
+                    } else{
+                        variables.put(TRANSACTION_VALID, true);
+                    }
+                    client.newCompleteCommand(job.getKey())
+                            .variables(variables)
+                            .send()
+                            .join();
+                })
+                .name("validate-transactional-data")
+                .maxJobsActive(workerMaxJobs)
+                .open();
+
+
+    }
+
+    private boolean validateTxn(TransactionChannelRequestDTO channelRequestDTO) {
+        boolean valid = false;
+        String payerIdentifierType = channelRequestDTO.getPayer().getPartyIdInfo().getPartyIdType().toString();
+        String payeeIdentifierType = channelRequestDTO.getPayee().getPartyIdInfo().getPartyIdType().toString();
+        if(payerIdentifierType.equalsIgnoreCase("MSISDN") || payerIdentifierType
+                .equalsIgnoreCase("ACCOUNTID")) {
+            String payerIdentity = channelRequestDTO.getPayer().getPartyIdInfo().getPartyIdentifier();
+            valid = payerIdentity.matches("^[\\d*#+]+$");
+            if (payeeIdentifierType.equalsIgnoreCase("MSISDN") || payeeIdentifierType
+                    .equalsIgnoreCase("ACCOUNTID")) {
+                String payeeIdentity = channelRequestDTO.getPayee().getPartyIdInfo().getPartyIdentifier();
+                valid = payeeIdentity.matches("^[\\d*#+]+$");
+            }
+        }
+        if(channelRequestDTO.getNote().contains("Duplicate Transaction"))
+        { valid = !channelRequestDTO.getNote().contains("Duplicate transaction");}
+        
+        return valid;
     }
 }

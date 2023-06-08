@@ -28,7 +28,7 @@ public class ApiOriginFilter implements Filter {
         HttpServletRequest req = (HttpServletRequest) request;
         String tenant = req.getHeader(PLATFORM_TENANT_ID);
         logger.debug("Tenant Name is : {}", tenant);
-        logger.debug("Client IP Address: {}",req.getRemoteHost());
+        logger.info("Client IP Address: {}",req.getRemoteHost());
         HttpServletResponse res = (HttpServletResponse) response;
         res.addHeader("Access-Control-Allow-Origin", "*");
         res.addHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT");

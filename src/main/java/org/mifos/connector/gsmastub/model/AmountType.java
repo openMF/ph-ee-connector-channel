@@ -7,28 +7,28 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * The amount for the authorisation can be an exact amount or can be a maximum amount.
  */
 public enum AmountType {
-  EXACT("exact"),
-    MAXIMUM("maximum");
 
-  private String value;
+    EXACT("exact"), MAXIMUM("maximum");
 
-  AmountType(String value) {
-    this.value = value;
-  }
+    private String value;
 
-  @Override
-  @JsonValue
-  public String toString() {
-    return String.valueOf(value);
-  }
-
-  @JsonCreator
-  public static AmountType fromValue(String text) {
-    for (AmountType b : AmountType.values()) {
-      if (String.valueOf(b.value).equals(text)) {
-        return b;
-      }
+    AmountType(String value) {
+        this.value = value;
     }
-    return null;
-  }
+
+    @Override
+    @JsonValue
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static AmountType fromValue(String text) {
+        for (AmountType b : AmountType.values()) {
+            if (String.valueOf(b.value).equals(text)) {
+                return b;
+            }
+        }
+        return null;
+    }
 }

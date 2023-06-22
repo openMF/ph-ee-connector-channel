@@ -7,29 +7,28 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Indicates the state of the Authorisation Code.
  */
 public enum CodeState {
-  ACTIVE("active"),
-    EXPIRED("expired"),
-    CANCELLED("cancelled");
 
-  private String value;
+    ACTIVE("active"), EXPIRED("expired"), CANCELLED("cancelled");
 
-  CodeState(String value) {
-    this.value = value;
-  }
+    private String value;
 
-  @Override
-  @JsonValue
-  public String toString() {
-    return String.valueOf(value);
-  }
-
-  @JsonCreator
-  public static CodeState fromValue(String text) {
-    for (CodeState b : CodeState.values()) {
-      if (String.valueOf(b.value).equals(text)) {
-        return b;
-      }
+    CodeState(String value) {
+        this.value = value;
     }
-    return null;
-  }
+
+    @Override
+    @JsonValue
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static CodeState fromValue(String text) {
+        for (CodeState b : CodeState.values()) {
+            if (String.valueOf(b.value).equals(text)) {
+                return b;
+            }
+        }
+        return null;
+    }
 }

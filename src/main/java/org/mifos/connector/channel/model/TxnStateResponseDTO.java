@@ -1,10 +1,12 @@
 package org.mifos.connector.channel.model;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
 public class TxnStateResponseDTO {
+
     private String transactionId;
     private String transferState;
 }

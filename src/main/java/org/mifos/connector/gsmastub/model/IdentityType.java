@@ -7,27 +7,28 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Indicates the type of the identity. Currently, only ‘individual’ is supported.
  */
 public enum IdentityType {
-  INDIVIDUAL("individual");
 
-  private String value;
+    INDIVIDUAL("individual");
 
-  IdentityType(String value) {
-    this.value = value;
-  }
+    private String value;
 
-  @Override
-  @JsonValue
-  public String toString() {
-    return String.valueOf(value);
-  }
-
-  @JsonCreator
-  public static IdentityType fromValue(String text) {
-    for (IdentityType b : IdentityType.values()) {
-      if (String.valueOf(b.value).equals(text)) {
-        return b;
-      }
+    IdentityType(String value) {
+        this.value = value;
     }
-    return null;
-  }
+
+    @Override
+    @JsonValue
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static IdentityType fromValue(String text) {
+        for (IdentityType b : IdentityType.values()) {
+            if (String.valueOf(b.value).equals(text)) {
+                return b;
+            }
+        }
+        return null;
+    }
 }

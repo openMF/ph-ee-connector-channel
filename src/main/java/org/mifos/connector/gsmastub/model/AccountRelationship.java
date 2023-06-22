@@ -7,27 +7,28 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Describes the relationship that the identity holds with the account.
  */
 public enum AccountRelationship {
-  ACCOUNTHOLDER("accountholder");
 
-  private String value;
+    ACCOUNTHOLDER("accountholder");
 
-  AccountRelationship(String value) {
-    this.value = value;
-  }
+    private String value;
 
-  @Override
-  @JsonValue
-  public String toString() {
-    return String.valueOf(value);
-  }
-
-  @JsonCreator
-  public static AccountRelationship fromValue(String text) {
-    for (AccountRelationship b : AccountRelationship.values()) {
-      if (String.valueOf(b.value).equals(text)) {
-        return b;
-      }
+    AccountRelationship(String value) {
+        this.value = value;
     }
-    return null;
-  }
+
+    @Override
+    @JsonValue
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static AccountRelationship fromValue(String text) {
+        for (AccountRelationship b : AccountRelationship.values()) {
+            if (String.valueOf(b.value).equals(text)) {
+                return b;
+            }
+        }
+        return null;
+    }
 }

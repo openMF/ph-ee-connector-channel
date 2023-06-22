@@ -7,28 +7,28 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * The harmonised Transaction Type.
  */
 public enum TypeReversal {
-  ADJUSTMENT("adjustment"),
-    REVERSAL("reversal");
 
-  private String value;
+    ADJUSTMENT("adjustment"), REVERSAL("reversal");
 
-  TypeReversal(String value) {
-    this.value = value;
-  }
+    private String value;
 
-  @Override
-  @JsonValue
-  public String toString() {
-    return String.valueOf(value);
-  }
-
-  @JsonCreator
-  public static TypeReversal fromValue(String text) {
-    for (TypeReversal b : TypeReversal.values()) {
-      if (String.valueOf(b.value).equals(text)) {
-        return b;
-      }
+    TypeReversal(String value) {
+        this.value = value;
     }
-    return null;
-  }
+
+    @Override
+    @JsonValue
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static TypeReversal fromValue(String text) {
+        for (TypeReversal b : TypeReversal.values()) {
+            if (String.valueOf(b.value).equals(text)) {
+                return b;
+            }
+        }
+        return null;
+    }
 }

@@ -7,29 +7,28 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Gets or Sets billStatus
  */
 public enum BillStatus {
-  UNPAID("unpaid"),
-    PAID("paid"),
-    PARTIALPAID("partialpaid");
 
-  private String value;
+    UNPAID("unpaid"), PAID("paid"), PARTIALPAID("partialpaid");
 
-  BillStatus(String value) {
-    this.value = value;
-  }
+    private String value;
 
-  @Override
-  @JsonValue
-  public String toString() {
-    return String.valueOf(value);
-  }
-
-  @JsonCreator
-  public static BillStatus fromValue(String text) {
-    for (BillStatus b : BillStatus.values()) {
-      if (String.valueOf(b.value).equals(text)) {
-        return b;
-      }
+    BillStatus(String value) {
+        this.value = value;
     }
-    return null;
-  }
+
+    @Override
+    @JsonValue
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static BillStatus fromValue(String text) {
+        for (BillStatus b : BillStatus.values()) {
+            if (String.valueOf(b.value).equals(text)) {
+                return b;
+            }
+        }
+        return null;
+    }
 }

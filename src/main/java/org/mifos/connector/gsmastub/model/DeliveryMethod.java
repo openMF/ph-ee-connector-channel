@@ -7,29 +7,28 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Gets or Sets deliveryMethod
  */
 public enum DeliveryMethod {
-  DIRECTTOACCOUNT("directtoaccount"),
-    AGENT("agent"),
-    PERSONALDELIVERY("personaldelivery");
 
-  private String value;
+    DIRECTTOACCOUNT("directtoaccount"), AGENT("agent"), PERSONALDELIVERY("personaldelivery");
 
-  DeliveryMethod(String value) {
-    this.value = value;
-  }
+    private String value;
 
-  @Override
-  @JsonValue
-  public String toString() {
-    return String.valueOf(value);
-  }
-
-  @JsonCreator
-  public static DeliveryMethod fromValue(String text) {
-    for (DeliveryMethod b : DeliveryMethod.values()) {
-      if (String.valueOf(b.value).equals(text)) {
-        return b;
-      }
+    DeliveryMethod(String value) {
+        this.value = value;
     }
-    return null;
-  }
+
+    @Override
+    @JsonValue
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static DeliveryMethod fromValue(String text) {
+        for (DeliveryMethod b : DeliveryMethod.values()) {
+            if (String.valueOf(b.value).equals(text)) {
+                return b;
+            }
+        }
+        return null;
+    }
 }

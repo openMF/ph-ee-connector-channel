@@ -1,8 +1,7 @@
 package org.mifos.connector.channel;
 
-import org.junit.jupiter.api.Test;
-
 import java.util.UUID;
+import org.junit.jupiter.api.Test;
 
 public class TestUtil {
 

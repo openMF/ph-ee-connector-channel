@@ -5,8 +5,6 @@
  */
 package org.mifos.connector.gsmastub.api;
 
-import org.mifos.connector.gsmastub.model.ErrorObject;
-import org.mifos.connector.gsmastub.model.ResponseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -14,6 +12,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import javax.validation.constraints.Pattern;
+import org.mifos.connector.gsmastub.model.ErrorObject;
+import org.mifos.connector.gsmastub.model.ResponseResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,29 +23,32 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.threeten.bp.OffsetDateTime;
 
-import javax.validation.constraints.Pattern;
-
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 @Validated
-public interface ResponsesApi extends BaseGsmaApi  {
+public interface ResponsesApi extends BaseGsmaApi {
 
-    @Operation(summary = "View A Response", description = "This endpoint returns a specific response.", tags={ "Supporting" })
-    @ApiResponses(value = { 
-        @ApiResponse(responseCode = "200", description = "Represents an Response object response", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseResponse.class))),
-        
-        @ApiResponse(responseCode = "400", description = "Represents an Error Caused by the Violation of a Business Rule", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
-        
-        @ApiResponse(responseCode = "401", description = "Represents an Error Caused by an Authorisation Failure", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
-        
-        @ApiResponse(responseCode = "404", description = "Represents an Error Caused by a Failure to Identify the Target Resource", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
-        
-        @ApiResponse(responseCode = "500", description = "Represents an Error Caused by a General Server-Side Issue", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
-        
-        @ApiResponse(responseCode = "503", description = "Represents an Error Caused by System Unavailability", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))) })
-    @RequestMapping(value = "/responses/{clientCorrelationId}",
-        produces = { "application/json" }, 
-        method = RequestMethod.GET)
-    ResponseEntity<ResponseResponse> responsesClientCorrelationIdGET(@Pattern(regexp="^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$") @Parameter(in = ParameterIn.PATH, description = "Path variable to uniquely identify a response object. Must be supplied as a UUID.", required=true, schema=@Schema()) @PathVariable("clientCorrelationId") String clientCorrelationId, @Parameter(in = ParameterIn.HEADER, description = "Header parameter to indicate the date and time that the message was originated. It is used for basic message integrity checks, to ensure the request is not stale. Note that the header was previously referenced as 'Date' in version 1.0 of the Mobile Money API." ,schema=@Schema()) @RequestHeader(value="X-Date", required=false) OffsetDateTime xDate, @Parameter(in = ParameterIn.HEADER, description = "Used to pass pre-shared client's API key to the server." ,schema=@Schema()) @RequestHeader(value="X-API-Key", required=false) String xAPIKey, @Parameter(in = ParameterIn.HEADER, description = "Used to pass pre-shared client's identifier to the server." ,schema=@Schema()) @RequestHeader(value="X-Client-Id", required=false) String xClientId, @Parameter(in = ParameterIn.HEADER, description = "SHA-256 hex digest of the request content (encrypted or plain). Applicable only if basic data integrity checking is to be performed." ,schema=@Schema()) @RequestHeader(value="X-Content-Hash", required=false) String xContentHash, @Parameter(in = ParameterIn.HEADER, description = "The end-users encrypted security credential. Should only be used when OAuth 2.0/OIDC authorisation framework has not been implemented by the API Provider." ,schema=@Schema()) @RequestHeader(value="X-User-Credential-1", required=false) String xUserCredential1, @Parameter(in = ParameterIn.HEADER, description = "The end-users encrypted security credential Should only be used when OAuth 2.0/OIDC authorisation framework has not been implemented by the API Provider." ,schema=@Schema()) @RequestHeader(value="X-User-Credential-2", required=false) String xUserCredential2, @Parameter(in = ParameterIn.HEADER, description = "String containing the channel that was used to originate the request. For example USSD, Web, App." ,schema=@Schema()) @RequestHeader(value="X-Channel", required=false) String xChannel);
+    @Operation(summary = "View A Response", description = "This endpoint returns a specific response.", tags = { "Supporting" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Represents an Response object response", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseResponse.class))),
+
+            @ApiResponse(responseCode = "400", description = "Represents an Error Caused by the Violation of a Business Rule", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
+
+            @ApiResponse(responseCode = "401", description = "Represents an Error Caused by an Authorisation Failure", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
+
+            @ApiResponse(responseCode = "404", description = "Represents an Error Caused by a Failure to Identify the Target Resource", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
+
+            @ApiResponse(responseCode = "500", description = "Represents an Error Caused by a General Server-Side Issue", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
+
+            @ApiResponse(responseCode = "503", description = "Represents an Error Caused by System Unavailability", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))) })
+    @RequestMapping(value = "/responses/{clientCorrelationId}", produces = { "application/json" }, method = RequestMethod.GET)
+    ResponseEntity<ResponseResponse> responsesClientCorrelationIdGET(
+            @Pattern(regexp = "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$") @Parameter(in = ParameterIn.PATH, description = "Path variable to uniquely identify a response object. Must be supplied as a UUID.", required = true, schema = @Schema()) @PathVariable("clientCorrelationId") String clientCorrelationId,
+            @Parameter(in = ParameterIn.HEADER, description = "Header parameter to indicate the date and time that the message was originated. It is used for basic message integrity checks, to ensure the request is not stale. Note that the header was previously referenced as 'Date' in version 1.0 of the Mobile Money API.", schema = @Schema()) @RequestHeader(value = "X-Date", required = false) OffsetDateTime xDate,
+            @Parameter(in = ParameterIn.HEADER, description = "Used to pass pre-shared client's API key to the server.", schema = @Schema()) @RequestHeader(value = "X-API-Key", required = false) String xAPIKey,
+            @Parameter(in = ParameterIn.HEADER, description = "Used to pass pre-shared client's identifier to the server.", schema = @Schema()) @RequestHeader(value = "X-Client-Id", required = false) String xClientId,
+            @Parameter(in = ParameterIn.HEADER, description = "SHA-256 hex digest of the request content (encrypted or plain). Applicable only if basic data integrity checking is to be performed.", schema = @Schema()) @RequestHeader(value = "X-Content-Hash", required = false) String xContentHash,
+            @Parameter(in = ParameterIn.HEADER, description = "The end-users encrypted security credential. Should only be used when OAuth 2.0/OIDC authorisation framework has not been implemented by the API Provider.", schema = @Schema()) @RequestHeader(value = "X-User-Credential-1", required = false) String xUserCredential1,
+            @Parameter(in = ParameterIn.HEADER, description = "The end-users encrypted security credential Should only be used when OAuth 2.0/OIDC authorisation framework has not been implemented by the API Provider.", schema = @Schema()) @RequestHeader(value = "X-User-Credential-2", required = false) String xUserCredential2,
+            @Parameter(in = ParameterIn.HEADER, description = "String containing the channel that was used to originate the request. For example USSD, Web, App.", schema = @Schema()) @RequestHeader(value = "X-Channel", required = false) String xChannel);
 
 }
-

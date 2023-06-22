@@ -4,11 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class Headers {
+public final class Headers {
+
     private Map<String, Object> headers;
 
-    private Headers() {
-    }
+    private Headers() {}
 
     private void setHeaders(Map<String, Object> headers) {
         this.headers = headers;
@@ -27,6 +27,7 @@ public class Headers {
     }
 
     public static class HeaderBuilder {
+
         private Map<String, Object> headers = new HashMap<>();
 
         public HeaderBuilder addHeader(String key, Object value) {

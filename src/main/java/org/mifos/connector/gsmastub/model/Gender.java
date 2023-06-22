@@ -7,29 +7,28 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Gender of the KYC subject.
  */
 public enum Gender {
-  M("m"),
-    F("f"),
-    U("u");
 
-  private String value;
+    M("m"), F("f"), U("u");
 
-  Gender(String value) {
-    this.value = value;
-  }
+    private String value;
 
-  @Override
-  @JsonValue
-  public String toString() {
-    return String.valueOf(value);
-  }
-
-  @JsonCreator
-  public static Gender fromValue(String text) {
-    for (Gender b : Gender.values()) {
-      if (String.valueOf(b.value).equals(text)) {
-        return b;
-      }
+    Gender(String value) {
+        this.value = value;
     }
-    return null;
-  }
+
+    @Override
+    @JsonValue
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static Gender fromValue(String text) {
+        for (Gender b : Gender.values()) {
+            if (String.valueOf(b.value).equals(text)) {
+                return b;
+            }
+        }
+        return null;
+    }
 }

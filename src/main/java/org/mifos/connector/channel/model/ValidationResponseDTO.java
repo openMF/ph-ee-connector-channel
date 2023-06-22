@@ -7,6 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ValidationResponseDTO {
+
     @JsonProperty("transactionId")
     public String transactionId;
     @JsonProperty("accountHoldingInstitutionId")

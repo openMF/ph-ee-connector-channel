@@ -7,28 +7,28 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Gets or Sets paymentType
  */
 public enum PaymentType {
-  PARTIALPAYMENT("partialpayment"),
-    FULLPAYMENT("fullpayment");
 
-  private String value;
+    PARTIALPAYMENT("partialpayment"), FULLPAYMENT("fullpayment");
 
-  PaymentType(String value) {
-    this.value = value;
-  }
+    private String value;
 
-  @Override
-  @JsonValue
-  public String toString() {
-    return String.valueOf(value);
-  }
-
-  @JsonCreator
-  public static PaymentType fromValue(String text) {
-    for (PaymentType b : PaymentType.values()) {
-      if (String.valueOf(b.value).equals(text)) {
-        return b;
-      }
+    PaymentType(String value) {
+        this.value = value;
     }
-    return null;
-  }
+
+    @Override
+    @JsonValue
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static PaymentType fromValue(String text) {
+        for (PaymentType b : PaymentType.values()) {
+            if (String.valueOf(b.value).equals(text)) {
+                return b;
+            }
+        }
+        return null;
+    }
 }

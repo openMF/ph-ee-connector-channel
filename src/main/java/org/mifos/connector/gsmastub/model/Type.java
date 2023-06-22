@@ -7,35 +7,29 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * The harmonised Transaction Type.
  */
 public enum Type {
-  BILLPAY("billpay"),
-    DEPOSIT("deposit"),
-    DISBURSEMENT("disbursement"),
-    TRANSFER("transfer"),
-    MERCHANTPAY("merchantpay"),
-    INTTRANSFER("inttransfer"),
-    ADJUSTMENT("adjustment"),
-    REVERSAL("reversal"),
-    WITHDRAWAL("withdrawal");
 
-  private String value;
+    BILLPAY("billpay"), DEPOSIT("deposit"), DISBURSEMENT("disbursement"), TRANSFER("transfer"), MERCHANTPAY("merchantpay"), INTTRANSFER(
+            "inttransfer"), ADJUSTMENT("adjustment"), REVERSAL("reversal"), WITHDRAWAL("withdrawal");
 
-  Type(String value) {
-    this.value = value;
-  }
+    private String value;
 
-  @Override
-  @JsonValue
-  public String toString() {
-    return String.valueOf(value);
-  }
-
-  @JsonCreator
-  public static Type fromValue(String text) {
-    for (Type b : Type.values()) {
-      if (String.valueOf(b.value).equals(text)) {
-        return b;
-      }
+    Type(String value) {
+        this.value = value;
     }
-    return null;
-  }
+
+    @Override
+    @JsonValue
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static Type fromValue(String text) {
+        for (Type b : Type.values()) {
+            if (String.valueOf(b.value).equals(text)) {
+                return b;
+            }
+        }
+        return null;
+    }
 }

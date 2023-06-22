@@ -1,12 +1,12 @@
 package org.mifos.connector.channel.utils;
 
-import org.apache.camel.*;
-import org.apache.camel.support.*;
+import org.apache.camel.CamelContext;
+import org.apache.camel.Exchange;
+import org.apache.camel.support.DefaultExchange;
 
 public class SpringWrapperUtil {
-    public static Exchange getDefaultWrappedExchange(CamelContext camelContext,
-                                                     Headers headers,
-                                                     String body) {
+
+    public static Exchange getDefaultWrappedExchange(CamelContext camelContext, Headers headers, String body) {
         Exchange exchange = new DefaultExchange(camelContext);
 
         // Setting headers

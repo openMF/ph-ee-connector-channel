@@ -5,10 +5,6 @@
  */
 package org.mifos.connector.gsmastub.api;
 
-import org.mifos.connector.gsmastub.model.ErrorObject;
-import org.mifos.connector.gsmastub.model.RequestQuotation;
-import org.mifos.connector.gsmastub.model.RequestStateObject;
-import org.mifos.connector.gsmastub.model.ResponseQuotation;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -16,59 +12,83 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import javax.validation.Valid;
+import javax.validation.constraints.Size;
+import org.mifos.connector.gsmastub.model.ErrorObject;
+import org.mifos.connector.gsmastub.model.RequestQuotation;
+import org.mifos.connector.gsmastub.model.RequestStateObject;
+import org.mifos.connector.gsmastub.model.ResponseQuotation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.threeten.bp.OffsetDateTime;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Size;
-
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 @Validated
-public interface QuotationsApi extends BaseGsmaApi  {
+public interface QuotationsApi extends BaseGsmaApi {
 
-    @Operation(summary = "Create A New Quotation", description = "Provided with a valid object representation, this endpoint allows for a new quotation to be created.", tags={ "Quotations" })
-    @ApiResponses(value = { 
-        @ApiResponse(responseCode = "201", description = "Represents a Quotation response", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseQuotation.class))),
-        
-        @ApiResponse(responseCode = "202", description = "Represents an Asynchronous response", content = @Content(mediaType = "application/json", schema = @Schema(implementation = RequestStateObject.class))),
-        
-        @ApiResponse(responseCode = "400", description = "Represents an Error Caused by the Violation of a Business Rule", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
-        
-        @ApiResponse(responseCode = "401", description = "Represents an Error Caused by an Authorisation Failure", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
-        
-        @ApiResponse(responseCode = "404", description = "Represents an Error Caused by a Failure to Identify the Target Resource", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
-        
-        @ApiResponse(responseCode = "500", description = "Represents an Error Caused by a General Server-Side Issue", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
-        
-        @ApiResponse(responseCode = "503", description = "Represents an Error Caused by System Unavailability", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))) })
-    @RequestMapping(value = "/quotations",
-        produces = { "application/json" }, 
-        consumes = { "application/json" }, 
-        method = RequestMethod.POST)
-    ResponseEntity<ResponseQuotation> quotationsPOST(@Parameter(in = ParameterIn.DEFAULT, description = "Represents the request body of a Quotation.", required=true, schema=@Schema()) @Valid @RequestBody RequestQuotation body, @Parameter(in = ParameterIn.HEADER, description = "Header parameter to indicate the date and time that the message was originated. It is used for basic message integrity checks, to ensure the request is not stale. Note that the header was previously referenced as 'Date' in version 1.0 of the Mobile Money API." ,schema=@Schema()) @RequestHeader(value="X-Date", required=false) OffsetDateTime xDate, @Parameter(in = ParameterIn.HEADER, description = "Header parameter to uniquely identify the request. Must be supplied as a UUID." ,schema=@Schema()) @RequestHeader(value="X-CorrelationID", required=false) String xCorrelationID, @Parameter(in = ParameterIn.HEADER, description = "Used to pass pre-shared client's API key to the server." ,schema=@Schema()) @RequestHeader(value="X-API-Key", required=false) String xAPIKey, @Parameter(in = ParameterIn.HEADER, description = "Used to pass user’s access token when OAuth 2.0/OIDC authorisation framework is used for end-user authentication." ,schema=@Schema()) @RequestHeader(value="X-User-Bearer", required=false) String xUserBearer, @Parameter(in = ParameterIn.HEADER, description = "Used to pass pre-shared client's identifier to the server." ,schema=@Schema()) @RequestHeader(value="X-Client-Id", required=false) String xClientId, @Parameter(in = ParameterIn.HEADER, description = "SHA-256 hex digest of the request content (encrypted or plain). Applicable only if basic data integrity checking is to be performed." ,schema=@Schema()) @RequestHeader(value="X-Content-Hash", required=false) String xContentHash, @Parameter(in = ParameterIn.HEADER, description = "The end-users encrypted security credential. Should only be used when OAuth 2.0/OIDC authorisation framework has not been implemented by the API Provider." ,schema=@Schema()) @RequestHeader(value="X-User-Credential-1", required=false) String xUserCredential1, @Parameter(in = ParameterIn.HEADER, description = "The end-users encrypted security credential Should only be used when OAuth 2.0/OIDC authorisation framework has not been implemented by the API Provider." ,schema=@Schema()) @RequestHeader(value="X-User-Credential-2", required=false) String xUserCredential2, @Parameter(in = ParameterIn.HEADER, description = "String containing the channel that was used to originate the request. For example USSD, Web, App." ,schema=@Schema()) @RequestHeader(value="X-Channel", required=false) String xChannel, @Parameter(in = ParameterIn.HEADER, description = "The URL supplied by the client that will be used to return the callback in the form of a HTTP PUT." ,schema=@Schema()) @RequestHeader(value="X-Callback-URL", required=false) String xCallbackURL, @Parameter(in = ParameterIn.HEADER, description = "A header variable that identifies the type of the account holding institution. This header is used to support request routing and should be used in conjunction with the X-Account-Holding-Institution-Identifier header." ,schema=@Schema(allowableValues={ "lei", "swiftbic", "organisationid" }
-)) @RequestHeader(value="X-Account-Holding-Institution-Identifier-Type", required=false) String xAccountHoldingInstitutionIdentifierType, @Parameter(in = ParameterIn.HEADER, description = "A header variable that identifies the account holding institution. This header is used to support request routing and should be used in conjunction with the X-Account-Holding-Institution-Identifier-Type header." ,schema=@Schema()) @RequestHeader(value="X-Account-Holding-Institution-Identifier", required=false) String xAccountHoldingInstitutionIdentifier);
+    @Operation(summary = "Create A New Quotation", description = "Provided with a valid object representation, this endpoint allows for a new quotation to be created.", tags = {
+            "Quotations" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Represents a Quotation response", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseQuotation.class))),
 
+            @ApiResponse(responseCode = "202", description = "Represents an Asynchronous response", content = @Content(mediaType = "application/json", schema = @Schema(implementation = RequestStateObject.class))),
 
-    @Operation(summary = "View A Quotation", description = "This endpoint returns a specific quotation", tags={ "Quotations" })
-    @ApiResponses(value = { 
-        @ApiResponse(responseCode = "200", description = "Represents a Quotation response", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseQuotation.class))),
-        
-        @ApiResponse(responseCode = "400", description = "Represents an Error Caused by the Violation of a Business Rule", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
-        
-        @ApiResponse(responseCode = "401", description = "Represents an Error Caused by an Authorisation Failure", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
-        
-        @ApiResponse(responseCode = "404", description = "Represents an Error Caused by a Failure to Identify the Target Resource", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
-        
-        @ApiResponse(responseCode = "500", description = "Represents an Error Caused by a General Server-Side Issue", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
-        
-        @ApiResponse(responseCode = "503", description = "Represents an Error Caused by System Unavailability", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))) })
-    @RequestMapping(value = "/quotations/{quotationReference}",
-        produces = { "application/json" }, 
-        method = RequestMethod.GET)
-    ResponseEntity<ResponseQuotation> quotationsQuotationReferenceGET(@Size(min=1,max=256) @Parameter(in = ParameterIn.PATH, description = "Path variable to uniquely identify the quotation.", required=true, schema=@Schema()) @PathVariable("quotationReference") String quotationReference, @Parameter(in = ParameterIn.HEADER, description = "Header parameter to indicate the date and time that the message was originated. It is used for basic message integrity checks, to ensure the request is not stale. Note that the header was previously referenced as 'Date' in version 1.0 of the Mobile Money API." ,schema=@Schema()) @RequestHeader(value="X-Date", required=false) OffsetDateTime xDate, @Parameter(in = ParameterIn.HEADER, description = "Used to pass pre-shared client's API key to the server." ,schema=@Schema()) @RequestHeader(value="X-API-Key", required=false) String xAPIKey, @Parameter(in = ParameterIn.HEADER, description = "Used to pass user’s access token when OAuth 2.0/OIDC authorisation framework is used for end-user authentication." ,schema=@Schema()) @RequestHeader(value="X-User-Bearer", required=false) String xUserBearer, @Parameter(in = ParameterIn.HEADER, description = "Used to pass pre-shared client's identifier to the server." ,schema=@Schema()) @RequestHeader(value="X-Client-Id", required=false) String xClientId, @Parameter(in = ParameterIn.HEADER, description = "SHA-256 hex digest of the request content (encrypted or plain). Applicable only if basic data integrity checking is to be performed." ,schema=@Schema()) @RequestHeader(value="X-Content-Hash", required=false) String xContentHash, @Parameter(in = ParameterIn.HEADER, description = "The end-users encrypted security credential. Should only be used when OAuth 2.0/OIDC authorisation framework has not been implemented by the API Provider." ,schema=@Schema()) @RequestHeader(value="X-User-Credential-1", required=false) String xUserCredential1, @Parameter(in = ParameterIn.HEADER, description = "The end-users encrypted security credential Should only be used when OAuth 2.0/OIDC authorisation framework has not been implemented by the API Provider." ,schema=@Schema()) @RequestHeader(value="X-User-Credential-2", required=false) String xUserCredential2, @Parameter(in = ParameterIn.HEADER, description = "String containing the channel that was used to originate the request. For example USSD, Web, App." ,schema=@Schema()) @RequestHeader(value="X-Channel", required=false) String xChannel, @Parameter(in = ParameterIn.HEADER, description = "A header variable that identifies the type of the account holding institution. This header is used to support request routing and should be used in conjunction with the X-Account-Holding-Institution-Identifier header." ,schema=@Schema(allowableValues={ "lei", "swiftbic", "organisationid" }
-)) @RequestHeader(value="X-Account-Holding-Institution-Identifier-Type", required=false) String xAccountHoldingInstitutionIdentifierType, @Parameter(in = ParameterIn.HEADER, description = "A header variable that identifies the account holding institution. This header is used to support request routing and should be used in conjunction with the X-Account-Holding-Institution-Identifier-Type header." ,schema=@Schema()) @RequestHeader(value="X-Account-Holding-Institution-Identifier", required=false) String xAccountHoldingInstitutionIdentifier);
+            @ApiResponse(responseCode = "400", description = "Represents an Error Caused by the Violation of a Business Rule", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
+
+            @ApiResponse(responseCode = "401", description = "Represents an Error Caused by an Authorisation Failure", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
+
+            @ApiResponse(responseCode = "404", description = "Represents an Error Caused by a Failure to Identify the Target Resource", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
+
+            @ApiResponse(responseCode = "500", description = "Represents an Error Caused by a General Server-Side Issue", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
+
+            @ApiResponse(responseCode = "503", description = "Represents an Error Caused by System Unavailability", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))) })
+    @RequestMapping(value = "/quotations", produces = { "application/json" }, consumes = {
+            "application/json" }, method = RequestMethod.POST)
+    ResponseEntity<ResponseQuotation> quotationsPOST(
+            @Parameter(in = ParameterIn.DEFAULT, description = "Represents the request body of a Quotation.", required = true, schema = @Schema()) @Valid @RequestBody RequestQuotation body,
+            @Parameter(in = ParameterIn.HEADER, description = "Header parameter to indicate the date and time that the message was originated. It is used for basic message integrity checks, to ensure the request is not stale. Note that the header was previously referenced as 'Date' in version 1.0 of the Mobile Money API.", schema = @Schema()) @RequestHeader(value = "X-Date", required = false) OffsetDateTime xDate,
+            @Parameter(in = ParameterIn.HEADER, description = "Header parameter to uniquely identify the request. Must be supplied as a UUID.", schema = @Schema()) @RequestHeader(value = "X-CorrelationID", required = false) String xCorrelationID,
+            @Parameter(in = ParameterIn.HEADER, description = "Used to pass pre-shared client's API key to the server.", schema = @Schema()) @RequestHeader(value = "X-API-Key", required = false) String xAPIKey,
+            @Parameter(in = ParameterIn.HEADER, description = "Used to pass user’s access token when OAuth 2.0/OIDC authorisation framework is used for end-user authentication.", schema = @Schema()) @RequestHeader(value = "X-User-Bearer", required = false) String xUserBearer,
+            @Parameter(in = ParameterIn.HEADER, description = "Used to pass pre-shared client's identifier to the server.", schema = @Schema()) @RequestHeader(value = "X-Client-Id", required = false) String xClientId,
+            @Parameter(in = ParameterIn.HEADER, description = "SHA-256 hex digest of the request content (encrypted or plain). Applicable only if basic data integrity checking is to be performed.", schema = @Schema()) @RequestHeader(value = "X-Content-Hash", required = false) String xContentHash,
+            @Parameter(in = ParameterIn.HEADER, description = "The end-users encrypted security credential. Should only be used when OAuth 2.0/OIDC authorisation framework has not been implemented by the API Provider.", schema = @Schema()) @RequestHeader(value = "X-User-Credential-1", required = false) String xUserCredential1,
+            @Parameter(in = ParameterIn.HEADER, description = "The end-users encrypted security credential Should only be used when OAuth 2.0/OIDC authorisation framework has not been implemented by the API Provider.", schema = @Schema()) @RequestHeader(value = "X-User-Credential-2", required = false) String xUserCredential2,
+            @Parameter(in = ParameterIn.HEADER, description = "String containing the channel that was used to originate the request. For example USSD, Web, App.", schema = @Schema()) @RequestHeader(value = "X-Channel", required = false) String xChannel,
+            @Parameter(in = ParameterIn.HEADER, description = "The URL supplied by the client that will be used to return the callback in the form of a HTTP PUT.", schema = @Schema()) @RequestHeader(value = "X-Callback-URL", required = false) String xCallbackURL,
+            @Parameter(in = ParameterIn.HEADER, description = "A header variable that identifies the type of the account holding institution. This header is used to support request routing and should be used in conjunction with the X-Account-Holding-Institution-Identifier header.", schema = @Schema(allowableValues = {
+                    "lei", "swiftbic",
+                    "organisationid" })) @RequestHeader(value = "X-Account-Holding-Institution-Identifier-Type", required = false) String xAccountHoldingInstitutionIdentifierType,
+            @Parameter(in = ParameterIn.HEADER, description = "A header variable that identifies the account holding institution. This header is used to support request routing and should be used in conjunction with the X-Account-Holding-Institution-Identifier-Type header.", schema = @Schema()) @RequestHeader(value = "X-Account-Holding-Institution-Identifier", required = false) String xAccountHoldingInstitutionIdentifier);
+
+    @Operation(summary = "View A Quotation", description = "This endpoint returns a specific quotation", tags = { "Quotations" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Represents a Quotation response", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseQuotation.class))),
+
+            @ApiResponse(responseCode = "400", description = "Represents an Error Caused by the Violation of a Business Rule", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
+
+            @ApiResponse(responseCode = "401", description = "Represents an Error Caused by an Authorisation Failure", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
+
+            @ApiResponse(responseCode = "404", description = "Represents an Error Caused by a Failure to Identify the Target Resource", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
+
+            @ApiResponse(responseCode = "500", description = "Represents an Error Caused by a General Server-Side Issue", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
+
+            @ApiResponse(responseCode = "503", description = "Represents an Error Caused by System Unavailability", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))) })
+    @RequestMapping(value = "/quotations/{quotationReference}", produces = { "application/json" }, method = RequestMethod.GET)
+    ResponseEntity<ResponseQuotation> quotationsQuotationReferenceGET(
+            @Size(min = 1, max = 256) @Parameter(in = ParameterIn.PATH, description = "Path variable to uniquely identify the quotation.", required = true, schema = @Schema()) @PathVariable("quotationReference") String quotationReference,
+            @Parameter(in = ParameterIn.HEADER, description = "Header parameter to indicate the date and time that the message was originated. It is used for basic message integrity checks, to ensure the request is not stale. Note that the header was previously referenced as 'Date' in version 1.0 of the Mobile Money API.", schema = @Schema()) @RequestHeader(value = "X-Date", required = false) OffsetDateTime xDate,
+            @Parameter(in = ParameterIn.HEADER, description = "Used to pass pre-shared client's API key to the server.", schema = @Schema()) @RequestHeader(value = "X-API-Key", required = false) String xAPIKey,
+            @Parameter(in = ParameterIn.HEADER, description = "Used to pass user’s access token when OAuth 2.0/OIDC authorisation framework is used for end-user authentication.", schema = @Schema()) @RequestHeader(value = "X-User-Bearer", required = false) String xUserBearer,
+            @Parameter(in = ParameterIn.HEADER, description = "Used to pass pre-shared client's identifier to the server.", schema = @Schema()) @RequestHeader(value = "X-Client-Id", required = false) String xClientId,
+            @Parameter(in = ParameterIn.HEADER, description = "SHA-256 hex digest of the request content (encrypted or plain). Applicable only if basic data integrity checking is to be performed.", schema = @Schema()) @RequestHeader(value = "X-Content-Hash", required = false) String xContentHash,
+            @Parameter(in = ParameterIn.HEADER, description = "The end-users encrypted security credential. Should only be used when OAuth 2.0/OIDC authorisation framework has not been implemented by the API Provider.", schema = @Schema()) @RequestHeader(value = "X-User-Credential-1", required = false) String xUserCredential1,
+            @Parameter(in = ParameterIn.HEADER, description = "The end-users encrypted security credential Should only be used when OAuth 2.0/OIDC authorisation framework has not been implemented by the API Provider.", schema = @Schema()) @RequestHeader(value = "X-User-Credential-2", required = false) String xUserCredential2,
+            @Parameter(in = ParameterIn.HEADER, description = "String containing the channel that was used to originate the request. For example USSD, Web, App.", schema = @Schema()) @RequestHeader(value = "X-Channel", required = false) String xChannel,
+            @Parameter(in = ParameterIn.HEADER, description = "A header variable that identifies the type of the account holding institution. This header is used to support request routing and should be used in conjunction with the X-Account-Holding-Institution-Identifier header.", schema = @Schema(allowableValues = {
+                    "lei", "swiftbic",
+                    "organisationid" })) @RequestHeader(value = "X-Account-Holding-Institution-Identifier-Type", required = false) String xAccountHoldingInstitutionIdentifierType,
+            @Parameter(in = ParameterIn.HEADER, description = "A header variable that identifies the account holding institution. This header is used to support request routing and should be used in conjunction with the X-Account-Holding-Institution-Identifier-Type header.", schema = @Schema()) @RequestHeader(value = "X-Account-Holding-Institution-Identifier", required = false) String xAccountHoldingInstitutionIdentifier);
 
 }
-

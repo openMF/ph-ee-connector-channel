@@ -5,8 +5,6 @@
  */
 package org.mifos.connector.gsmastub.api;
 
-import org.mifos.connector.gsmastub.model.ErrorObject;
-import org.mifos.connector.gsmastub.model.ResponseStatementEntries;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -14,6 +12,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import javax.validation.constraints.Size;
+import org.mifos.connector.gsmastub.model.ErrorObject;
+import org.mifos.connector.gsmastub.model.ResponseStatementEntries;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,30 +23,38 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.threeten.bp.OffsetDateTime;
 
-import javax.validation.constraints.Size;
-
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 @Validated
-public interface StatemententriesApi extends BaseGsmaApi  {
+public interface StatemententriesApi extends BaseGsmaApi {
 
-    @Operation(summary = "View Specific Statement", description = "The Statement Entries API enables generic representations of transactions to be returned. Typically, the returned representations are used for the purposes of presenting a statement to the account holder. In order to return a statement, a transaction reference must be specified.", tags={ "Accounts" })
-    @ApiResponses(value = { 
-        @ApiResponse(responseCode = "200", description = "Represent a list of Statement Entries", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseStatementEntries.class))),
-        
-        @ApiResponse(responseCode = "400", description = "Represents an Error Caused by the Violation of a Business Rule", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
-        
-        @ApiResponse(responseCode = "401", description = "Represents an Error Caused by an Authorisation Failure", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
-        
-        @ApiResponse(responseCode = "404", description = "Represents an Error Caused by a Failure to Identify the Target Resource", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
-        
-        @ApiResponse(responseCode = "500", description = "Represents an Error Caused by a General Server-Side Issue", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
-        
-        @ApiResponse(responseCode = "503", description = "Represents an Error Caused by System Unavailability", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))) })
-    @RequestMapping(value = "/statemententries/{transactionReference}",
-        produces = { "application/json" }, 
-        method = RequestMethod.GET)
-    ResponseEntity<ResponseStatementEntries> statemententriesTransactionReferenceGET(@Size(min=1,max=256) @Parameter(in = ParameterIn.PATH, description = "Path variable to uniquely identify the transaction.", required=true, schema=@Schema()) @PathVariable("transactionReference") String transactionReference, @Parameter(in = ParameterIn.HEADER, description = "Header parameter to indicate the date and time that the message was originated. It is used for basic message integrity checks, to ensure the request is not stale. Note that the header was previously referenced as 'Date' in version 1.0 of the Mobile Money API." ,schema=@Schema()) @RequestHeader(value="X-Date", required=false) OffsetDateTime xDate, @Parameter(in = ParameterIn.HEADER, description = "Used to pass pre-shared client's API key to the server." ,schema=@Schema()) @RequestHeader(value="X-API-Key", required=false) String xAPIKey, @Parameter(in = ParameterIn.HEADER, description = "Used to pass user’s access token when OAuth 2.0/OIDC authorisation framework is used for end-user authentication." ,schema=@Schema()) @RequestHeader(value="X-User-Bearer", required=false) String xUserBearer, @Parameter(in = ParameterIn.HEADER, description = "Used to pass pre-shared client's identifier to the server." ,schema=@Schema()) @RequestHeader(value="X-Client-Id", required=false) String xClientId, @Parameter(in = ParameterIn.HEADER, description = "SHA-256 hex digest of the request content (encrypted or plain). Applicable only if basic data integrity checking is to be performed." ,schema=@Schema()) @RequestHeader(value="X-Content-Hash", required=false) String xContentHash, @Parameter(in = ParameterIn.HEADER, description = "The end-users encrypted security credential. Should only be used when OAuth 2.0/OIDC authorisation framework has not been implemented by the API Provider." ,schema=@Schema()) @RequestHeader(value="X-User-Credential-1", required=false) String xUserCredential1, @Parameter(in = ParameterIn.HEADER, description = "The end-users encrypted security credential Should only be used when OAuth 2.0/OIDC authorisation framework has not been implemented by the API Provider." ,schema=@Schema()) @RequestHeader(value="X-User-Credential-2", required=false) String xUserCredential2, @Parameter(in = ParameterIn.HEADER, description = "String containing the channel that was used to originate the request. For example USSD, Web, App." ,schema=@Schema()) @RequestHeader(value="X-Channel", required=false) String xChannel, @Parameter(in = ParameterIn.HEADER, description = "A header variable that identifies the type of the account holding institution. This header is used to support request routing and should be used in conjunction with the X-Account-Holding-Institution-Identifier header." ,schema=@Schema(allowableValues={ "lei", "swiftbic", "organisationid" }
-)) @RequestHeader(value="X-Account-Holding-Institution-Identifier-Type", required=false) String xAccountHoldingInstitutionIdentifierType, @Parameter(in = ParameterIn.HEADER, description = "A header variable that identifies the account holding institution. This header is used to support request routing and should be used in conjunction with the X-Account-Holding-Institution-Identifier-Type header." ,schema=@Schema()) @RequestHeader(value="X-Account-Holding-Institution-Identifier", required=false) String xAccountHoldingInstitutionIdentifier);
+    @Operation(summary = "View Specific Statement", description = "The Statement Entries API enables generic representations of transactions to be returned. Typically, the returned representations are used for the purposes of presenting a statement to the account holder. In order to return a statement, a transaction reference must be specified.", tags = {
+            "Accounts" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Represent a list of Statement Entries", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseStatementEntries.class))),
+
+            @ApiResponse(responseCode = "400", description = "Represents an Error Caused by the Violation of a Business Rule", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
+
+            @ApiResponse(responseCode = "401", description = "Represents an Error Caused by an Authorisation Failure", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
+
+            @ApiResponse(responseCode = "404", description = "Represents an Error Caused by a Failure to Identify the Target Resource", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
+
+            @ApiResponse(responseCode = "500", description = "Represents an Error Caused by a General Server-Side Issue", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))),
+
+            @ApiResponse(responseCode = "503", description = "Represents an Error Caused by System Unavailability", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorObject.class))) })
+    @RequestMapping(value = "/statemententries/{transactionReference}", produces = { "application/json" }, method = RequestMethod.GET)
+    ResponseEntity<ResponseStatementEntries> statemententriesTransactionReferenceGET(
+            @Size(min = 1, max = 256) @Parameter(in = ParameterIn.PATH, description = "Path variable to uniquely identify the transaction.", required = true, schema = @Schema()) @PathVariable("transactionReference") String transactionReference,
+            @Parameter(in = ParameterIn.HEADER, description = "Header parameter to indicate the date and time that the message was originated. It is used for basic message integrity checks, to ensure the request is not stale. Note that the header was previously referenced as 'Date' in version 1.0 of the Mobile Money API.", schema = @Schema()) @RequestHeader(value = "X-Date", required = false) OffsetDateTime xDate,
+            @Parameter(in = ParameterIn.HEADER, description = "Used to pass pre-shared client's API key to the server.", schema = @Schema()) @RequestHeader(value = "X-API-Key", required = false) String xAPIKey,
+            @Parameter(in = ParameterIn.HEADER, description = "Used to pass user’s access token when OAuth 2.0/OIDC authorisation framework is used for end-user authentication.", schema = @Schema()) @RequestHeader(value = "X-User-Bearer", required = false) String xUserBearer,
+            @Parameter(in = ParameterIn.HEADER, description = "Used to pass pre-shared client's identifier to the server.", schema = @Schema()) @RequestHeader(value = "X-Client-Id", required = false) String xClientId,
+            @Parameter(in = ParameterIn.HEADER, description = "SHA-256 hex digest of the request content (encrypted or plain). Applicable only if basic data integrity checking is to be performed.", schema = @Schema()) @RequestHeader(value = "X-Content-Hash", required = false) String xContentHash,
+            @Parameter(in = ParameterIn.HEADER, description = "The end-users encrypted security credential. Should only be used when OAuth 2.0/OIDC authorisation framework has not been implemented by the API Provider.", schema = @Schema()) @RequestHeader(value = "X-User-Credential-1", required = false) String xUserCredential1,
+            @Parameter(in = ParameterIn.HEADER, description = "The end-users encrypted security credential Should only be used when OAuth 2.0/OIDC authorisation framework has not been implemented by the API Provider.", schema = @Schema()) @RequestHeader(value = "X-User-Credential-2", required = false) String xUserCredential2,
+            @Parameter(in = ParameterIn.HEADER, description = "String containing the channel that was used to originate the request. For example USSD, Web, App.", schema = @Schema()) @RequestHeader(value = "X-Channel", required = false) String xChannel,
+            @Parameter(in = ParameterIn.HEADER, description = "A header variable that identifies the type of the account holding institution. This header is used to support request routing and should be used in conjunction with the X-Account-Holding-Institution-Identifier header.", schema = @Schema(allowableValues = {
+                    "lei", "swiftbic",
+                    "organisationid" })) @RequestHeader(value = "X-Account-Holding-Institution-Identifier-Type", required = false) String xAccountHoldingInstitutionIdentifierType,
+            @Parameter(in = ParameterIn.HEADER, description = "A header variable that identifies the account holding institution. This header is used to support request routing and should be used in conjunction with the X-Account-Holding-Institution-Identifier-Type header.", schema = @Schema()) @RequestHeader(value = "X-Account-Holding-Institution-Identifier", required = false) String xAccountHoldingInstitutionIdentifier);
 
 }
-

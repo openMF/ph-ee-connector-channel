@@ -7,29 +7,28 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Provides the status of the requested service.
  */
 public enum ServiceStatus {
-  AVAILABLE("available"),
-    UNAVAILABLE("unavailable"),
-    DEGRADED("degraded");
 
-  private String value;
+    AVAILABLE("available"), UNAVAILABLE("unavailable"), DEGRADED("degraded");
 
-  ServiceStatus(String value) {
-    this.value = value;
-  }
+    private String value;
 
-  @Override
-  @JsonValue
-  public String toString() {
-    return String.valueOf(value);
-  }
-
-  @JsonCreator
-  public static ServiceStatus fromValue(String text) {
-    for (ServiceStatus b : ServiceStatus.values()) {
-      if (String.valueOf(b.value).equals(text)) {
-        return b;
-      }
+    ServiceStatus(String value) {
+        this.value = value;
     }
-    return null;
-  }
+
+    @Override
+    @JsonValue
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static ServiceStatus fromValue(String text) {
+        for (ServiceStatus b : ServiceStatus.values()) {
+            if (String.valueOf(b.value).equals(text)) {
+                return b;
+            }
+        }
+        return null;
+    }
 }

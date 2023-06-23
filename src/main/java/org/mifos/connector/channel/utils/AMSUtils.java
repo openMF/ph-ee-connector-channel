@@ -86,6 +86,10 @@ public class AMSUtils {
         variables.put("timer",timer);
         return variables;
     }
+
+    public Object getOrDefault(JSONObject body, String value, Object defaultValue) {
+        return body.has(value) ? body.get(value) : defaultValue;
+    }
 }
 
 

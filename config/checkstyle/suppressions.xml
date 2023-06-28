@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+    This file contains suppression rules for Checkstyle checks.
+    Ideally only files that cannot be modified (e.g. third-party code)
+    should be added here. All other violations should be fixed.
+-->
+
+<suppressions>
+    <suppress files="[/\\]build[/\\]generated[/\\]" checks=".*"/>
+<!--    &lt;!&ndash; TODO: fix integration test formatting &ndash;&gt;-->
+    <suppress files="[/\\]integration-tests[/\\]src[/\\]test[/\\]main[/\\]" checks=".*"/>
+</suppressions>

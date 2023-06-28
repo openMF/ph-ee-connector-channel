@@ -22,7 +22,7 @@ jobs:
 #       - slack/notify:
 #           event: pass
 #           template: basic_success_1
-      - run: ./gradlew clean bootJar 
+      - run: ./gradlew clean bootJar
       - aws-ecr/build-and-push-image:
           aws-access-key-id: AWS_ACCESS_KEY_ID
           aws-secret-access-key: AWS_SECRET_ACCESS_KEY
@@ -33,7 +33,7 @@ jobs:
           repo: phee-channel
           repo-scan-on-push: true
           role-arn: arn:aws:iam::419830066942:role/CustomAdmin
-          tag: latest         
+          tag: latest
       # - run: ./gradlew cucumberCli
       # run tests! Slack Success/Fail Notification Step
       #- run: ./gradlew test
@@ -44,4 +44,3 @@ workflows:
           context:
             - AWS
             - slack
-      

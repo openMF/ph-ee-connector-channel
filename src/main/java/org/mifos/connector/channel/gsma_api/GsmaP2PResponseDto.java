@@ -1,7 +1,6 @@
-package org.mifos.connector.channel.GSMA_API;
+package org.mifos.connector.channel.gsma_api;
 
 public class GsmaP2PResponseDto {
+
     public String transactionId;
 }
-
-

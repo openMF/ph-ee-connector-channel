@@ -18,7 +18,6 @@ import org.mifos.connector.channel.properties.TenantImplementation;
 import org.mifos.connector.channel.properties.TenantImplementationProperties;
 import org.mifos.connector.channel.utils.AMSProps;
 import org.mifos.connector.channel.utils.AMSUtils;
-import org.mifos.connector.channel.utils.NullUtil;
 import org.mifos.connector.channel.zeebe.ZeebeProcessStarter;
 import org.mifos.connector.common.camel.AuthProcessor;
 import org.mifos.connector.common.camel.AuthProperties;
@@ -446,7 +445,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     }//end for loop
                     JSONObject amountObj = body.getJSONObject("amount");
                     String currency = amountObj.getString("currency");
-                    Object customDataObj = NullUtil.getOrDefault(body, "customData","");
+                    Object customDataObj = amsUtils.getOrDefault(body, "customData","");
                     String customDataString = String.valueOf(customDataObj);
 
                     logger.info("Final Value for ams : " + finalAmsVal);

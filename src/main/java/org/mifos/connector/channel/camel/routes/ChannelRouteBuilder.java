@@ -52,7 +52,7 @@ import static java.util.stream.StreamSupport.stream;
 import static org.mifos.connector.channel.camel.config.CamelProperties.*;
 import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.ACCOUNT;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.CHANNEL_REQUEST;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.GSMA_CHANNEL_REQUEST;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_AUTHORISATION_REQUIRED;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_RTP_REQUEST;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID;
@@ -695,7 +695,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     // inbound-transfer-mifos-lion
                     Map<String, Object> variables = amsUtils.setZeebeVariables(gsmaTranfer.getCustomData(),timer);
                     variables.put(TENANT_ID,accountHoldingInstitutionId);
-                    variables.put(CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaTranfer));
+                    variables.put(GSMA_CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaTranfer));
                     variables.put("clientCorrelationId",clientCorrelationId);
                     String workflowName=new StringBuilder().append(subtype).append("_").append(type).append("_").append(amsName).append("-").append(accountHoldingInstitutionId).toString();
                     logger.info("Workflow Name:{}",workflowName);

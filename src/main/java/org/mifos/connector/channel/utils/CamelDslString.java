@@ -1,15 +1,13 @@
 package org.mifos.connector.channel.utils;
 
 /**
- * The static class for getting the camel specific REST DSL paths for different http request type.
- * This class is specific to [BeneficiaryRouteBuilder] hence has a base path as [/channel/beneficiary]
+ * The static class for getting the camel specific REST DSL paths for different http request type. This class is
+ * specific to [BeneficiaryRouteBuilder] hence has a base path as [/channel/beneficiary]
  *
- * use case:
- * where [basePath] = "/channel/beneficiary"
- * Path.getPath("") >> "rest:GET:/channel/beneficiary"
- * Path.getPath("{beneficiaryId}") >> "rest:GET:/channel/beneficiary/{beneficiaryId}"
- * Path.postPath("") >> "rest:POST:/channel/beneficiary"
- * Path.deletePath("{beneficiaryId}") >> "rest:DELETE:/channel/beneficiary/{beneficiaryId}"
+ * use case: where [basePath] = "/channel/beneficiary" Path.getPath("") >> "rest:GET:/channel/beneficiary"
+ * Path.getPath("{beneficiaryId}") >> "rest:GET:/channel/beneficiary/{beneficiaryId}" Path.postPath("") >>
+ * "rest:POST:/channel/beneficiary" Path.deletePath("{beneficiaryId}") >>
+ * "rest:DELETE:/channel/beneficiary/{beneficiaryId}"
  */
 public class CamelDslString {
 
@@ -20,7 +18,7 @@ public class CamelDslString {
     }
 
     public String getCamelPath(String path, String httpRequestType) {
-        if(path.isEmpty()) {
+        if (path.isEmpty()) {
             return String.format("rest:%s:%s", httpRequestType, basePath);
         }
         return String.format("rest:%s:%s/%s", httpRequestType, basePath, path);

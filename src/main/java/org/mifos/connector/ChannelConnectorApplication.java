@@ -46,13 +46,12 @@ public class ChannelConnectorApplication {
         javaTimeModule.addDeserializer(Instant.class, CustomInstantDeserializer.INSTANT);
         javaTimeModule.addDeserializer(OffsetDateTime.class, CustomInstantDeserializer.OFFSET_DATE_TIME);
         javaTimeModule.addDeserializer(ZonedDateTime.class, CustomInstantDeserializer.ZONED_DATE_TIME);
-        /*javaTimeModule.addSerializer(LocalDate.class, new CustomInstantDeserializer.LocalDateSerializer());*/
+        /* javaTimeModule.addSerializer(LocalDate.class, new CustomInstantDeserializer.LocalDateSerializer()); */
         javaTimeModule.addDeserializer(LocalDate.class, new CustomInstantDeserializer.LocalDateDeserializer());
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(javaTimeModule);
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        return objectMapper
-                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        return objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
                 .configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
@@ -64,19 +63,22 @@ public class ChannelConnectorApplication {
 
     @Configuration
     static class CustomDateConfig implements WebMvcConfigurer {
+
         @Override
         public void addFormatters(FormatterRegistry registry) {
             registry.addConverter(new LocalDateConverter("yyyy-MM-dd"));
             registry.addConverter(new LocalDateTimeConverter("yyyy-MM-dd'T'HH:mm:ss.SSS"));
-            //registry.addConverter(new LocalDateTimeConverter("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
+            // registry.addConverter(new LocalDateTimeConverter("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
         }
     }
+
     @Bean
     JedisConnectionFactory jedisConnectionFactory() {
         JedisConnectionFactory jedisConnectionFactory = redisRouteConfig.setupConnector();
         jedisConnectionFactory.setDatabase(redisDatabase);
         return jedisConnectionFactory;
     }
+
     @Bean
     public RedisTemplate<String, String> redisTemplate() {
         RedisTemplate<String, String> template = new RedisTemplate<>();
@@ -85,7 +87,6 @@ public class ChannelConnectorApplication {
         template.setConnectionFactory(jedisConnectionFactory());
         return template;
     }
-
 
     public static void main(String[] args) {
         SpringApplication.run(ChannelConnectorApplication.class, args);

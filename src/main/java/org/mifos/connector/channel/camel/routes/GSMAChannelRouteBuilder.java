@@ -1,8 +1,22 @@
 package org.mifos.connector.channel.camel.routes;
 
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.GSMA_CHANNEL_REQUEST;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_RTP_REQUEST;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.NOTE;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID_TYPE;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.TENANT_ID;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSACTION_TYPE;
+import static org.mifos.connector.common.mojaloop.type.InitiatorType.CONSUMER;
+import static org.mifos.connector.common.mojaloop.type.Scenario.TRANSFER;
+import static org.mifos.connector.common.mojaloop.type.TransactionRole.PAYER;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import io.camunda.zeebe.client.ZeebeClient;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.component.bean.validator.BeanValidationException;
@@ -19,7 +33,11 @@ import org.mifos.connector.common.exception.PaymentHubError;
 import org.mifos.connector.common.gsma.dto.GSMATransaction;
 import org.mifos.connector.common.gsma.dto.GsmaParty;
 import org.mifos.connector.common.gsma.dto.RequestStateDTO;
-import org.mifos.connector.common.mojaloop.dto.*;
+import org.mifos.connector.common.mojaloop.dto.FspMoneyData;
+import org.mifos.connector.common.mojaloop.dto.MoneyData;
+import org.mifos.connector.common.mojaloop.dto.Party;
+import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
+import org.mifos.connector.common.mojaloop.dto.TransactionType;
 import org.mifos.connector.common.mojaloop.type.IdentifierType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,19 +45,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.*;
-import static org.mifos.connector.common.mojaloop.type.InitiatorType.CONSUMER;
-import static org.mifos.connector.common.mojaloop.type.Scenario.TRANSFER;
-import static org.mifos.connector.common.mojaloop.type.TransactionRole.PAYER;
-
 @Component
 public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
-
-
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -60,17 +67,13 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     TenantImplementationProperties tenantImplementationProperties;
 
     public GSMAChannelRouteBuilder(@Value("#{'${dfspids}'.split(',')}") List<String> dfspIds,
-                               @Value("${bpmn.flows.gsma-base-transaction}") String baseTransaction,
-                               @Value("${bpmn.flows.gsma-int-transfer}") String intTransfer,
-                               @Value("${bpmn.flows.gsma-payee-process}") String payeeProcess,
-                               @Value("${bpmn.flows.gsma-bill-payment}") String billPayment,
-                               @Value("${bpmn.flows.gsma-link-based-payment}") String linkBasedPayment,
-                               @Value("${destination.dfspid}") String payeeDfspid,
-                               @Value("${bpmn.flows.international-remittance-payee}") String internationalRemittancePayee,
-                               @Value("${bpmn.flows.international-remittance-payer}") String internationalRemittancePayer,
-                               ZeebeClient zeebeClient,
-                               ZeebeProcessStarter zeebeProcessStarter,
-                               ObjectMapper objectMapper) {
+            @Value("${bpmn.flows.gsma-base-transaction}") String baseTransaction,
+            @Value("${bpmn.flows.gsma-int-transfer}") String intTransfer, @Value("${bpmn.flows.gsma-payee-process}") String payeeProcess,
+            @Value("${bpmn.flows.gsma-bill-payment}") String billPayment,
+            @Value("${bpmn.flows.gsma-link-based-payment}") String linkBasedPayment, @Value("${destination.dfspid}") String payeeDfspid,
+            @Value("${bpmn.flows.international-remittance-payee}") String internationalRemittancePayee,
+            @Value("${bpmn.flows.international-remittance-payer}") String internationalRemittancePayer, ZeebeClient zeebeClient,
+            ZeebeProcessStarter zeebeProcessStarter, ObjectMapper objectMapper) {
         super.configure();
         this.baseTransaction = baseTransaction;
         this.intTransfer = intTransfer;
@@ -88,44 +91,32 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
     @Override
     public void configure() {
-        onException(BeanValidationException.class)
-                .process(e -> {
-                    JSONArray violations = new JSONArray();
-                    e.getProperty(Exchange.EXCEPTION_CAUGHT, BeanValidationException.class).getConstraintViolations().forEach(v -> {
-                        violations.put(v.getPropertyPath() + " --- " + v.getMessage());
-                    });
+        onException(BeanValidationException.class).process(e -> {
+            JSONArray violations = new JSONArray();
+            e.getProperty(Exchange.EXCEPTION_CAUGHT, BeanValidationException.class).getConstraintViolations().forEach(v -> {
+                violations.put(v.getPropertyPath() + " --- " + v.getMessage());
+            });
 
-                    JSONObject response = new JSONObject();
-                    response.put("violations", violations);
-                    e.getIn().setBody(response.toString());
-                    e.removeProperties("*");
-                })
-                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(400))
-                .stop();
+            JSONObject response = new JSONObject();
+            response.put("violations", violations);
+            e.getIn().setBody(response.toString());
+            e.removeProperties("*");
+        }).setHeader(Exchange.HTTP_RESPONSE_CODE, constant(400)).stop();
 
-        onException(InvalidFormatException.class)
-                .process(e -> {
-                    JSONArray violations = new JSONArray();
-                    violations.put(e.getProperty(Exchange.EXCEPTION_CAUGHT, InvalidFormatException.class).getMessage());
+        onException(InvalidFormatException.class).process(e -> {
+            JSONArray violations = new JSONArray();
+            violations.put(e.getProperty(Exchange.EXCEPTION_CAUGHT, InvalidFormatException.class).getMessage());
 
-                    JSONObject response = new JSONObject();
-                    response.put("violations", violations);
-                    e.getIn().setBody(response.toString());
-                    e.removeProperties("*");
-                })
-                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(400))
-                .stop();
+            JSONObject response = new JSONObject();
+            response.put("violations", violations);
+            e.getIn().setBody(response.toString());
+            e.removeProperties("*");
+        }).setHeader(Exchange.HTTP_RESPONSE_CODE, constant(400)).stop();
 
-        from("direct:get-channel-gsma")
-                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200))
-                .setBody(constant("It Works!"));
+        from("direct:get-channel-gsma").setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200)).setBody(constant("It Works!"));
 
-        from("direct:post-gsma-transfer")
-                .id("gsma-payer-transfer")
-                .log(LoggingLevel.INFO, "## CHANNEL -> GSMA PAYER initiated transfer")
-                .unmarshal().json(JsonLibrary.Jackson, GSMATransaction.class)
-                .to("bean-validator:request")
-                .process(exchange -> {
+        from("direct:post-gsma-transfer").id("gsma-payer-transfer").log(LoggingLevel.INFO, "## CHANNEL -> GSMA PAYER initiated transfer")
+                .unmarshal().json(JsonLibrary.Jackson, GSMATransaction.class).to("bean-validator:request").process(exchange -> {
                     GSMATransaction gsmaChannelRequest = exchange.getIn().getBody(GSMATransaction.class); // GSMA Object
 
                     // validation of request
@@ -144,7 +135,6 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     Party payee = partyMapper(gsmaChannelRequest.getCreditParty());
                     MoneyData amount = amountMapper(gsmaChannelRequest.getAmount(), gsmaChannelRequest.getCurrency());
 
-
                     channelRequest.setPayer(payer);
                     channelRequest.setPayee(payee);
                     channelRequest.setAmount(amount);
@@ -160,9 +150,9 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("initiator", transactionType.getInitiator().name());
                     extraVariables.put("initiatorType", transactionType.getInitiatorType().name());
                     extraVariables.put("scenario", transactionType.getScenario().name());
-                    extraVariables.put("amount", new FspMoneyData(channelRequest.getAmount().getAmountDecimal(),
-                            channelRequest.getAmount().getCurrency()));
-                    extraVariables.put("processType","api");
+                    extraVariables.put("amount",
+                            new FspMoneyData(channelRequest.getAmount().getAmountDecimal(), channelRequest.getAmount().getCurrency()));
+                    extraVariables.put("processType", "api");
                     extraVariables.put("payeeTenantId", payeeDfspid);
                     extraVariables.put("clientCorrelationId", clientCorrelationId);
 
@@ -170,31 +160,27 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(TENANT_ID, tenantId);
                     channelRequest.setTransactionType(transactionType);
 
-                    PartyIdInfo requestedParty = (boolean)extraVariables.get(IS_RTP_REQUEST) ? channelRequest.getPayer().getPartyIdInfo() : channelRequest.getPayee().getPartyIdInfo();
+                    PartyIdInfo requestedParty = (boolean) extraVariables.get(IS_RTP_REQUEST) ? channelRequest.getPayer().getPartyIdInfo()
+                            : channelRequest.getPayee().getPartyIdInfo();
                     extraVariables.put(PARTY_ID_TYPE, requestedParty.getPartyIdType());
                     extraVariables.put(PARTY_ID, requestedParty.getPartyIdentifier());
 
                     extraVariables.put(GSMA_CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaChannelRequest));
-                    extraVariables.put(NOTE,gsmaChannelRequest.getDescriptionText());
+                    extraVariables.put(NOTE, gsmaChannelRequest.getDescriptionText());
                     logger.info("Payee Tenant ID {}", extraVariables.get("payeeTenantId"));
                     String bpmn = getWorkflowForTenant(tenantId);
-                    String tenantSpecificBpmn = bpmn.equals("default")?baseTransaction .replace("{dfspid}",
-                            tenantId):bpmn.replace("{dfspid}", tenantId);
+                    String tenantSpecificBpmn = bpmn.equals("default") ? baseTransaction.replace("{dfspid}", tenantId)
+                            : bpmn.replace("{dfspid}", tenantId);
                     String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
-                            objectMapper.writeValueAsString(channelRequest),
-                            extraVariables);
+                            objectMapper.writeValueAsString(channelRequest), extraVariables);
                     JSONObject response = new JSONObject();
                     response.put("transactionId", transactionId);
                     exchange.getIn().setBody(response.toString());
                 });
 
-
-        from("direct:post-gsma-payer-int-transfer")
-                .id("gsma-payer-inttransfer")
-                .log(LoggingLevel.INFO, "## CHANNEL -> GSMA PAYER initiated international transfer")
-                .unmarshal().json(JsonLibrary.Jackson, GSMATransaction.class)
-                .to("bean-validator:request")
-                .process(exchange -> {
+        from("direct:post-gsma-payer-int-transfer").id("gsma-payer-inttransfer")
+                .log(LoggingLevel.INFO, "## CHANNEL -> GSMA PAYER initiated international transfer").unmarshal()
+                .json(JsonLibrary.Jackson, GSMATransaction.class).to("bean-validator:request").process(exchange -> {
                     GSMATransaction gsmaChannelRequest = exchange.getIn().getBody(GSMATransaction.class); // GSMA Object
                     TransactionChannelRequestDTO channelRequest = new TransactionChannelRequestDTO(); // Fineract Object
 
@@ -218,31 +204,25 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     extraVariables.put(TENANT_ID, tenantId);
                     String bpmn = getWorkflowForTenant(tenantId);
-                    String tenantSpecificBpmn = bpmn.equals("default")?internationalRemittancePayer:bpmn
-                            .replace("{dfspid}", tenantId);
+                    String tenantSpecificBpmn = bpmn.equals("default") ? internationalRemittancePayer : bpmn.replace("{dfspid}", tenantId);
                     channelRequest.setTransactionType(transactionType);
 
-                    PartyIdInfo requestedParty = (boolean)extraVariables.get(IS_RTP_REQUEST) ? channelRequest.getPayer().getPartyIdInfo() : channelRequest.getPayee().getPartyIdInfo();
+                    PartyIdInfo requestedParty = (boolean) extraVariables.get(IS_RTP_REQUEST) ? channelRequest.getPayer().getPartyIdInfo()
+                            : channelRequest.getPayee().getPartyIdInfo();
                     extraVariables.put(PARTY_ID_TYPE, requestedParty.getPartyIdType());
                     extraVariables.put(PARTY_ID, requestedParty.getPartyIdentifier());
 
                     extraVariables.put(GSMA_CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaChannelRequest));
 
                     String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
-                            objectMapper.writeValueAsString(channelRequest),
-                            extraVariables);
+                            objectMapper.writeValueAsString(channelRequest), extraVariables);
                     JSONObject response = new JSONObject();
                     response.put("transactionId", transactionId);
                     exchange.getIn().setBody(response.toString());
                 });
 
-
-        from("direct:post-gsma-deposit")
-                .id("gsma-payee-deposit")
-                .log(LoggingLevel.INFO, "## CHANNEL -> GSMA PAYEE deposit")
-                .unmarshal().json(JsonLibrary.Jackson, GSMATransaction.class)
-                .to("bean-validator:request")
-                .process(exchange -> {
+        from("direct:post-gsma-deposit").id("gsma-payee-deposit").log(LoggingLevel.INFO, "## CHANNEL -> GSMA PAYEE deposit").unmarshal()
+                .json(JsonLibrary.Jackson, GSMATransaction.class).to("bean-validator:request").process(exchange -> {
                     GSMATransaction gsmaChannelRequest = exchange.getIn().getBody(GSMATransaction.class); // GSMA Object
                     TransactionChannelRequestDTO channelRequest = new TransactionChannelRequestDTO(); // Fineract Object
                     String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);
@@ -259,15 +239,13 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     extraVariables.put(TENANT_ID, tenantId);
                     String bpmn = getWorkflowForTenant(tenantId);
-                    String tenantSpecificBpmn = bpmn.equals("default")?internationalRemittancePayee:bpmn
-                            .replace("{dfspid}", tenantId);
+                    String tenantSpecificBpmn = bpmn.equals("default") ? internationalRemittancePayee : bpmn.replace("{dfspid}", tenantId);
 
                     extraVariables.put(GSMA_CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaChannelRequest));
-                    extraVariables.put(NOTE,gsmaChannelRequest.getDescriptionText());
+                    extraVariables.put(NOTE, gsmaChannelRequest.getDescriptionText());
 
                     String transactionId = zeebeProcessStarter.startZeebeWorkflow(tenantSpecificBpmn,
-                            objectMapper.writeValueAsString(channelRequest),
-                            extraVariables);
+                            objectMapper.writeValueAsString(channelRequest), extraVariables);
 
                     RequestStateDTO gsmaResponse = new RequestStateDTO();
                     gsmaResponse.setServerCorrelationId(transactionId);
@@ -307,8 +285,8 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     .developerMessage("Amount field supports decimal values, with non negative value.")
                     .defaultUserMessage("Invalid amount format.").build();
         }
-        if (gsmaChannelRequest.getDebitParty()[0].getKey().equals(gsmaChannelRequest.getCreditParty()[0].getKey()) &&
-        gsmaChannelRequest.getDebitParty()[0].getValue().equals(gsmaChannelRequest.getCreditParty()[0].getValue())) {
+        if (gsmaChannelRequest.getDebitParty()[0].getKey().equals(gsmaChannelRequest.getCreditParty()[0].getKey())
+                && gsmaChannelRequest.getDebitParty()[0].getValue().equals(gsmaChannelRequest.getCreditParty()[0].getValue())) {
             return new PhErrorDTO.PhErrorDTOBuilder(PaymentHubError.SamePartiesError)
                     .developerMessage("Credit and Debit MSISDNs can't be same")
                     .defaultUserMessage(PaymentHubError.SamePartiesError.getErrorDescription()).build();
@@ -341,25 +319,25 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         switch (gsmaParties[0].getKey()) {
             case "accountid":
                 identifierType = IdentifierType.ACCOUNT_ID;
-                break;
+            break;
             case "identityalias":
                 identifierType = IdentifierType.ALIAS;
-                break;
+            break;
             case "iban":
                 identifierType = IdentifierType.IBAN;
-                break;
+            break;
             case "emailaddress":
                 identifierType = IdentifierType.EMAIL;
-                break;
+            break;
         }
 
         PartyIdInfo partyIdInfo = new PartyIdInfo(identifierType, gsmaParties[0].getValue());
         return new Party(partyIdInfo);
     }
-    
-//    public Party partyMapper(GsmaParty[] gsmaParties, Kyc kyc) {
-//        return new Party(); // To be taken care of
-//    }
+
+    // public Party partyMapper(GsmaParty[] gsmaParties, Kyc kyc) {
+    // return new Party(); // To be taken care of
+    // }
 
     public MoneyData amountMapper(String amount, String currency) {
         MoneyData moneyData = new MoneyData();
@@ -369,11 +347,13 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
         return moneyData;
     }
+
     public String getWorkflowForTenant(String tenantId) {
         for (TenantImplementation tenant : tenantImplementationProperties.getTenants()) {
             if (tenant.getId().equals(tenantId)) {
                 return tenant.getFlows().getOrDefault("gsma-base-transaction", "default");
-            }}
+            }
+        }
         return "default";
     }
 }

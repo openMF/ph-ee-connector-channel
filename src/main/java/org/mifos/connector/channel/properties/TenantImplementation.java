@@ -3,8 +3,9 @@ package org.mifos.connector.channel.properties;
 import java.util.HashMap;
 
 public class TenantImplementation {
+
     String id;
-    HashMap<String,String> flows;
+    HashMap<String, String> flows;
 
     public String getId() {
         return id;
@@ -21,7 +22,5 @@ public class TenantImplementation {
     public void setFlows(HashMap<String, String> flows) {
         this.flows = flows;
     }
-
-
 
 }

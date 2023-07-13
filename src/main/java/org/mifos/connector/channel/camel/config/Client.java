@@ -2,10 +2,11 @@ package org.mifos.connector.channel.camel.config;
 
 public class Client {
 
-    private String tenant, clientId, clientSecret;
+    private String tenant;
+    private String clientId;
+    private String clientSecret;
 
-    public Client() {
-    }
+    public Client() {}
 
     public String getTenant() {
         return tenant;

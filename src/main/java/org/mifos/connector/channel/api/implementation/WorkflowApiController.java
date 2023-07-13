@@ -14,7 +14,7 @@ public class WorkflowApiController implements WorkflowApi {
     private ProducerTemplate producerTemplate;
 
     @Override
-    public Object workflow(String requestBody){
+    public Object workflow(String requestBody) {
         Exchange exchange = new DefaultExchange(producerTemplate.getCamelContext());
         producerTemplate.send("direct:post-workflow-resolve", exchange);
 
@@ -22,7 +22,7 @@ public class WorkflowApiController implements WorkflowApi {
     }
 
     @Override
-    public Object workflowKey(String workflowInstanceKey){
+    public Object workflowKey(String workflowInstanceKey) {
         Exchange exchange = new DefaultExchange(producerTemplate.getCamelContext());
         producerTemplate.send("direct:post-workflow-instanceKey-cancel", exchange);
 

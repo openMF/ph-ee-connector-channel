@@ -18,7 +18,7 @@ repositories {
     }
 
     maven {
-        url = uri('https://fynarfin.jfrog.io/artifactory/fyn-libs-snapshot-local/')
+        url = uri('https://jfrog.sandbox.fynarfin.io/artifactory/fyn-libs-snapshot')
     }
 }
 

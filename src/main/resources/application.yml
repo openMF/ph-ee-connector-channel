@@ -29,7 +29,7 @@ server:
   port: 8443
 
 operations:
-  url: "http://bb-operations.mifos.io/api/v1"
+  url: https://ops-bk.sandbox.fynarfin.io/api/v1"
   auth-enabled: false
   endpoint:
     transfers: "/transfers?page=0&size=1&"

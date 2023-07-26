@@ -28,7 +28,7 @@ jobs:
           aws-secret-access-key: AWS_SECRET_ACCESS_KEY
           extra-build-args: '--compress'
           push-image: true
-          region: ap-south-1
+          region: "$REGION"
           registry-id: AWS_REGISTRY_ID
           repo: phee-channel
           repo-scan-on-push: true

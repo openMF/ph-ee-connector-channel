@@ -427,7 +427,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     } // end for loop
                     JSONObject amountObj = body.getJSONObject("amount");
                     String currency = amountObj.getString("currency");
-                    Object customDataObj = amsUtils.getOrDefault(body, "customData","");
+                    Object customDataObj = amsUtils.getOrDefault(body, "customData", "");
                     String customDataString = String.valueOf(customDataObj);
 
                     logger.info("Final Value for ams : " + finalAmsVal);

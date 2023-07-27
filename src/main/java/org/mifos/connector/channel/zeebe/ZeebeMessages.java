@@ -1,6 +1,6 @@
 package org.mifos.connector.channel.zeebe;
 
-public class ZeebeMessages {
+public final class ZeebeMessages {
 
     private ZeebeMessages() {}
 

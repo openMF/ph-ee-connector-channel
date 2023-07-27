@@ -15,7 +15,7 @@ public interface ValidationApi {
     @PostMapping("/accounts/validate/{primaryIdentifierName}/{primaryIdentifierVal}")
     ValidationResponseDTO validation(@RequestHeader("amsUrl") String amsUrl, @RequestHeader("amsName") String amsName,
             @RequestHeader("accountHoldingInstitutionId") String accountHoldingInstitutionId,
-            @RequestHeader(CONTENT_TYPE) String CONTENT_TYPE_VAL, @RequestBody ValidationRequestDTO validationRequestDTO,
+            @RequestHeader(CONTENT_TYPE) String ContentTypeVal, @RequestBody ValidationRequestDTO validationRequestDTO,
             @PathVariable String primaryIdentifierName, @PathVariable String primaryIdentifierVal) throws JsonProcessingException;
 
 }

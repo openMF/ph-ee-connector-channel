@@ -51,9 +51,9 @@ public class IdInterceptor implements HandlerInterceptor {
     @Autowired
     public RedisTemplate<String, String> redisTemplate;
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    void IdInterceptor(Set<String> apiList) {
+    IdInterceptor(Set<String> apiList) {
         this.apiList = apiList;
     }
 

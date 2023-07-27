@@ -15,7 +15,7 @@ public interface CollectionApi {
     @PostMapping("/channel/collection")
     GsmaP2PResponseDto collection(@RequestHeader(value = "Platform-TenantId") String tenant,
             @RequestHeader(value = "X-CorrelationID") String correlationId,
-            @RequestHeader(value = PAYMENT_SCHEME_HEADER) String paymentScheme, @RequestBody CollectionRequestDTO requestBody)
-            throws ExecutionException, InterruptedException, JsonProcessingException;
+            @RequestHeader(value = PAYMENT_SCHEME_HEADER, required = false) String paymentScheme,
+            @RequestBody CollectionRequestDTO requestBody) throws ExecutionException, InterruptedException, JsonProcessingException;
 
 }

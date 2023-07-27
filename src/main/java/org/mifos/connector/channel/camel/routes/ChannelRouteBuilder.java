@@ -6,6 +6,7 @@ import static java.util.stream.StreamSupport.stream;
 import static org.mifos.connector.channel.camel.config.CamelProperties.AUTH_TYPE;
 import static org.mifos.connector.channel.camel.config.CamelProperties.BATCH_ID;
 import static org.mifos.connector.channel.camel.config.CamelProperties.CLIENTCORRELATIONID;
+import static org.mifos.connector.channel.camel.config.CamelProperties.PAYMENT_SCHEME_HEADER;
 import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.ACCOUNT;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.AMS;
@@ -14,6 +15,7 @@ import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_AUTHORISATION_
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_RTP_REQUEST;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.PARTY_ID_TYPE;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.PAYMENT_SCHEME;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.TENANT_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.common.mojaloop.type.InitiatorType.CONSUMER;
@@ -78,6 +80,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    private static final String DEFAULT_COLLECTION_PAYMENT_SCHEME = "mpesa";
 
     @Autowired
     private AMSUtils amsUtils;
@@ -388,6 +392,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                         throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
                     }
                     extraVariables.put(TENANT_ID, tenantId);
+                    String paymentScheme = getCollectionPaymentScheme(exchange.getIn().getHeader(PAYMENT_SCHEME_HEADER, String.class));
+                    extraVariables.put(PAYMENT_SCHEME, paymentScheme);
                     String tenantSpecificBpmn;
 
                     String channelRequestBodyString = exchange.getIn().getBody(String.class);
@@ -427,12 +433,13 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     } // end for loop
                     JSONObject amountObj = body.getJSONObject("amount");
                     String currency = amountObj.getString("currency");
-                    Object customDataObj = amsUtils.getOrDefault(body, "customData","");
+                    Object customDataObj = amsUtils.getOrDefault(body, "customData", "");
                     String customDataString = String.valueOf(customDataObj);
-
                     logger.info("Final Value for ams : " + finalAmsVal);
                     extraVariables.put(AMS, finalAmsVal);
-                    tenantSpecificBpmn = inboundTransactionReqFlow.replace("{dfspid}", tenantId).replace("{ams}", finalAmsVal);
+
+                    tenantSpecificBpmn = inboundTransactionReqFlow.replace("{dfspid}", tenantId).replace("{ams}", finalAmsVal)
+                            .replace("{ps}", paymentScheme);
 
                     String amount = body.getJSONObject("amount").getString("amount");
 
@@ -712,5 +719,12 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
             }
         }
         return "default";
+    }
+
+    private String getCollectionPaymentScheme(String paymentSchemeHeaderValue) {
+        if (paymentSchemeHeaderValue != null && !paymentSchemeHeaderValue.isBlank()) {
+            return paymentSchemeHeaderValue.toLowerCase();
+        }
+        return DEFAULT_COLLECTION_PAYMENT_SCHEME;
     }
 }

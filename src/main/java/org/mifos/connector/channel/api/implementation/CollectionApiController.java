@@ -1,5 +1,7 @@
 package org.mifos.connector.channel.api.implementation;
 
+import static org.mifos.connector.channel.camel.config.CamelProperties.PAYMENT_SCHEME_HEADER;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.concurrent.ExecutionException;
@@ -23,10 +25,10 @@ public class CollectionApiController implements CollectionApi {
     private ObjectMapper objectMapper;
 
     @Override
-    public GsmaP2PResponseDto collection(String tenant, String correlationId, CollectionRequestDTO requestBody)
+    public GsmaP2PResponseDto collection(String tenant, String correlationId, String paymentScheme, CollectionRequestDTO requestBody)
             throws ExecutionException, InterruptedException, JsonProcessingException {
         Headers headers = new Headers.HeaderBuilder().addHeader("Platform-TenantId", tenant).addHeader("X-CorrelationID", correlationId)
-                .build();
+                .addHeader(PAYMENT_SCHEME_HEADER, paymentScheme).build();
         Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(), headers,
                 objectMapper.writeValueAsString(requestBody));
         Exchange ex = producerTemplate.send("direct:post-collection", exchange);

@@ -37,7 +37,7 @@ jobs:
       # - run: ./gradlew cucumberCli
       # run tests! Slack Success/Fail Notification Step
       #- run: ./gradlew test
-  build-and-host-engine:
+  build-and-host-ph-ee-engine:
     docker:
       - image: cimg/python:3.10
     working_directory: ~/repo
@@ -102,13 +102,14 @@ jobs:
           wait: true
           timeout: "300s"
 workflows:
-  build_and_push_image:
+  build_push_deploy:
     jobs:
       - build:
           context:
             - AWS
+            - Helm
             - slack
-      - build-and-host-engine:
+      - build-and-host-ph-ee-engine:
           requires:
             - build
           context:
@@ -117,7 +118,7 @@ workflows:
             - slack
       - build-and-host-g2p-sandbox:
           requires:
-            - build-and-host-engine
+            - build-and-host-ph-ee-engine
           context:
             - AWS
             - Helm

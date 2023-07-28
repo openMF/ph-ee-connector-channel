@@ -67,7 +67,8 @@ jobs:
     environment:
       TERM: dumb
     steps:
-      - run: git clone https://github.com/openMF/ph-ee-env-template && cd ph-ee-env-template
+      - run: git clone https://github.com/openMF/ph-ee-env-template
+      - run: cd ph-ee-env-template
       - run: rm -f helm/g2p-sandbox/Chart.lock helm/g2p-sandbox/requirements.lock helm/g2p-sandbox/charts/*
       - helm/install-helm-client:
           version: "v3.8.2"

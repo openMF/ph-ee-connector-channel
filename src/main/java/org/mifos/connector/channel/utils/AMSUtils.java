@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 @UtilityClass
 public class AMSUtils {
 
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     private AMSProps amsProps;

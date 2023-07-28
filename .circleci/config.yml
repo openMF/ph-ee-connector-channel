@@ -25,7 +25,7 @@ jobs:
 #       - slack/notify:
 #           event: pass
 #           template: basic_success_1
-      - run: ./gradlew clean bootJar
+      - run: ./gradlew bootJar
       - aws-ecr/build-and-push-image:
           aws-access-key-id: AWS_ACCESS_KEY_ID
           aws-secret-access-key: AWS_SECRET_ACCESS_KEY

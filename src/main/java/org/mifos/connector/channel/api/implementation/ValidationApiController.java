@@ -28,11 +28,11 @@ public class ValidationApiController implements ValidationApi {
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
-    public ValidationResponseDTO validation(String amsUrl, String amsName, String accountHoldingInstitutionId, String ContentTypeVal,
+    public ValidationResponseDTO validation(String amsUrl, String amsName, String accountHoldingInstitutionId, String contentTypeVal,
             ValidationRequestDTO validationRequestDTO, String primaryIdentifierName, String primaryIdentifierVal)
             throws JsonProcessingException {
         Headers headers = new Headers.HeaderBuilder().addHeader("amsUrl", amsUrl).addHeader("amsName", amsName)
-                .addHeader("accountHoldingInstitutionId", accountHoldingInstitutionId).addHeader(CONTENT_TYPE, ContentTypeVal).build();
+                .addHeader("accountHoldingInstitutionId", accountHoldingInstitutionId).addHeader(CONTENT_TYPE, contentTypeVal).build();
 
         Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(), headers,
                 objectMapper.writeValueAsString(validationRequestDTO));

@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-// @UtilityClass
 public class AMSUtils {
 
     private Logger logger = LoggerFactory.getLogger(AMSUtils.class);

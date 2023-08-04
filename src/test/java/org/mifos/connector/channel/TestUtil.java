@@ -11,6 +11,6 @@ public class TestUtil {
 
     @Test
     public void test1() {
-        log.info(" {}", UUID.randomUUID().toString());
+        log.debug(" {}", UUID.randomUUID().toString());
     }
 }

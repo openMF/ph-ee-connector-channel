@@ -3,7 +3,9 @@ package org.mifos.connector.channel.utils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class MpesaUtils {
+public final class MpesaUtils {
+
+    private MpesaUtils() {}
 
     public static String mpesaChannelRequestToChannelRequestConvertor(String channelRequest) {
 

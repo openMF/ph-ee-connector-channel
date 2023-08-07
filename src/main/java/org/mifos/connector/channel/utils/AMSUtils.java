@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.PostConstruct;
+import lombok.experimental.UtilityClass;
 import org.json.JSONObject;
 import org.mifos.connector.common.gsma.dto.CustomData;
 import org.slf4j.Logger;
@@ -14,9 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
+//@UtilityClass
 public class AMSUtils {
 
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private Logger logger = LoggerFactory.getLogger(AMSUtils.class);
 
     @Autowired
     private AMSProps amsProps;
@@ -25,8 +27,6 @@ public class AMSUtils {
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    public AMSUtils() {}
 
     @PostConstruct
     public List<AMSProps.AMS> postConstruct() {

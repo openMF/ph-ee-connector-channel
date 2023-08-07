@@ -7,7 +7,7 @@ import org.mifos.connector.channel.utils.Headers;
 import org.mifos.connector.channel.utils.SpringWrapperUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class ChannelGSMAAPIController implements GSMA_API {
+public class ChannelGSMAAPIController implements GSMAAPI {
 
     @Autowired
     private ProducerTemplate producerTemplate;

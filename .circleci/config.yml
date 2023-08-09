@@ -5,6 +5,20 @@ executors:
       - image: circleci/openjdk:17-buster-node-browsers-legacy
 
 jobs:
+  gradle_build:
+    executor: docker-executor
+    environment:
+      JVM_OPTS: -Xmx512m
+      TERM: dumb
+
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.14
+      - run:
+          name: Checkstyle and spotless
+          command: ./gradlew build
+
   build_and_push_tag_image:
     executor: docker-executor
     environment:
@@ -29,7 +43,7 @@ jobs:
             fi
 
             # Build and tag the Docker image
-            ./gradlew build
+            ./gradlew bootJar
             docker build -t "openmf/ph-ee-connector-channel:$IMAGE_TAG" .
 
             # Push the Docker image to Docker Hub
@@ -37,6 +51,7 @@ jobs:
             docker push "openmf/ph-ee-connector-channel:$IMAGE_TAG"
 
           # when: always  # The job will be executed even if there's no match for the tag filter
+
 
   build_and_push_latest_image:
     executor: docker-executor
@@ -54,8 +69,9 @@ jobs:
       - run:
           name: Build Docker image
           command: |
-            ./gradlew build
+            ./gradlew bootJar
             docker build -t openmf/ph-ee-connector-channel:latest .
+
 
       # Log in to DockerHub using environment variables
       - run:
@@ -71,12 +87,18 @@ workflows:
   version: 2
   build-and-push:
     jobs:
+      - gradle_build:
+
       - build_and_push_tag_image:
           filters:
             tags:
               only: /^v\d+\.\d+\.\d+$/  # Match tags in the format v1.2.3
           context:
               - DOCKER
+          requires:
+            - gradle_build
       - build_and_push_latest_image:
           context:
               - DOCKER
+          requires:
+            - gradle_build

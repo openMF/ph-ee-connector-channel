@@ -54,7 +54,7 @@ jobs:
       - run:
           name: Build Docker image
           command: |
-            ./gradlew build
+            ./gradlew bootJar
             docker build -t openmf/ph-ee-connector-channel:latest .
 
       # Log in to DockerHub using environment variables

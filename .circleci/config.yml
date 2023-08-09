@@ -82,9 +82,4 @@ workflows:
             - DOCKER
       - build_and_push_latest_image:
           context:
-<<<<<<< Updated upstream
-              - DOCKER
-=======
             - DOCKER
-             
->>>>>>> Stashed changes

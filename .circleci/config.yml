@@ -3,6 +3,9 @@ executors:
   docker-executor:
     docker:
       - image: circleci/openjdk:17-buster-node-browsers-legacy
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
 
 jobs:
   build_and_push_tag_image:
@@ -76,7 +79,7 @@ workflows:
             tags:
               only: /^v\d+\.\d+\.\d+$/  # Match tags in the format v1.2.3
           context:
-              - DOCKER
+            - DOCKER
       - build_and_push_latest_image:
           context:
-              - DOCKER
+            - DOCKER

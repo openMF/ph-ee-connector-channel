@@ -38,7 +38,7 @@ jobs:
             fi
 
             # Build and tag the Docker image
-            ./gradlew build
+            ./gradlew bootJar
             docker build -t "openmf/ph-ee-connector-channel:$IMAGE_TAG" .
 
             # Push the Docker image to Docker Hub
@@ -63,7 +63,7 @@ jobs:
       - run:
           name: Build Docker image
           command: |
-            ./gradlew build
+            ./gradlew bootJar
             docker build -t openmf/ph-ee-connector-channel:latest .
 
       # Log in to DockerHub using environment variables
@@ -84,7 +84,6 @@ jobs:
       TERM: dumb
     steps:
       - run: git clone https://github.com/openMF/ph-ee-env-template
-      - run: cd helm
       - run: rm -f helm/ph-ee-engine/Chart.lock helm/ph-ee-engine/requirements.lock helm/ph-ee-engine/charts/*
       - helm/install-helm-client:
           version: "v3.8.2"

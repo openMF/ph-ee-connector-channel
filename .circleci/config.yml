@@ -95,10 +95,7 @@ jobs:
           add-repo: "https://fynarfin.io/images/ph-ee-g2psandbox-fynarfin"
           wait: true
           timeout: "300s"
-      - run:
-          name: Restart Pod
-          command: |
-            kubectl delete pod ph-ee-processor-bulk -n paymenthub
+
   test-chart-gov:
     docker:
       - image: cimg/openjdk:17.0.0

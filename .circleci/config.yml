@@ -58,7 +58,11 @@ jobs:
       # Install Docker to build and push the image
       - setup_remote_docker:
           version: 20.10.14
-
+      - kubernetes/install-kubectl
+      - checkout
+      - aws-eks/update-kubeconfig-with-authenticator:
+          cluster-name: "sit"
+          aws-region: "$REGION"
       # Build the Docker image
       - run:
           name: Build Docker image
@@ -75,6 +79,14 @@ jobs:
       - run:
           name: Push Docker image to DockerHub
           command: docker push openmf/ph-ee-connector-channel:latest
+
+      - run: |
+          kubectl config use-context arn:aws:eks:$REGION:419830066942:cluster/sit
+          kubectl config get-contexts
+     # Delete the pod from paymentHub
+      - run:
+          name: Restart Pod
+          command: kubectl delete pods -n paymenthub `kubectl get pods -n paymenthub | grep ph-ee-operations-app|cut -d " " -f1`
 
   build-and-host-engine:
     docker:
@@ -195,6 +207,7 @@ workflows:
       - build_and_push_latest_image:
           context:
               - DOCKER
+              - AWS
       - build-and-host-engine:
           requires:
             - build_and_push_tag_image

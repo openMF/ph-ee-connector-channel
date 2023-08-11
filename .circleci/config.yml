@@ -86,7 +86,7 @@ jobs:
      # Delete the pod from paymentHub
       - run:
           name: Restart Pod
-          command: kubectl delete pods -n paymenthub `kubectl get pods -n paymenthub | grep ph-ee-operations-app|cut -d " " -f1`
+          command: kubectl delete pods -n paymenthub `kubectl get pods -n paymenthub | grep ph-ee-connector-channel|cut -d " " -f1`
 
   build-and-host-engine:
     docker:

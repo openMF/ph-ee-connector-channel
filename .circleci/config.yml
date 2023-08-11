@@ -84,13 +84,13 @@ jobs:
       TERM: dumb
     steps:
       - run: git clone https://github.com/openMF/ph-ee-env-template
-      - run: rm -f helm/ph-ee-engine/Chart.lock helm/ph-ee-engine/requirements.lock helm/ph-ee-engine/charts/* | pwd
+      - run: rm -f helm/ph-ee-engine/Chart.lock helm/ph-ee-engine/requirements.lock helm/ph-ee-engine/charts/*
       - helm/install-helm-client:
           version: "v3.8.2"
 #      - run: "sed -i '2s/.*/appVersion: 0.0.0/' helm/ph-ee-engine/Chart.yaml"
 #      - run: "sed -i '5s/.*/version: 0.0.0-SNAPSHOT/' helm/ph-ee-engine/Chart.yaml"
-      - run: helm dep up ph-ee-env-template/helm/ph-ee-engine | pwd
-      - run: helm package ph-ee-env-template/helm/ph-ee-engine | pwd
+      - run: helm dep up ph-ee-env-template/helm/ph-ee-engine
+      - run: helm package ph-ee-env-template/helm/ph-ee-engine
       - run: helm repo index .
       - run: echo "$CERT_FILE" | base64 --decode > b64encoded.pem
       - run: chmod 400 b64encoded.pem

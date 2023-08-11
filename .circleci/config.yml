@@ -1,4 +1,10 @@
 version: 2.1
+orbs:
+  slack: circleci/slack@4.12.5
+  aws-ecr: circleci/aws-ecr@8.2.1
+  helm: circleci/helm@2.0.1
+  aws-eks: circleci/aws-eks@2.2.0
+  kubernetes: circleci/kubernetes@1.3
 executors:
   docker-executor:
     docker:
@@ -70,6 +76,50 @@ jobs:
           name: Push Docker image to DockerHub
           command: docker push openmf/ph-ee-connector-channel:latest
 
+  upgrade-helm-chart:
+    docker:
+      - image: cimg/python:3.10
+    parameters:
+      cluster-name:
+        description: "sit"
+        type: string
+    steps:
+      - aws-eks/update-kubeconfig-with-authenticator:
+          cluster-name: "sit"
+          aws-region: "$REGION"
+      - helm/upgrade-helm-chart:
+          chart: "https://fynarfin.io/images/ph-ee-g2psandbox-fynarfin/ph-ee-g2psandbox-fynarfin-0.2.0.tgz"
+          release-name: g2p-sandbox
+          namespace: paymenthub
+          recreate-pods: true
+          add-repo: "https://fynarfin.io/images/ph-ee-g2psandbox-fynarfin"
+          wait: true
+          timeout: "300s"
+      - run:
+          name: Restart Pod
+          command: |
+            kubectl delete pod ph-ee-processor-bulk -n paymenthub
+  test-chart-gov:
+    docker:
+      - image: cimg/openjdk:17.0.0
+    steps:
+      - run: git clone https://github.com/openmf/ph-ee-integration-test
+      - run: cd ph-ee-integration-test && ./gradlew test -Dcucumber.filter.tags="@gov"
+      - store_test_results:
+          path: /build/cucumber.xml
+      - store_artifacts:
+          path: /build/reports/tests/test
+  test-chart-ams:
+    docker:
+      - image: cimg/openjdk:17.0.0
+    steps:
+      - run: git clone https://github.com/openmf/ph-ee-integration-test
+      - run: cd ph-ee-integration-test && ./gradlew test -Dcucumber.filter.tags="@amsIntegration"
+      - store_test_results:
+          path: /build/cucumber.xml
+      - store_artifacts:
+          path: /build/reports/tests/test
+
 workflows:
   version: 2
   build-and-push:
@@ -82,4 +132,24 @@ workflows:
             - DOCKER
       - build_and_push_latest_image:
           context:
-            - DOCKER
+              - DOCKER
+      - upgrade-helm-chart:
+          cluster-name: sit
+          requires:
+            - build_and_push_latest_image
+          context:
+            - AWS
+      - test-chart-gov:
+          requires:
+            - upgrade-helm-chart
+          context:
+            - AWS
+            - Helm
+            - slack
+      - test-chart-ams:
+          requires:
+            - upgrade-helm-chart
+          context:
+            - AWS
+            - Helm
+            - slack

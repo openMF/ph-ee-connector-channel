@@ -83,8 +83,8 @@ jobs:
     environment:
       TERM: dumb
     steps:
-      - run: git clone https://github.com/openMF/ph-ee-env-template
-      - run: rm -f helm/ph-ee-engine/Chart.lock helm/ph-ee-engine/requirements.lock helm/ph-ee-engine/charts/*
+      - run: git clone https://github.com/openMF/ph-ee-env-template | pwd
+      - run: rm -f helm/ph-ee-engine/Chart.lock helm/ph-ee-engine/requirements.lock helm/ph-ee-engine/charts/* | pwd
       - helm/install-helm-client:
           version: "v3.8.2"
 #      - run: "sed -i '2s/.*/appVersion: 0.0.0/' helm/ph-ee-engine/Chart.yaml"

@@ -76,6 +76,69 @@ jobs:
           name: Push Docker image to DockerHub
           command: docker push openmf/ph-ee-connector-channel:latest
 
+  build-and-host-engine:
+    docker:
+      - image: cimg/python:3.10
+    working_directory: ~/repo
+    environment:
+      TERM: dumb
+    steps:
+      - run: git clone https://github.com/openMF/ph-ee-env-template
+      - run: rm -f helm/ph-ee-engine/Chart.lock helm/ph-ee-engine/requirements.lock helm/ph-ee-engine/charts/*
+      - helm/install-helm-client:
+          version: "v3.8.2"
+      - run: "sed -i '2s/.*/appVersion: 0.0.0/' helm/ph-ee-engine/Chart.yaml"
+      - run: "sed -i '5s/.*/version: 0.0.0-SNAPSHOT/' helm/ph-ee-engine/Chart.yaml"
+      - run: helm dep up helm/ph-ee-engine
+      - run: helm package helm/ph-ee-engine
+      - run: helm repo index .
+      - run: echo "$CERT_FILE" | base64 --decode > b64encoded.pem
+      - run: chmod 400 b64encoded.pem
+      - run: scp -o StrictHostKeyChecking=No -i b64encoded.pem index.yaml ph-ee-engine-0.0.0-SNAPSHOT.tgz ec2-user@13.233.68.128:~/
+      - run: ssh -i b64encoded.pem -o StrictHostKeyChecking=No ec2-user@13.233.68.128 sudo cp -t /apps/apache-tomcat-7.0.82/webapps/ROOT/images/ph-ee-engine-0.0.0-SNAPSHOT index.yaml ph-ee-engine-0.0.0-SNAPSHOT.tgz
+  build-and-host-g2p-sandbox:
+    docker:
+      - image: cimg/python:3.10
+    working_directory: ~/repo
+    environment:
+      TERM: dumb
+    steps:
+      - run: git clone https://github.com/openMF/ph-ee-env-template
+      - run: rm -f helm/g2p-sandbox/Chart.lock helm/g2p-sandbox/requirements.lock helm/g2p-sandbox/charts/*
+      - helm/install-helm-client:
+          version: "v3.8.2"
+      - run: "sed -i '6s/.*/appVersion: 0.0.0/' helm/g2p-sandbox/Chart.yaml"
+      - run: "sed -i '7s/.*/version: 0.0.0/' helm/g2p-sandbox/Chart.yaml"
+      # - run: "sed -i '4s/.*/version: 0.0.0-SNAPSHOT/' helm/g2p-sandbox/requirements.yaml"
+      # SED & replace dependency with 0.0.0
+      - run: helm dep up helm/g2p-sandbox
+      - run: helm package helm/g2p-sandbox
+      - run: helm repo index .
+      - run: echo "$CERT_FILE" | base64 --decode > b64encoded.pem
+      - run: chmod 400 b64encoded.pem
+      - run: scp -o StrictHostKeyChecking=No -i b64encoded.pem index.yaml ph-ee-g2psandbox-0.0.0.tgz ec2-user@13.233.68.128:~/
+      - run: ssh -i b64encoded.pem -o StrictHostKeyChecking=No ec2-user@13.233.68.128 sudo cp -t /apps/apache-tomcat-7.0.82/webapps/ROOT/images/ph-ee-g2psandbox-0.0.0 index.yaml ph-ee-g2psandbox-0.0.0.tgz
+  build-host-g2p-fyn-chart:
+    docker:
+      - image: cimg/python:3.10
+    working_directory: ~/repo
+    environment:
+      TERM: dumb
+    steps:
+      - run: git clone https://github.com/openmf/ph-ee-env-labs
+      - run: rm -f ph-ee-env-labs/helm/g2p-sandbox-fynarfin-SIT/Chart.lock ph-ee-env-labs/helm/g2p-sandbox-fynarfin-SIT/requirements.lock ph-ee-env-labs/helm/g2p-sandbox-fynarfin-SIT/charts/*
+      - helm/install-helm-client:
+          version: "v3.8.2"
+      # - run: "sed -i '12s/.*/version: 0.0.0/' helm/g2p-sandbox-fynarfin-SIT/Chart.yaml"
+      - run: cat ph-ee-env-labs/helm/g2p-sandbox-fynarfin-SIT/Chart.yaml
+      - run: helm dep up ph-ee-env-labs/helm/g2p-sandbox-fynarfin-SIT
+      - run: helm package ph-ee-env-labs/helm/g2p-sandbox-fynarfin-SIT
+      - run: helm repo index .
+      - run: echo "$CERT_FILE" | base64 --decode > b64encoded.pem
+      - run: chmod 400 b64encoded.pem
+      - run: scp -o StrictHostKeyChecking=No -i b64encoded.pem index.yaml ph-ee-g2psandbox-fynarfin-0.2.0.tgz ec2-user@13.233.68.128:~/
+      - run: ssh -i b64encoded.pem -o StrictHostKeyChecking=No ec2-user@13.233.68.128 sudo mv -t /apps/apache-tomcat-7.0.82/webapps/ROOT/images/ph-ee-g2psandbox-fynarfin index.yaml ph-ee-g2psandbox-fynarfin-0.2.0.tgz
+
   upgrade-helm-chart:
     docker:
       - image: cimg/python:3.10
@@ -130,6 +193,26 @@ workflows:
       - build_and_push_latest_image:
           context:
               - DOCKER
+      - build-and-host-engine:
+          requires:
+            - build_and_push_latest_image
+          context:
+            - AWS
+            - Helm
+            - slack
+      - build-and-host-g2p-sandbox:
+          requires:
+            - build-and-host-engine
+          context:
+            - AWS
+            - Helm
+            - slack
+      - build-host-g2p-fyn-chart:
+          requires:
+            - build-and-host-g2p-sandbox
+          context:
+            - AWS
+            - Helm
       - upgrade-helm-chart:
           cluster-name: sit
           requires:

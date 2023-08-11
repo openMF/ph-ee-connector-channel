@@ -84,11 +84,12 @@ jobs:
       TERM: dumb
     steps:
       - run: git clone https://github.com/openMF/ph-ee-env-template
+      - run: cd helm
       - run: rm -f helm/ph-ee-engine/Chart.lock helm/ph-ee-engine/requirements.lock helm/ph-ee-engine/charts/*
       - helm/install-helm-client:
           version: "v3.8.2"
-      - run: "sed -i '2s/.*/appVersion: 0.0.0/' helm/ph-ee-engine/Chart.yaml"
-      - run: "sed -i '5s/.*/version: 0.0.0-SNAPSHOT/' helm/ph-ee-engine/Chart.yaml"
+#      - run: "sed -i '2s/.*/appVersion: 0.0.0/' helm/ph-ee-engine/Chart.yaml"
+#      - run: "sed -i '5s/.*/version: 0.0.0-SNAPSHOT/' helm/ph-ee-engine/Chart.yaml"
       - run: helm dep up helm/ph-ee-engine
       - run: helm package helm/ph-ee-engine
       - run: helm repo index .
@@ -107,8 +108,8 @@ jobs:
       - run: rm -f helm/g2p-sandbox/Chart.lock helm/g2p-sandbox/requirements.lock helm/g2p-sandbox/charts/*
       - helm/install-helm-client:
           version: "v3.8.2"
-      - run: "sed -i '6s/.*/appVersion: 0.0.0/' helm/g2p-sandbox/Chart.yaml"
-      - run: "sed -i '7s/.*/version: 0.0.0/' helm/g2p-sandbox/Chart.yaml"
+#      - run: "sed -i '6s/.*/appVersion: 0.0.0/' helm/g2p-sandbox/Chart.yaml"
+#      - run: "sed -i '7s/.*/version: 0.0.0/' helm/g2p-sandbox/Chart.yaml"
       # - run: "sed -i '4s/.*/version: 0.0.0-SNAPSHOT/' helm/g2p-sandbox/requirements.yaml"
       # SED & replace dependency with 0.0.0
       - run: helm dep up helm/g2p-sandbox
@@ -195,6 +196,7 @@ workflows:
               - DOCKER
       - build-and-host-engine:
           requires:
+            - build_and_push_tag_image
             - build_and_push_latest_image
           context:
             - AWS
@@ -202,6 +204,8 @@ workflows:
             - slack
       - build-and-host-g2p-sandbox:
           requires:
+            - build_and_push_tag_image
+            - build_and_push_latest_image
             - build-and-host-engine
           context:
             - AWS
@@ -216,7 +220,7 @@ workflows:
       - upgrade-helm-chart:
           cluster-name: sit
           requires:
-            - build_and_push_latest_image
+            - build-host-g2p-fyn-chart
           context:
             - AWS
       - test-chart-gov:

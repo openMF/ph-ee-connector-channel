@@ -89,13 +89,14 @@ jobs:
           version: "v3.8.2"
 #      - run: "sed -i '2s/.*/appVersion: 0.0.0/' helm/ph-ee-engine/Chart.yaml"
 #      - run: "sed -i '5s/.*/version: 0.0.0-SNAPSHOT/' helm/ph-ee-engine/Chart.yaml"
-      - run: helm dep up helm/ph-ee-engine
-      - run: helm package helm/ph-ee-engine
+      - run: helm dep up helm/ph-ee-engine | pwd
+      - run: helm package helm/ph-ee-engine | pwd
       - run: helm repo index .
       - run: echo "$CERT_FILE" | base64 --decode > b64encoded.pem
       - run: chmod 400 b64encoded.pem
       - run: scp -o StrictHostKeyChecking=No -i b64encoded.pem index.yaml ph-ee-engine-0.0.0-SNAPSHOT.tgz ec2-user@13.233.68.128:~/
       - run: ssh -i b64encoded.pem -o StrictHostKeyChecking=No ec2-user@13.233.68.128 sudo cp -t /apps/apache-tomcat-7.0.82/webapps/ROOT/images/ph-ee-engine-0.0.0-SNAPSHOT index.yaml ph-ee-engine-0.0.0-SNAPSHOT.tgz
+
   build-and-host-g2p-sandbox:
     docker:
       - image: cimg/python:3.10
@@ -118,6 +119,7 @@ jobs:
       - run: chmod 400 b64encoded.pem
       - run: scp -o StrictHostKeyChecking=No -i b64encoded.pem index.yaml ph-ee-g2psandbox-0.0.0.tgz ec2-user@13.233.68.128:~/
       - run: ssh -i b64encoded.pem -o StrictHostKeyChecking=No ec2-user@13.233.68.128 sudo cp -t /apps/apache-tomcat-7.0.82/webapps/ROOT/images/ph-ee-g2psandbox-0.0.0 index.yaml ph-ee-g2psandbox-0.0.0.tgz
+
   build-host-g2p-fyn-chart:
     docker:
       - image: cimg/python:3.10

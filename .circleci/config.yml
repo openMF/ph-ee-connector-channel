@@ -38,6 +38,7 @@ jobs:
             fi
 
             # Build and tag the Docker image
+            ./gradlew build
             ./gradlew bootJar
             docker build -t "openmf/ph-ee-connector-channel:$IMAGE_TAG" .
 
@@ -67,6 +68,7 @@ jobs:
       - run:
           name: Build Docker image
           command: |
+            ./gradlew build
             ./gradlew bootJar
             docker build -t openmf/ph-ee-connector-channel:latest .
 
@@ -81,12 +83,12 @@ jobs:
           command: docker push openmf/ph-ee-connector-channel:latest
 
       - run: |
-          kubectl config use-context arn:aws:eks:$REGION:419830066942:cluster/sit
+          kubectl config use-context arn:aws:eks:$REGION:$ACCOUNT_ID:cluster/sit
           kubectl config get-contexts
      # Delete the pod from paymentHub
       - run:
           name: Restart Pod
-          command: kubectl delete pods -n paymenthub `kubectl get pods -n paymenthub | grep ph-ee-connector-channel|cut -d " " -f1`
+          command: kubectl delete pods -n $NAMESPACE `kubectl get pods -n $NAMESPACE | grep ph-ee-connector-channel|cut -d " " -f1`
 
   build-and-host-engine:
     docker:

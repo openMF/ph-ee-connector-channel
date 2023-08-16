@@ -261,6 +261,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     if (tenantId == null || !dfspIds.contains(tenantId)) {
                         throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
                     }
+                    logger.debug("tenantId: " + tenantId);
                     Client client = clientProperties.getClient(tenantId);
                     String requestType = getRequestType(e.getIn().getHeader("requestType", String.class));
                     HttpEntity<String> entity = buildHeader(tenantId, null);

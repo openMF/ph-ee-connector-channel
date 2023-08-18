@@ -80,13 +80,6 @@ jobs:
           name: Push Docker image to DockerHub
           command: docker push openmf/ph-ee-connector-channel:latest
 
-      - run: |
-          kubectl config use-context arn:aws:eks:$REGION:$ACCOUNT_ID:cluster/sit
-          kubectl config get-contexts
-     # Delete the pod from paymentHub
-      - run:
-          name: Restart Pod
-          command: kubectl delete pods -n $NAMESPACE `kubectl get pods -n $NAMESPACE | grep ph-ee-connector-channel|cut -d " " -f1`
 
   build-and-host-engine:
     docker:
@@ -117,7 +110,7 @@ jobs:
       TERM: dumb
     steps:
       - run: git clone https://github.com/openMF/ph-ee-env-template
-      - run: rm -f helm/g2p-sandbox/Chart.lock helm/g2p-sandbox/requirements.lock helm/g2p-sandbox/charts/*
+      - run: rm -f ph-ee-env-template/helm/g2p-sandbox/Chart.lock ph-ee-env-template/helm/g2p-sandbox/requirements.lock ph-ee-env-template/helm/g2p-sandbox/charts/*
       - helm/install-helm-client:
           version: "v3.8.2"
 #      - run: "sed -i '6s/.*/appVersion: 0.0.0/' helm/g2p-sandbox/Chart.yaml"

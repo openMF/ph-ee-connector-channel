@@ -38,6 +38,7 @@ jobs:
             fi
 
             # Build and tag the Docker image
+            ./gradlew clean build
             ./gradlew bootJar
             docker build -t "openmf/ph-ee-connector-channel:$IMAGE_TAG" .
 

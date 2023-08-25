@@ -198,9 +198,9 @@ jobs:
             echo -n "Test execution is completed, kill ngrok"
             pkill ngrok
       - store_test_results:
-          path: /build/cucumber.xml
+          path: ph-ee-integration-test/build/cucumber.xml
       - store_artifacts:
-          path: /build/reports/tests/test
+          path: ph-ee-integration-test/build/reports/tests/test
   test-chart-ams:
     docker:
       - image: cimg/openjdk:17.0.0
@@ -208,9 +208,9 @@ jobs:
       - run: git clone https://github.com/openmf/ph-ee-integration-test
       - run: cd ph-ee-integration-test && ./gradlew test -Dcucumber.filter.tags="@amsIntegration"
       - store_test_results:
-          path: /build/cucumber.xml
+          path: ph-ee-integration-test/build/cucumber.xml
       - store_artifacts:
-          path: /build/reports/tests/test
+          path: ph-ee-integration-test/build/reports/tests/test
 
 workflows:
   version: 2

@@ -178,6 +178,7 @@ jobs:
       - run:
           name: Test execution
           command: |
+            ngrok config add-authtoken "$AUTH_TOKEN"
             ngrok http 53013 > /dev/null &
             echo -n "Extracting ngrok public url ."
             NGROK_PUBLIC_URL=""
@@ -193,7 +194,7 @@ jobs:
             export CALLBACK_URL="https://$NGROK_PUBx  LIC_URL"
             echo -n "Public url ."
             echo $CALLBACK_URL
-            ./gradlew test -Dcucumber.filter.tags="@gov"
+            cd ph-ee-integration-test && ./gradlew test -Dcucumber.filter.tags="@gov"
             echo -n "Test execution is completed, kill ngrok"
             pkill ngrok
       - store_test_results:

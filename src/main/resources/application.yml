@@ -48,7 +48,7 @@ bpmn:
     gsma-link-based-payment: "gsma_link_transfer"
     international-remittance-payee: "international_remittance_payee_process-{dfspid}"
     international-remittance-payer: "international_remittance_payer_process-{dfspid}"
-    inboundTransactionReq-flow: "mpesa_flow_{ams}-{dfspid}"
+    inboundTransactionReq-flow: "{ps}_flow_{ams}-{dfspid}"
 
 ams:
   groups:

@@ -1,5 +1,7 @@
 package org.mifos.connector.channel.api.definition;
 
+import static org.mifos.connector.channel.camel.config.CamelProperties.PAYMENT_SCHEME_HEADER;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.concurrent.ExecutionException;
 import org.mifos.connector.channel.gsma_api.GsmaP2PResponseDto;
@@ -12,7 +14,8 @@ public interface CollectionApi {
 
     @PostMapping("/channel/collection")
     GsmaP2PResponseDto collection(@RequestHeader(value = "Platform-TenantId") String tenant,
-            @RequestHeader(value = "X-CorrelationID") String correlationId, @RequestBody CollectionRequestDTO requestBody)
-            throws ExecutionException, InterruptedException, JsonProcessingException;
+            @RequestHeader(value = "X-CorrelationID") String correlationId,
+            @RequestHeader(value = PAYMENT_SCHEME_HEADER, required = false) String paymentScheme,
+            @RequestBody CollectionRequestDTO requestBody) throws ExecutionException, InterruptedException, JsonProcessingException;
 
 }

@@ -1,11 +1,12 @@
 bpmns:
   tenants:
-    - id: "rhino"
-      flows:
-        payment-transfer: "minimal_mock_fund_transfer-{dfspid}"
     - id: "lion"
       flows:
-        payment-transfer: "MockPayerFundTransfer-{dfspid}"
+        payment-transfer: "minimal_mock_fund_transfer-{dfspid}"
     - id: "gorilla"
       flows:
         payment-transfer: "PayerFundTransfer-{dfspid}"
+        outbound-transfer-request: "mpesa_flow_{ams}-{dfspid}"
+    - id: "rhino"
+      flows:
+        payment-transfer: "minimal_mock_fund_transfer_account_lookup-{dfspid}"

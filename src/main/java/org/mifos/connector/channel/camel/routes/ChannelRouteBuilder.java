@@ -332,7 +332,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("clientCorrelationId", clientCorrelationId);
                     extraVariables.put("initiatorFspId", channelRequest.getPayer().getPartyIdInfo().getFspId());
                     String tenantSpecificBpmn;
-                    String bpmn = getWorkflowForTenant(tenantId);
+                    String bpmn = getWorkflowForTenant(tenantId, "payment-transfer");
                     if (channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier().startsWith("6666")) {
                         tenantSpecificBpmn = bpmn.equals("default") ? specialPaymentTransferFlow.replace("{dfspid}", tenantId)
                                 : bpmn.replace("{dfspid}", tenantId);
@@ -399,38 +399,9 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     String channelRequestBodyString = exchange.getIn().getBody(String.class);
                     JSONObject body = new JSONObject(channelRequestBodyString);
                     JSONArray payer = body.getJSONArray("payer");
-                    String primaryIdentifierVal = "";
-                    String secondaryIdentifierVal = "";
-                    String primaryIdentifierName = "";
-                    String secondaryIdentifierName = "";
-                    String finalAmsVal = "value";
-                    primaryIdentifierName = ((JSONObject) payer.get(0)).getString("key");
-                    secondaryIdentifierName = ((JSONObject) payer.get(1)).getString("key");
-                    primaryIdentifierVal = ((JSONObject) payer.get(0)).getString("value");
-                    secondaryIdentifierVal = ((JSONObject) payer.get(1)).getString("value");
-                    for (AMSProps.AMS amsIdentifier : amsUtils.postConstruct()) {
-                        logger.info("KEY VALUE PAIR : " + amsIdentifier.getIdentifier() + " " + amsIdentifier.getValue());
-                        String identifier = amsIdentifier.getIdentifier();
-                        if (identifier.equalsIgnoreCase(secondaryIdentifierName)) {
-                            finalAmsVal = amsIdentifier.getValue();
-                            logger.info("Assigned from secondary" + finalAmsVal);
-                            break;
-                        } else if (identifier.equalsIgnoreCase(primaryIdentifierName)) {
-                            finalAmsVal = amsIdentifier.getValue();
-                            // logic to keep correct primary/secondary identifier for line 345-346
-                            String temp = primaryIdentifierVal;
-                            primaryIdentifierVal = secondaryIdentifierVal;
-                            secondaryIdentifierVal = temp;
-                            logger.info("Assigned from primary" + finalAmsVal);
-                            break;
-                        } else {
-                            if (identifier.equalsIgnoreCase("default")) {
-                                finalAmsVal = amsIdentifier.getDefaultValue();
-                                logger.info("Assigned default from secondary" + finalAmsVal);
-                            }
 
-                        }
-                    } // end for loop
+                    String finalAmsVal = getFinalAmsValue(payer, extraVariables);
+
                     JSONObject amountObj = body.getJSONObject("amount");
                     String currency = amountObj.getString("currency");
                     Object customDataObj = amsUtils.getOrDefault(body, "customData", "");
@@ -438,15 +409,16 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     logger.info("Final Value for ams : " + finalAmsVal);
                     extraVariables.put(AMS, finalAmsVal);
 
-                    tenantSpecificBpmn = inboundTransactionReqFlow.replace("{dfspid}", tenantId).replace("{ams}", finalAmsVal)
-                            .replace("{ps}", paymentScheme);
+                    String bpmn = getWorkflowForTenant(tenantId, "outbound-transfer-request");
+                    if (bpmn.equals("default")) {
+                        bpmn = inboundTransactionReqFlow;
+                    }
+                    tenantSpecificBpmn = bpmn.replace("{dfspid}", tenantId).replace("{ams}", finalAmsVal).replace("{ps}", paymentScheme);
 
                     String amount = body.getJSONObject("amount").getString("amount");
 
                     extraVariables.put("customData", customDataString);
                     extraVariables.put("currency", currency);
-                    extraVariables.put("accountId", secondaryIdentifierVal);
-                    extraVariables.put("phoneNumber", primaryIdentifierVal);
                     extraVariables.put("amount", amount);
                     extraVariables.put("isNotificationsSuccessEnabled", isNotificationSuccessServiceEnabled);
                     extraVariables.put("isNotificationsFailureEnabled", isNotificationFailureServiceEnabled);
@@ -459,6 +431,44 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     response.put("transactionId", transactionId);
                     exchange.getIn().setBody(response.toString());
                 });
+    }
+
+    private String getFinalAmsValue(JSONArray payer, Map<String, Object> extraVariables) {
+        String primaryIdentifierVal = "";
+        String secondaryIdentifierVal = "";
+        String primaryIdentifierName = "";
+        String secondaryIdentifierName = "";
+        String finalAmsVal = "value";
+        primaryIdentifierName = ((JSONObject) payer.get(0)).getString("key");
+        secondaryIdentifierName = ((JSONObject) payer.get(1)).getString("key");
+        primaryIdentifierVal = ((JSONObject) payer.get(0)).getString("value");
+        secondaryIdentifierVal = ((JSONObject) payer.get(1)).getString("value");
+        for (AMSProps.AMS amsIdentifier : amsUtils.postConstruct()) {
+            logger.debug("KEY VALUE PAIR : {} {}", amsIdentifier.getIdentifier(), amsIdentifier.getValue());
+            String identifier = amsIdentifier.getIdentifier();
+            if (identifier.equalsIgnoreCase(secondaryIdentifierName)) {
+                finalAmsVal = amsIdentifier.getValue();
+                logger.debug("Assigned from secondary {}", finalAmsVal);
+                break;
+            } else if (identifier.equalsIgnoreCase(primaryIdentifierName)) {
+                finalAmsVal = amsIdentifier.getValue();
+                // logic to keep correct primary/secondary identifier for line 345-346
+                String temp = primaryIdentifierVal;
+                primaryIdentifierVal = secondaryIdentifierVal;
+                secondaryIdentifierVal = temp;
+                logger.debug("Assigned from primary {}", finalAmsVal);
+                break;
+            } else {
+                if (identifier.equalsIgnoreCase("default")) {
+                    finalAmsVal = amsIdentifier.getDefaultValue();
+                    logger.debug("Assigned default from secondary {}", finalAmsVal);
+                }
+            }
+        } // end for loop
+
+        extraVariables.put("accountId", secondaryIdentifierVal);
+        extraVariables.put("phoneNumber", primaryIdentifierVal);
+        return finalAmsVal;
     }
 
     private void transactionRoutes() {
@@ -711,11 +721,11 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         return entity;
     }
 
-    public String getWorkflowForTenant(String tenantId) {
+    public String getWorkflowForTenant(String tenantId, String useCase) {
 
         for (TenantImplementation tenant : tenantImplementationProperties.getTenants()) {
             if (tenant.getId().equals(tenantId)) {
-                return tenant.getFlows().get("payment-transfer");
+                return tenant.getFlows().getOrDefault(useCase, "default");
             }
         }
         return "default";

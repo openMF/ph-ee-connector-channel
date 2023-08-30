@@ -2,10 +2,12 @@ package org.mifos.connector.channel.zeebe;
 
 import static java.util.Comparator.naturalOrder;
 import static org.mifos.connector.channel.camel.config.CamelProperties.BATCH_ID;
+import static org.mifos.connector.channel.camel.config.CamelProperties.CLIENTCORRELATIONID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.CHANNEL_REQUEST;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.ERROR_DESCRIPTION;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.ERROR_INFORMATION;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.SAMPLED_TX_IDS;
+import static org.mifos.connector.channel.zeebe.ZeebeVariables.TENANT_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSACTION_VALID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSFER_CREATE_FAILED;
@@ -17,6 +19,7 @@ import io.camunda.zeebe.client.ZeebeClient;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import org.apache.camel.CamelContext;
@@ -24,7 +27,13 @@ import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.support.DefaultExchange;
 import org.json.JSONObject;
+import org.mifos.connector.channel.utils.Headers;
+import org.mifos.connector.channel.utils.SpringWrapperUtil;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
+import org.mifos.connector.common.mojaloop.dto.MoneyData;
+import org.mifos.connector.common.mojaloop.dto.Party;
+import org.mifos.connector.common.mojaloop.dto.PartyIdInfo;
+import org.mifos.connector.common.mojaloop.type.IdentifierType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +53,8 @@ public class ZeebeWorkers {
 
     @Autowired
     private CamelContext camelContext;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Value("${zeebe.client.evenly-allocated-max-jobs}")
     private int workerMaxJobs;
@@ -65,7 +76,7 @@ public class ZeebeWorkers {
         workerInvokeAcknowledgementWorkflows();
         zeebeConsistencyWorker();
         validateTransactionalData();
-
+        callTransferRoute();
     }
 
     private void workerSendErrorToChannel() {
@@ -86,6 +97,39 @@ public class ZeebeWorkers {
 
             client.newCompleteCommand(job.getKey()).variables(existingVariables).send();
         }).name("send-error-to-channel").maxJobsActive(workerMaxJobs).open();
+    }
+
+    private void callTransferRoute() {
+        zeebeClient.newWorker().jobType("call-transfer-API").handler((client, job) -> {
+            logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
+            Map<String, Object> variables = job.getVariablesAsMap();
+            String clientCorrelationId = UUID.randomUUID().toString();
+            Headers headers = new Headers.HeaderBuilder().addHeader("Platform-TenantId", variables.get(TENANT_ID).toString())
+                    .addHeader(CLIENTCORRELATIONID, clientCorrelationId).build();
+            variables.put("clientCorrelationId", clientCorrelationId);
+
+            PartyIdInfo payer = new PartyIdInfo(IdentifierType.valueOf(String.valueOf(variables.get("payerIdentifierType"))),
+                    variables.get("payerIdentifier").toString());
+            PartyIdInfo payee = new PartyIdInfo(IdentifierType.valueOf(String.valueOf(variables.get("payeePartyIdType"))),
+                    variables.get("payeePartyId").toString());
+            TransactionChannelRequestDTO channelRequestDTO = new TransactionChannelRequestDTO();
+            Party payeeParty = new Party();
+            payeeParty.setPartyIdInfo(payee);
+            Party payerParty = new Party();
+            payerParty.setPartyIdInfo(payer);
+            channelRequestDTO.setPayee(payeeParty);
+            channelRequestDTO.setPayer(payerParty);
+            MoneyData amount = new MoneyData();
+            amount.setAmount(variables.get("amount").toString());
+            amount.setCurrency(variables.get("currency").toString());
+            channelRequestDTO.setAmount(amount);
+
+            Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(), headers,
+                    objectMapper.writeValueAsString(channelRequestDTO));
+            producerTemplate.send("direct:post-transfer", exchange);
+            String responseBody = exchange.getIn().getBody(String.class);
+            client.newCompleteCommand(job.getKey()).variables(variables).send();
+        }).name("call-transfer-API").maxJobsActive(workerMaxJobs).open();
     }
 
     private void workerSendSuccessToChannel() {

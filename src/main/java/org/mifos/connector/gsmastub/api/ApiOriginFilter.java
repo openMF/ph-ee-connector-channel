@@ -18,7 +18,7 @@ import java.util.Optional;
 import static org.mifos.connector.channel.camel.config.CamelProperties.PLATFORM_TENANT_ID;
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
-@Component
+//@Component
 public class ApiOriginFilter implements Filter {
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 

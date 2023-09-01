@@ -1,5 +1,7 @@
 package org.mifos.connector.channel.utils;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -40,10 +42,11 @@ public final class MpesaUtils {
         }
 
         // setting payer and payee
-        mpesaChannelRequestJson.put("payer", getPartyInfoJson(payer.split(" ")[0], payer.split(" ")[1]));
-
-        mpesaChannelRequestJson.put("payee", getPartyInfoJson(payee.split(" ")[0], payee.split(" ")[1]));
-
+        // mpesaChannelRequestJson.put("payer", getPartyInfoJson(payer.split(" ")[0], payer.split(" ")[1]));
+        mpesaChannelRequestJson.put("payer",
+                getPartyInfoJson(Iterables.get(Splitter.on(' ').split(payer), 0), Iterables.get(Splitter.on(' ').split(payer), 1)));
+        mpesaChannelRequestJson.put("payee",
+                getPartyInfoJson(Iterables.get(Splitter.on(' ').split(payee), 0), Iterables.get(Splitter.on(' ').split(payee), 1)));
         return mpesaChannelRequestJson.toString();
     }
 

@@ -28,6 +28,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import io.camunda.zeebe.client.ZeebeClient;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -205,8 +206,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     Client client = clientProperties.getClient(tenantId);
                     HttpHeaders httpHeaders = new HttpHeaders();
                     httpHeaders.add("Platform-TenantId", tenantId);
-                    httpHeaders.add("Authorization",
-                            "Basic " + getEncoder().encodeToString((client.getClientId() + ":" + client.getClientSecret()).getBytes()));
+                    httpHeaders.add("Authorization", "Basic " + getEncoder()
+                            .encodeToString((client.getClientId() + ":" + client.getClientSecret()).getBytes(StandardCharsets.UTF_8)));
 
                     HttpEntity<String> entity = new HttpEntity<>(null, httpHeaders);
                     ResponseEntity<String> exchange = restTemplate.exchange(restAuthHost + "/oauth/token?grant_type=client_credentials",

@@ -197,6 +197,7 @@ configure(this) {
             enabled = project.gradle.startParameter.taskNames.contains('build') || project.gradle.startParameter.taskNames.contains('check')
             disableWarningsInGeneratedCode = true
             excludedPaths = ".*/build/.*"
+            excludedPaths = ".*/gsmastub/.*"
             disable(
                     // TODO Remove disabled checks from this list, by fixing remaining usages
                     "UnusedVariable",
@@ -214,7 +215,7 @@ configure(this) {
                     "SameNameButDifferent", // Until errorprone recognizes Lombok
                     "MultiVariableDeclaration", // Until errorprone recognizes Lombok
                     "UnnecessaryDefaultInEnumSwitch" // FINERACT-1911
-            )
+                    )
             error(
                     "DefaultCharset",
                     "RemoveUnusedImports",
@@ -247,7 +248,6 @@ configure(this) {
                     "BoxedPrimitiveEquality",
                     "SynchronizeOnNonFinalField",
                     "WildcardImport",
-                    "FutureReturnValueIgnored",
                     "PrivateConstructorForNoninstantiableModule",
                     "ClassCanBeStatic",
                     "ClassNewInstance",
@@ -281,7 +281,7 @@ configure(this) {
                     "ModifiedButNotUsed",
                     "InconsistentCapitalization",
                     "MissingOverride",
-            )
+                    )
         }
     }
 }
@@ -290,6 +290,7 @@ configure(this) {
 checkstyle {
     checkstyleMain.exclude '**/gsmastub/**'
 }
+
 
 
 group = 'org.mifos'

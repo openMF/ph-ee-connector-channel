@@ -80,7 +80,7 @@ public class ZeebeProcessStarter {
         char[] arr = data.toCharArray();
         StringBuilder s = new StringBuilder();
         for (int i = 0; i < size; i++) {
-            int index = (int) (Math.random() * (data.length()));
+            int index = (int) (Math.random() * data.length());
             s.append(arr[index]);
         }
         return s.toString();

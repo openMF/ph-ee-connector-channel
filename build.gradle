@@ -44,12 +44,16 @@ spotless {
     lineEndings 'UNIX'
 }
 
+ext {
+    springBootVersion = '2.6.2'
+}
+
 dependencies {
     implementation 'com.google.code.gson:gson:2.8.9'
     implementation 'org.mifos:ph-ee-connector-common:1.4.1-SNAPSHOT'
     implementation 'org.apache.camel.springboot:camel-spring-boot-starter:3.12.0'
     implementation('org.springframework.boot:spring-boot-starter-web:2.6.2')
-    implementation('org.springframework.boot:spring-boot-starter-actuator:2.6.2')
+    implementation "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
     implementation 'org.apache.camel:camel-endpointdsl:3.12.0'
     implementation 'org.apache.camel:camel-jetty:3.12.0'
     implementation 'org.apache.camel:camel-http:3.12.0'

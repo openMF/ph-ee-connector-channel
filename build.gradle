@@ -9,6 +9,7 @@ plugins {
     id 'checkstyle'
     id 'org.springframework.boot' version '2.6.2'
     id 'com.diffplug.spotless' version '6.19.0'
+    id 'net.ltgt.errorprone' version '3.1.0'
 }
 
 repositories {
@@ -93,6 +94,7 @@ configure(this) {
     apply plugin: 'idea'
     apply plugin: 'eclipse'
     apply plugin: 'checkstyle'
+    apply plugin: 'net.ltgt.errorprone'
     configurations {
         implementation.setCanBeResolved(true)
         api.setCanBeResolved(true)
@@ -183,6 +185,104 @@ configure(this) {
     dependencies {
         checkstyle 'com.puppycrawl.tools:checkstyle:10.3.1'
         checkstyle 'com.github.sevntu-checkstyle:sevntu-checks:1.42.0'
+    }
+    // Configuration for the errorprone plugin
+    // https://github.com/tbroyer/gradle-errorprone-plugin
+    dependencies {
+        errorprone "com.google.errorprone:error_prone_core:2.20.0"
+    }
+
+    tasks.withType(JavaCompile) {
+        options.errorprone {
+            enabled = project.gradle.startParameter.taskNames.contains('build') || project.gradle.startParameter.taskNames.contains('check')
+            disableWarningsInGeneratedCode = true
+            excludedPaths = ".*/build/.*"
+            disable(
+                    // TODO Remove disabled checks from this list, by fixing remaining usages
+                    "UnusedVariable",
+                    "TypeParameterUnusedInFormals",
+                    "EmptyBlockTag",
+                    "MissingSummary",
+                    "InvalidParam",
+                    "ReturnFromVoid",
+                    "AlmostJavadoc",
+                    "InvalidBlockTag",
+                    "JavaUtilDate", // TODO FINERACT-1298
+                    "ReturnValueIgnored",
+                    "DirectInvocationOnMock",
+                    "CanIgnoreReturnValueSuggester",
+                    "SameNameButDifferent", // Until errorprone recognizes Lombok
+                    "MultiVariableDeclaration", // Until errorprone recognizes Lombok
+                    "UnnecessaryDefaultInEnumSwitch" // FINERACT-1911
+            )
+            error(
+                    "DefaultCharset",
+                    "RemoveUnusedImports",
+                    "WaitNotInLoop",
+                    "ThreeLetterTimeZoneID",
+                    "VariableNameSameAsType",
+                    "UnnecessaryParentheses",
+                    "MultipleTopLevelClasses",
+                    "MixedMutabilityReturnType",
+                    "AssertEqualsArgumentOrderChecker",
+                    "EmptySetMultibindingContributions",
+                    "BigDecimalEquals",
+                    "MixedArrayDimensions",
+                    "PackageLocation",
+                    "UseBinds",
+                    "BadImport",
+                    "IntLongMath",
+                    "FloatCast",
+                    "ReachabilityFenceUsage",
+                    "StreamResourceLeak",
+                    "TruthIncompatibleType",
+                    "ByteBufferBackingArray",
+                    "OrphanedFormatString",
+                    "CatchAndPrintStackTrace",
+                    "ObjectToString",
+                    "StringSplitter",
+                    "AssertThrowsMultipleStatements",
+                    "BoxedPrimitiveConstructor",
+                    "EmptyCatch",
+                    "BoxedPrimitiveEquality",
+                    "SynchronizeOnNonFinalField",
+                    "WildcardImport",
+                    "FutureReturnValueIgnored",
+                    "PrivateConstructorForNoninstantiableModule",
+                    "ClassCanBeStatic",
+                    "ClassNewInstance",
+                    "UnnecessaryStaticImport",
+                    "UnsafeFinalization",
+                    "JavaTimeDefaultTimeZone",
+                    "JodaPlusMinusLong",
+                    "SwitchDefault",
+                    "VarTypeName",
+                    "ArgumentSelectionDefectChecker",
+                    "CompareToZero",
+                    "InjectOnConstructorOfAbstractClass",
+                    "ImmutableEnumChecker",
+                    "NarrowingCompoundAssignment",
+                    "MissingCasesInEnumSwitch",
+                    "ReferenceEquality",
+                    "UndefinedEquals",
+                    "UnescapedEntity",
+                    "ModifyCollectionInEnhancedForLoop",
+                    "NonCanonicalType",
+                    "InvalidInlineTag",
+                    "MutablePublicArray",
+                    "StaticAssignmentInConstructor",
+                    "ProtectedMembersInFinalClass",
+                    "OperatorPrecedence",
+                    "EqualsGetClass",
+                    "EqualsUnsafeCast",
+                    "DoubleBraceInitialization",
+                    "UnusedNestedClass",
+                    "UnusedMethod",
+                    "ModifiedButNotUsed",
+                    "InconsistentCapitalization",
+                    "MissingOverride",
+            )
+        }
     }
 }
 

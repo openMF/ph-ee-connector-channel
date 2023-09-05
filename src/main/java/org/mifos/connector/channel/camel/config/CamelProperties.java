@@ -11,5 +11,6 @@ public final class CamelProperties {
     public static final String BATCH_ID_HEADER = "X-BatchID";
     public static final String PLATFORM_TENANT_ID = "Platform-TenantId";
     public static final String PAYMENT_SCHEME_HEADER = "X-Payment-Scheme";
+    public static final String REGISTERING_INSTITUTION_ID = "X-Registering-Institution-ID";
 
 }

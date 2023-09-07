@@ -13,6 +13,8 @@ import org.mifos.connector.channel.utils.Headers;
 import org.mifos.connector.channel.utils.SpringWrapperUtil;
 import org.mifos.connector.common.channel.dto.TransactionChannelRequestDTO;
 import org.mifos.connector.common.channel.dto.TransactionStatusResponseDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,6 +27,8 @@ public class TransferApiController implements TransferApi {
     @Autowired
     ObjectMapper objectMapper;
 
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
+
     @Override
     public GsmaP2PResponseDto transfer(String tenant, String batchId, String correlationId, TransactionChannelRequestDTO requestBody)
             throws JsonProcessingException {
@@ -32,6 +36,8 @@ public class TransferApiController implements TransferApi {
                 .addHeader(CLIENTCORRELATIONID, correlationId).build();
         Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(), headers,
                 objectMapper.writeValueAsString(requestBody));
+        logger.info("Client correlation id: " + correlationId);
+        logger.info("Batch id: " + batchId);
         producerTemplate.send("direct:post-transfer", exchange);
         String responseBody = exchange.getIn().getBody(String.class);
         return objectMapper.readValue(responseBody, GsmaP2PResponseDto.class);

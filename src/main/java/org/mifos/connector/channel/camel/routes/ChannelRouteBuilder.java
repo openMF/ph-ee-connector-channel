@@ -307,6 +307,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);
+                    logger.info("## CHANNEL Client Correlation Id: " + clientCorrelationId);
                     if (tenantId == null || !dfspIds.contains(tenantId)) {
                         throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
                     }

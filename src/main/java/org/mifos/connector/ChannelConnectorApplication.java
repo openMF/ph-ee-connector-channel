@@ -8,6 +8,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import org.mifos.connector.channel.interceptor.config.RedisRouteConfig;
+import org.mifos.connector.gsmastub.api.ApiOriginFilter;
 import org.mifos.connector.gsmastub.configuration.CustomInstantDeserializer;
 import org.mifos.connector.gsmastub.configuration.LocalDateConverter;
 import org.mifos.connector.gsmastub.configuration.LocalDateTimeConverter;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
@@ -86,6 +88,16 @@ public class ChannelConnectorApplication {
         template.setValueSerializer(new GenericToStringSerializer<>(String.class));
         template.setConnectionFactory(jedisConnectionFactory());
         return template;
+    }
+
+    @Bean
+    public FilterRegistrationBean<ApiOriginFilter> apiOriginFilter() {
+        FilterRegistrationBean<ApiOriginFilter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(new ApiOriginFilter());
+        registration.addUrlPatterns("/**");
+        registration.setName("apiOriginFilter");
+        registration.setOrder(Integer.MIN_VALUE + 1);
+        return registration;
     }
 
     public static void main(String[] args) {

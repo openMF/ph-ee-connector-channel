@@ -653,11 +653,13 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     String amsName = e.getIn().getHeader("amsName").toString();
                     String accountHoldingInstitutionId = e.getIn().getHeader("accountHoldingInstitutionId").toString();
                     String clientCorrelationId = e.getIn().getHeader("X-CorrelationID", String.class);
+                    String callbackURL = e.getIn().getHeader("X-CallbackURL").toString();
                     // inbound-transfer-mifos-lion
                     Map<String, Object> variables = amsUtils.setZeebeVariables(gsmaTranfer.getCustomData(), timer);
                     variables.put(TENANT_ID, accountHoldingInstitutionId);
                     variables.put(CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaTranfer));
                     variables.put("clientCorrelationId", clientCorrelationId);
+                    variables.put("X-CallbackURL",callbackURL);
                     String workflowName = new StringBuilder().append(subtype).append("_").append(type).append("_").append(amsName)
                             .append("-").append(accountHoldingInstitutionId).toString();
                     logger.info("Workflow Name:{}", workflowName);

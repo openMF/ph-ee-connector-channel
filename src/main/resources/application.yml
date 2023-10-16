@@ -20,6 +20,7 @@ mpesa:
 timer: "PT45S"
 
 server:
+  aws: new
   ssl:
     key-alias: "tomcat-https"
     key-store: "classpath:keystore.jks"

@@ -195,7 +195,7 @@ jobs:
             export CALLBACK_URL="https://$NGROK_PUBLIC_URL"
             echo -n "Public url ."
             echo $CALLBACK_URL
-            ./gradlew test -Dcucumber.filter.tags="@gov"
+            cd ph-ee-integration-test && ./gradlew test -Dcucumber.filter.tags="@gov"
             echo -n "Test execution is completed, kill ngrok"
             pkill ngrok
       - store_test_results:

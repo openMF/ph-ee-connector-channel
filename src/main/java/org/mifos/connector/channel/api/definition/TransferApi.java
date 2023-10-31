@@ -2,6 +2,7 @@ package org.mifos.connector.channel.api.definition;
 
 import static org.mifos.connector.channel.camel.config.CamelProperties.BATCH_ID_HEADER;
 import static org.mifos.connector.channel.camel.config.CamelProperties.CLIENTCORRELATIONID;
+import static org.mifos.connector.channel.camel.config.CamelProperties.SUB_BATCH_ID_HEADER;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.mifos.connector.channel.gsma_api.GsmaP2PResponseDto;
@@ -18,6 +19,7 @@ public interface TransferApi {
     @PostMapping("/channel/transfer")
     GsmaP2PResponseDto transfer(@RequestHeader(value = "Platform-TenantId") String tenant,
             @RequestHeader(value = BATCH_ID_HEADER, required = false) String batchId,
+            @RequestHeader(value = SUB_BATCH_ID_HEADER, required = false) String subBatchId,
             @RequestHeader(value = CLIENTCORRELATIONID, required = false) String correlationId,
             @RequestBody TransactionChannelRequestDTO requestBody) throws JsonProcessingException;
 

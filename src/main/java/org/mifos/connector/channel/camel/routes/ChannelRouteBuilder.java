@@ -7,6 +7,7 @@ import static org.mifos.connector.channel.camel.config.CamelProperties.AUTH_TYPE
 import static org.mifos.connector.channel.camel.config.CamelProperties.BATCH_ID;
 import static org.mifos.connector.channel.camel.config.CamelProperties.CLIENTCORRELATIONID;
 import static org.mifos.connector.channel.camel.config.CamelProperties.PAYMENT_SCHEME_HEADER;
+import static org.mifos.connector.channel.camel.config.CamelProperties.SUB_BATCH_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.ACCOUNT;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.AMS;
@@ -303,7 +304,9 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     // adding batchId zeebeVariable form header
                     String batchIdHeader = exchange.getIn().getHeader(BATCH_ID, String.class);
+                    String subBatchIdHeader = exchange.getIn().getHeader(SUB_BATCH_ID, String.class);
                     extraVariables.put(BATCH_ID, batchIdHeader);
+                    extraVariables.put(SUB_BATCH_ID, subBatchIdHeader);
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);

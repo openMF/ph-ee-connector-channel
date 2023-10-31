@@ -2,6 +2,7 @@ package org.mifos.connector.channel.api.implementation;
 
 import static org.mifos.connector.channel.camel.config.CamelProperties.BATCH_ID;
 import static org.mifos.connector.channel.camel.config.CamelProperties.CLIENTCORRELATIONID;
+import static org.mifos.connector.channel.camel.config.CamelProperties.SUB_BATCH_ID;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,10 +31,10 @@ public class TransferApiController implements TransferApi {
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
-    public GsmaP2PResponseDto transfer(String tenant, String batchId, String correlationId, TransactionChannelRequestDTO requestBody)
+    public GsmaP2PResponseDto transfer(String tenant, String batchId, String subBatchId, String correlationId, TransactionChannelRequestDTO requestBody)
             throws JsonProcessingException {
         Headers headers = new Headers.HeaderBuilder().addHeader("Platform-TenantId", tenant).addHeader(BATCH_ID, batchId)
-                .addHeader(CLIENTCORRELATIONID, correlationId).build();
+                .addHeader(CLIENTCORRELATIONID, correlationId).addHeader(SUB_BATCH_ID, subBatchId).build();
         Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(), headers,
                 objectMapper.writeValueAsString(requestBody));
         logger.info("Client correlation id: " + correlationId);

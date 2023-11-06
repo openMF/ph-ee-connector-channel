@@ -1,5 +1,6 @@
 package org.mifos.connector.channel.camel.routes;
 
+import static org.mifos.connector.channel.camel.config.CamelProperties.REGISTERING_INSTITUTION_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.GSMA_CHANNEL_REQUEST;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_RTP_REQUEST;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.NOTE;
@@ -131,6 +132,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     TransactionChannelRequestDTO channelRequest = new TransactionChannelRequestDTO(); // Fineract Object
                     String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);
+                    String registeringInstitutionId = exchange.getIn().getHeader("X-Registering-Institution-ID", String.class);
                     Party payer = partyMapper(gsmaChannelRequest.getDebitParty());
                     Party payee = partyMapper(gsmaChannelRequest.getCreditParty());
                     MoneyData amount = amountMapper(gsmaChannelRequest.getAmount(), gsmaChannelRequest.getCurrency());
@@ -155,6 +157,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put("processType", "api");
                     extraVariables.put("payeeTenantId", payeeDfspid);
                     extraVariables.put("clientCorrelationId", clientCorrelationId);
+                    extraVariables.put(REGISTERING_INSTITUTION_ID, registeringInstitutionId);
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     extraVariables.put(TENANT_ID, tenantId);

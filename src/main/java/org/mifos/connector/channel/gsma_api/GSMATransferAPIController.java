@@ -1,5 +1,7 @@
 package org.mifos.connector.channel.gsma_api;
 
+import static org.mifos.connector.channel.camel.config.CamelProperties.REGISTERING_INSTITUTION_ID;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.camel.Exchange;
@@ -23,10 +25,10 @@ public class GSMATransferAPIController implements GSMATransferAPI {
     ObjectMapper objectMapper;
 
     @Override
-    public ResponseEntity<Object> gsmatransfer(String tenant, String correlationId, GSMATransaction requestBody)
-            throws JsonProcessingException {
+    public ResponseEntity<Object> gsmatransfer(String tenant, String correlationId, String registeringInstitutionId,
+            GSMATransaction requestBody) throws JsonProcessingException {
         org.mifos.connector.channel.utils.Headers headers = new Headers.HeaderBuilder().addHeader("Platform-TenantId", tenant)
-                .addHeader("X-CorrelationID", correlationId).build();
+                .addHeader("X-CorrelationID", correlationId).addHeader(REGISTERING_INSTITUTION_ID, registeringInstitutionId).build();
         Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(), headers,
                 objectMapper.writeValueAsString(requestBody));
         producerTemplate.send("direct:post-gsma-transfer", exchange);

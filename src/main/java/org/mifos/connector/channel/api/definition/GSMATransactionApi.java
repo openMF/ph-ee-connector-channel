@@ -15,6 +15,5 @@ public interface GSMATransactionApi {
     GsmaP2PResponseDto gsmatransaction(@RequestBody GsmaTransfer requestBody,
             @RequestHeader(value = CLIENTCORRELATIONID, required = false) String correlationId,
             @RequestHeader(value = "amsName") String amsName, @RequestHeader(value = "accountHoldingInstitutionId") String accountHoldId,
-                                       @RequestHeader(value = "X-CallbackURL") String callbackURL)
-            throws JsonProcessingException;
+            @RequestHeader(value = "X-CallbackURL") String callbackURL) throws JsonProcessingException;
 }

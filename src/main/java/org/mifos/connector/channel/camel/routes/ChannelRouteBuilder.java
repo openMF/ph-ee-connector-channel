@@ -663,7 +663,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     variables.put(TENANT_ID, accountHoldingInstitutionId);
                     variables.put(CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaTranfer));
                     variables.put("clientCorrelationId", clientCorrelationId);
-                    variables.put("X-CallbackURL",callbackURL);
+                    variables.put("X-CallbackURL", callbackURL);
                     String workflowName = new StringBuilder().append(subtype).append("_").append(type).append("_").append(amsName)
                             .append("-").append(accountHoldingInstitutionId).toString();
                     logger.info("Workflow Name:{}", workflowName);

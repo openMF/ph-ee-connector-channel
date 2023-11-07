@@ -261,6 +261,7 @@ workflows:
             - AWS
             - Helm
             - slack
+            - Ngrok
       - test-chart-ams:
           requires:
             - upgrade-helm-chart

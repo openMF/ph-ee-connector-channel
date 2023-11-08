@@ -208,6 +208,30 @@ jobs:
     steps:
       - run: git clone https://github.com/openmf/ph-ee-integration-test
       - run: cd ph-ee-integration-test && ./gradlew test -Dcucumber.filter.tags="@amsIntegration"
+      - run:
+          name: Ngrok setup
+          command: curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list && sudo apt update && sudo apt install ngrok
+            - run:
+                name: Test execution
+                command: |
+                  ngrok http 53013 > /dev/null &
+                  echo -n "Extracting ngrok public url ."
+                  NGROK_PUBLIC_URL=""
+                  while [ -z "$NGROK_PUBLIC_URL" ]; do
+                    # Run 'curl' against ngrok API and extract public (using 'sed' command)
+                    export NGROK_PUBLIC_URL=$(curl --silent --max-time 10 --connect-timeout 5 \
+                                              --show-error http://127.0.0.1:$LOCAL_PORT/api/tunnels | \
+                                              sed -nE 's/.*public_url":"https:..([^"]*).*/\1/p')
+                    sleep 1
+                    echo -n "."
+                  done
+                  
+                  export CALLBACK_URL="https://$NGROK_PUBLIC_URL"
+                  echo -n "Public url ."
+                  echo $CALLBACK_URL
+                  ./gradlew test -Dcucumber.filter.tags="@amsIntegration"
+                  echo -n "Test execution is completed, kill ngrok"
+                  pkill ngrok
       - store_test_results:
           path: ph-ee-integration-test/build/cucumber.xml
       - store_artifacts:
@@ -269,3 +293,4 @@ workflows:
             - AWS
             - Helm
             - slack
+            - Ngrok

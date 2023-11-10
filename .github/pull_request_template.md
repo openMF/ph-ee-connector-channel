@@ -1,7 +1,7 @@
 ## Description
 
 * Describe the changes made and why they were made.
-* Add a link to teh design document or include the design bullet points related to this PR here.
+* Add a link to the design document or include the design bullet points related to this PR here.
 
  _(Ignore if these details are present on the associated JIRA ticket)_
 

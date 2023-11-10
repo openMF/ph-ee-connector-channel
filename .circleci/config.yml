@@ -250,8 +250,8 @@ workflows:
             - DOCKER
       - build_and_push_latest_image:
           context:
-              - DOCKER
-              - AWS
+            - DOCKER
+            - AWS
       - build-and-host-engine:
           requires:
             - build_and_push_tag_image

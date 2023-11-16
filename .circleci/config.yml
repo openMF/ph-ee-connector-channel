@@ -67,10 +67,17 @@ jobs:
       - run:
           name: Build Docker image
           command: |
+            #Check for PR title Validity
+            
+            PR_NUMBER=$(basename $CIRCLE_PULL_REQUEST)
+            PR_TITLE=$(curl -sSL "https://api.github.com/repos/openmf/ph-ee-importer-rdbms/pulls/$PR_NUMBER" | jq -r '.title')
+            TICKET_NO=$(echo $PR_TITLE | cut -d "[" -f2 | cut -d "]" -f1)
+            if [ -z "$TICKET_NO" ]; then echo "Invalid PR title" && exit 1; else echo "Ticket NO: $TICKET_NO"; fi
+            
             ./gradlew checkstyleMain
             ./gradlew clean bootJar
             docker build -t openmf/ph-ee-connector-channel:latest .
-
+            docker image tag openmf/ph-ee-importer-rdbms:latest openmf/ph-ee-importer-rdbms:$TICKET_NO
       # Log in to DockerHub using environment variables
       - run:
           name: Login to DockerHub
@@ -79,8 +86,16 @@ jobs:
       # Push the Docker image to DockerHub
       - run:
           name: Push Docker image to DockerHub
-          command: docker push openmf/ph-ee-connector-channel:latest
-
+          command: |
+            if [ "$CIRCLE_BRANCH" = "master" ]; then
+            docker push openmf/ph-ee-connector-channel:latest
+            fi
+            if [ "$CIRCLE_BRANCH" != "master" ]; then
+            PR_NUMBER=$(basename $CIRCLE_PULL_REQUEST)
+            PR_TITLE=$(curl -sSL "https://api.github.com/repos/openmf/ph-ee-importer-rdbms/pulls/$PR_NUMBER" | jq -r '.title')
+            TICKET_NO=$(echo $PR_TITLE | cut -d "[" -f2 | cut -d "]" -f1)
+            docker push openmf/ph-ee-connector-channel:${TICKET_NO}
+            fi
 
   build-and-host-engine:
     docker:

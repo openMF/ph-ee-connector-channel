@@ -71,8 +71,8 @@ jobs:
             
             PR_NUMBER=$(basename $CIRCLE_PULL_REQUEST)
             PR_TITLE=$(curl -sSL "https://api.github.com/repos/openmf/ph-ee-connector-channel/pulls/$PR_NUMBER" | jq -r '.title')
-            TICKET_NO=$(echo $PR_TITLE | cut -d "[" -f2 | cut -d "]" -f1)
-            if [ -z "$TICKET_NO" ]; then echo "Invalid PR title" && exit 1; else echo "Ticket NO: $TICKET_NO"; fi
+            JIRA_STORY=$(echo $PR_TITLE | cut -d "[" -f2 | cut -d "]" -f1 | tr '[A-Z]' '[a-z]'))
+            if [ -z "$JIRA_STORY" ]; then echo "Invalid PR title" && exit 1; else echo "Ticket NO: $JIRA_STORY"; fi
             
             ./gradlew checkstyleMain
             ./gradlew clean bootJar
@@ -93,8 +93,8 @@ jobs:
             if [ "$CIRCLE_BRANCH" != "master" ]; then
             PR_NUMBER=$(basename $CIRCLE_PULL_REQUEST)
             PR_TITLE=$(curl -sSL "https://api.github.com/repos/openmf/ph-ee-connector-channel/pulls/$PR_NUMBER" | jq -r '.title')
-            TICKET_NO=$(echo $PR_TITLE | cut -d "[" -f2 | cut -d "]" -f1)
-            docker push openmf/ph-ee-connector-channel:${TICKET_NO}
+            JIRA_STORY=$(echo $PR_TITLE | cut -d "[" -f2 | cut -d "]" -f1 | tr '[A-Z]' '[a-z]'))
+            docker push openmf/ph-ee-connector-channel:${JIRA_STORY}
             fi
 
   build-and-host-engine:
@@ -162,25 +162,6 @@ jobs:
       - run: scp -o StrictHostKeyChecking=No -i b64encoded.pem index.yaml ph-ee-g2psandbox-fynarfin-0.2.0.tgz ec2-user@13.233.68.128:~/
       - run: ssh -i b64encoded.pem -o StrictHostKeyChecking=No ec2-user@13.233.68.128 sudo mv -t /apps/apache-tomcat-7.0.82/webapps/ROOT/images/ph-ee-g2psandbox-fynarfin index.yaml ph-ee-g2psandbox-fynarfin-0.2.0.tgz
 
-  upgrade-helm-chart:
-    docker:
-      - image: cimg/python:3.10
-    parameters:
-      cluster-name:
-        description: "sit"
-        type: string
-    steps:
-      - aws-eks/update-kubeconfig-with-authenticator:
-          cluster-name: "sit"
-          aws-region: "$REGION"
-      - helm/upgrade-helm-chart:
-          chart: "https://fynarfin.io/images/ph-ee-g2psandbox-fynarfin/ph-ee-g2psandbox-fynarfin-0.2.0.tgz"
-          release-name: g2p-sandbox
-          namespace: paymenthub
-          recreate-pods: true
-          add-repo: "https://fynarfin.io/images/ph-ee-g2psandbox-fynarfin"
-          wait: true
-          timeout: "300s"
 
   test-chart-gov:
     docker:
@@ -288,15 +269,23 @@ workflows:
           context:
             - AWS
             - Helm
-      - upgrade-helm-chart:
-          cluster-name: sit
-          requires:
-            - build-host-g2p-fyn-chart
+      - mifos-orb/docker-image-availability-check-and-upgrade:
+          namespace: paymenthub
+          chart: "https://fynarfin.io/images/ph-ee-g2psandbox-fynarfin/ph-ee-g2psandbox-fynarfin-0.2.0.tgz"
+          release-name: g2p-sandbox
+          add-repo: "https://fynarfin.io/images/ph-ee-g2psandbox-fynarfin"
+          cluster-name: "sit"
+          aws-region: "$REGION"
+          service-file-path: https://raw.githubusercontent.com/openMF/ph-ee-env-labs/master/.circleci/services.txt
           context:
             - AWS
+            - Helm
+            - slack
+          requires:
+            - build-host-g2p-fyn-chart
       - test-chart-gov:
           requires:
-            - upgrade-helm-chart
+            - mifos-orb/docker-image-availability-check-and-upgrade
           context:
             - AWS
             - Helm
@@ -304,7 +293,7 @@ workflows:
             - Ngrok
       - test-chart-ams:
           requires:
-            - upgrade-helm-chart
+            - mifos-orb/docker-image-availability-check-and-upgrade
           context:
             - AWS
             - Helm

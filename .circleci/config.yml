@@ -97,7 +97,18 @@ jobs:
             JIRA_STORY=$(echo $PR_TITLE | cut -d "[" -f2 | cut -d "]" -f1 | tr '[A-Z]' '[a-z]')
             docker push openmf/$CIRCLE_PR_REPONAME:${JIRA_STORY}
             fi
-
+  docker-image-availability-check-and-upgrade:
+    docker:
+      - image: cimg/python:3.10
+    steps:
+      - mifos-orb/docker-image-availability-check-and-upgrade:
+          namespace: paymenthub
+          chart: "https://fynarfin.io/images/ph-ee-g2psandbox-fynarfin/ph-ee-g2psandbox-fynarfin-0.2.0.tgz"
+          release-name: g2p-sandbox
+          add-repo: "https://fynarfin.io/images/ph-ee-g2psandbox-fynarfin"
+          cluster-name: "sit"
+          aws-region: "$REGION"
+          service-file-path: https://raw.githubusercontent.com/openMF/ph-ee-env-labs/master/.circleci/services.txt
   build-and-host-engine:
     docker:
       - image: cimg/python:3.10
@@ -270,14 +281,7 @@ workflows:
           context:
             - AWS
             - Helm
-      - mifos-orb/docker-image-availability-check-and-upgrade:
-          namespace: paymenthub
-          chart: "https://fynarfin.io/images/ph-ee-g2psandbox-fynarfin/ph-ee-g2psandbox-fynarfin-0.2.0.tgz"
-          release-name: g2p-sandbox
-          add-repo: "https://fynarfin.io/images/ph-ee-g2psandbox-fynarfin"
-          cluster-name: "sit"
-          aws-region: "$REGION"
-          service-file-path: https://raw.githubusercontent.com/openMF/ph-ee-env-labs/master/.circleci/services.txt
+      - docker-image-availability-check-and-upgrade:
           context:
             - AWS
             - Helm
@@ -286,7 +290,7 @@ workflows:
             - build-host-g2p-fyn-chart
       - test-chart-gov:
           requires:
-            - mifos-orb/docker-image-availability-check-and-upgrade
+            - docker-image-availability-check-and-upgrade
           context:
             - AWS
             - Helm
@@ -294,7 +298,7 @@ workflows:
             - Ngrok
       - test-chart-ams:
           requires:
-            - mifos-orb/docker-image-availability-check-and-upgrade
+            - docker-image-availability-check-and-upgrade
           context:
             - AWS
             - Helm

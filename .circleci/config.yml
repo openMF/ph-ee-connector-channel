@@ -69,16 +69,16 @@ jobs:
           name: Build Docker image
           command: |
             #Check for PR title Validity
-            
-            PR_NUMBER=$(basename $CIRCLE_PULL_REQUEST)
-            PR_TITLE=$(curl -sSL "https://api.github.com/repos/openmf/ph-ee-connector-channel/pulls/$PR_NUMBER" | jq -r '.title')
-            JIRA_STORY=$(echo $PR_TITLE | cut -d "[" -f2 | cut -d "]" -f1 | tr '[A-Z]' '[a-z]')
-            if [ -z "$JIRA_STORY" ]; then echo "Invalid PR title" && exit 1; else echo "Ticket NO: $JIRA_STORY"; fi
-            
             ./gradlew checkstyleMain
             ./gradlew clean bootJar
             docker build -t openmf/ph-ee-connector-channel:latest .
-            docker image tag openmf/ph-ee-connector-channel:latest openmf/ph-ee-connector-channel:$JIRA_STORY
+            if [ "$CIRCLE_BRANCH" != "master" ]; then
+              PR_NUMBER=$(basename $CIRCLE_PULL_REQUEST)
+              PR_TITLE=$(curl -sSL "https://api.github.com/repos/openmf/$CIRCLE_PR_REPONAME/pulls/$PR_NUMBER" | jq -r '.title')
+              JIRA_STORY=$(echo $PR_TITLE | cut -d "[" -f2 | cut -d "]" -f1 | tr '[A-Z]' '[a-z]')
+              if [ -z "$JIRA_STORY" ]; then echo "Invalid PR title" && exit 1; else echo "Ticket NO: $JIRA_STORY"; fi
+              docker image tag openmf/ph-ee-connector-channel:latest openmf/ph-ee-connector-channel:$JIRA_STORY
+            fi
       # Log in to DockerHub using environment variables
       - run:
           name: Login to DockerHub

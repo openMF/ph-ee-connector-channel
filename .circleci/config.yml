@@ -78,7 +78,7 @@ jobs:
             ./gradlew checkstyleMain
             ./gradlew clean bootJar
             docker build -t openmf/ph-ee-connector-channel:latest .
-            docker image tag openmf/ph-ee-connector-channel:latest openmf/ph-ee-connector-channel:$TICKET_NO
+            docker image tag openmf/ph-ee-connector-channel:latest openmf/ph-ee-connector-channel:$JIRA_STORY
       # Log in to DockerHub using environment variables
       - run:
           name: Login to DockerHub

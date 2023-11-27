@@ -5,6 +5,7 @@ orbs:
   helm: circleci/helm@2.0.1
   aws-eks: circleci/aws-eks@2.2.0
   kubernetes: circleci/kubernetes@1.3
+  mifos-orb: mifos/docker-image-availability-check-and-upgrade@dev:first
 executors:
   docker-executor:
     docker:
@@ -67,10 +68,17 @@ jobs:
       - run:
           name: Build Docker image
           command: |
+            #Check for PR title Validity
             ./gradlew checkstyleMain
             ./gradlew clean bootJar
-            docker build -t openmf/ph-ee-connector-channel:latest .
-
+            docker build -t openmf/$CIRCLE_PR_REPONAME:latest .
+            if [ "$CIRCLE_BRANCH" != "master" ]; then
+              PR_NUMBER=$(basename $CIRCLE_PULL_REQUEST)
+              PR_TITLE=$(curl -sSL "https://api.github.com/repos/openmf/$CIRCLE_PR_REPONAME/pulls/$PR_NUMBER" | jq -r '.title')
+              JIRA_STORY=$(echo $PR_TITLE | cut -d "[" -f2 | cut -d "]" -f1 | tr '[A-Z]' '[a-z]')
+              if [ -z "$JIRA_STORY" ]; then echo "Invalid PR title" && exit 1; else echo "Ticket NO: $JIRA_STORY"; fi
+              docker image tag openmf/$CIRCLE_PR_REPONAME:latest openmf/$CIRCLE_PR_REPONAME:$JIRA_STORY
+            fi
       # Log in to DockerHub using environment variables
       - run:
           name: Login to DockerHub
@@ -79,9 +87,28 @@ jobs:
       # Push the Docker image to DockerHub
       - run:
           name: Push Docker image to DockerHub
-          command: docker push openmf/ph-ee-connector-channel:latest
-
-
+          command: |
+            if [ "$CIRCLE_BRANCH" = "master" ]; then
+            docker push openmf/ph-ee-connector-channel:latest
+            fi
+            if [ "$CIRCLE_BRANCH" != "master" ]; then
+            PR_NUMBER=$(basename $CIRCLE_PULL_REQUEST)
+            PR_TITLE=$(curl -sSL "https://api.github.com/repos/openmf/$CIRCLE_PR_REPONAME/pulls/$PR_NUMBER" | jq -r '.title')
+            JIRA_STORY=$(echo $PR_TITLE | cut -d "[" -f2 | cut -d "]" -f1 | tr '[A-Z]' '[a-z]')
+            docker push openmf/$CIRCLE_PR_REPONAME:${JIRA_STORY}
+            fi
+  docker-image-availability-check-and-upgrade:
+    docker:
+      - image: cimg/python:3.10
+    steps:
+      - mifos-orb/docker-image-availability-check-and-upgrade:
+          namespace: paymenthub
+          chart: "https://fynarfin.io/images/ph-ee-g2psandbox-fynarfin/ph-ee-g2psandbox-fynarfin-0.2.0.tgz"
+          release-name: g2p-sandbox
+          add-repo: "https://fynarfin.io/images/ph-ee-g2psandbox-fynarfin"
+          cluster-name: "sit"
+          aws-region: "$REGION"
+          service-file-path: https://raw.githubusercontent.com/openMF/ph-ee-env-labs/master/.circleci/services.txt
   build-and-host-engine:
     docker:
       - image: cimg/python:3.10
@@ -147,25 +174,6 @@ jobs:
       - run: scp -o StrictHostKeyChecking=No -i b64encoded.pem index.yaml ph-ee-g2psandbox-fynarfin-0.2.0.tgz ec2-user@13.233.68.128:~/
       - run: ssh -i b64encoded.pem -o StrictHostKeyChecking=No ec2-user@13.233.68.128 sudo mv -t /apps/apache-tomcat-7.0.82/webapps/ROOT/images/ph-ee-g2psandbox-fynarfin index.yaml ph-ee-g2psandbox-fynarfin-0.2.0.tgz
 
-  upgrade-helm-chart:
-    docker:
-      - image: cimg/python:3.10
-    parameters:
-      cluster-name:
-        description: "sit"
-        type: string
-    steps:
-      - aws-eks/update-kubeconfig-with-authenticator:
-          cluster-name: "sit"
-          aws-region: "$REGION"
-      - helm/upgrade-helm-chart:
-          chart: "https://fynarfin.io/images/ph-ee-g2psandbox-fynarfin/ph-ee-g2psandbox-fynarfin-0.2.0.tgz"
-          release-name: g2p-sandbox
-          namespace: paymenthub
-          recreate-pods: true
-          add-repo: "https://fynarfin.io/images/ph-ee-g2psandbox-fynarfin"
-          wait: true
-          timeout: "300s"
 
   test-chart-gov:
     docker:
@@ -273,15 +281,16 @@ workflows:
           context:
             - AWS
             - Helm
-      - upgrade-helm-chart:
-          cluster-name: sit
-          requires:
-            - build-host-g2p-fyn-chart
+      - docker-image-availability-check-and-upgrade:
           context:
             - AWS
+            - Helm
+            - slack
+          requires:
+            - build-host-g2p-fyn-chart
       - test-chart-gov:
           requires:
-            - upgrade-helm-chart
+            - docker-image-availability-check-and-upgrade
           context:
             - AWS
             - Helm
@@ -289,7 +298,7 @@ workflows:
             - Ngrok
       - test-chart-ams:
           requires:
-            - upgrade-helm-chart
+            - docker-image-availability-check-and-upgrade
           context:
             - AWS
             - Helm

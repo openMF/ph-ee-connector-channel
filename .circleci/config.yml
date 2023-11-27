@@ -71,7 +71,7 @@ jobs:
             #Check for PR title Validity
             ./gradlew checkstyleMain
             ./gradlew clean bootJar
-            docker build -t openmf/$CIRCLE_PR_REPONAME:latest .
+            docker build -t openmf/ph-ee-connector-channel:latest .
             if [ "$CIRCLE_BRANCH" != "master" ]; then
               PR_NUMBER=$(basename $CIRCLE_PULL_REQUEST)
               PR_TITLE=$(curl -sSL "https://api.github.com/repos/openmf/$CIRCLE_PR_REPONAME/pulls/$PR_NUMBER" | jq -r '.title')

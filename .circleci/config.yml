@@ -103,9 +103,10 @@ jobs:
     steps:
       - mifos-orb/docker-image-availability-check-and-upgrade:
           namespace: paymenthub
-          chart: "https://fynarfin.io/images/ph-ee-g2psandbox-fynarfin/ph-ee-g2psandbox-fynarfin-0.2.0.tgz"
+          chart-base-url: https://fynarfin.io/images
+          chart-name: ph-ee-g2psandbox-fynarfin
+          chart-version: 0.2.0
           release-name: g2p-sandbox
-          add-repo: "https://fynarfin.io/images/ph-ee-g2psandbox-fynarfin"
           cluster-name: "sit"
           aws-region: "$REGION"
           service-file-path: https://raw.githubusercontent.com/openMF/ph-ee-env-labs/master/.circleci/services.txt

@@ -5,7 +5,7 @@ orbs:
   helm: circleci/helm@2.0.1
   aws-eks: circleci/aws-eks@2.2.0
   kubernetes: circleci/kubernetes@1.3
-  mifos-orb: mifos/docker-image-availability-check-and-upgrade@dev:first
+  mifos-orb: mifos/docker-image-availability-check-and-upgrade@1.0.0
 executors:
   docker-executor:
     docker:

@@ -239,7 +239,8 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     extraVariables.put(TENANT_ID, tenantId);
                     String bpmn = getWorkflowForTenant(tenantId);
-                    String tenantSpecificBpmn = bpmn.equals("default") ? internationalRemittancePayee : bpmn.replace("{dfspid}", tenantId);
+                    String tenantSpecificBpmn = bpmn.equals("default") ? internationalRemittancePayee.replace("{dfspid}", tenantId)
+                            : bpmn.replace("{dfspid}", tenantId);
 
                     extraVariables.put(GSMA_CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaChannelRequest));
                     extraVariables.put(NOTE, gsmaChannelRequest.getDescriptionText());

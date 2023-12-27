@@ -256,7 +256,7 @@ public class ZeebeWorkers {
                 valid = payeeIdentity.matches("^[\\d*#+]+$");
             }
         }
-        if (channelRequestDTO.getNote().contains("Duplicate Transaction")) {
+        if (channelRequestDTO.getNote() != null && channelRequestDTO.getNote().contains("Duplicate Transaction")) {
             valid = !channelRequestDTO.getNote().contains("Duplicate transaction");
         }
 

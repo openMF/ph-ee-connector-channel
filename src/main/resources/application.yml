@@ -76,6 +76,8 @@ rest:
     header: "Basic Y2xpZW50Og=="
 
 management:
+  server:
+    port: 8443
   endpoint:
     health:
       probes:

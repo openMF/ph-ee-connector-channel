@@ -86,7 +86,7 @@ management:
         enabled: true
       readiness:
         enabled: true
-      show-details: always
+#      show-details: always
 logging:
   level:
     root: INFO

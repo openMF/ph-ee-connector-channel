@@ -44,8 +44,8 @@ public class ZeebeProcessStarter {
         try {
             ProcessInstanceEvent instance = zeebeClient.newCreateInstanceCommand().bpmnProcessId(workflowId).latestVersion()
                     .variables(variables).send().join();
-            logger.info("zeebee workflow instance from process {} started with transactionId {}, instance key: {}", workflowId, transactionId,
-                    instance.getProcessInstanceKey());
+            logger.info("zeebee workflow instance from process {} started with transactionId {}, instance key: {}", workflowId,
+                    transactionId, instance.getProcessInstanceKey());
         } catch (ClientStatusException ex) {
             logger.error("ClientStatusException occurred : {}", ex.getMessage());
             throw ex;
@@ -71,8 +71,8 @@ public class ZeebeProcessStarter {
             ProcessInstanceEvent instance = zeebeClient.newCreateInstanceCommand().bpmnProcessId(workflowId).latestVersion()
                     .variables(variables).send().join();
 
-            logger.info("zeebee workflow instance from process {} started with transactionId {}, instance key: {}", workflowId, transactionId,
-                    instance.getProcessInstanceKey());
+            logger.info("zeebee workflow instance from process {} started with transactionId {}, instance key: {}", workflowId,
+                    transactionId, instance.getProcessInstanceKey());
         } catch (ClientStatusException ex) {
             logger.error("ClientStatusException occurred : {}", ex.getMessage());
             throw ex;
@@ -119,8 +119,8 @@ public class ZeebeProcessStarter {
             ProcessInstanceEvent instance = zeebeClient.newCreateInstanceCommand().bpmnProcessId(workflowId).latestVersion()
                     .variables(variables).send().join();
 
-            logger.info("zeebee workflow instance from process {} started with transactionId {}, instance key: {}", workflowId, transactionId,
-                    instance.getProcessInstanceKey());
+            logger.info("zeebee workflow instance from process {} started with transactionId {}, instance key: {}", workflowId,
+                    transactionId, instance.getProcessInstanceKey());
         } catch (ClientStatusException ex) {
             logger.error("ClientStatusException occurred : {}", ex.getMessage());
             throw ex;

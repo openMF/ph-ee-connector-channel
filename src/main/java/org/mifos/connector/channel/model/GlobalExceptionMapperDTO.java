@@ -10,6 +10,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GlobalExceptionMapperDTO {
+
     private String responseCode;
     private String responseDescription;
 }

@@ -2,6 +2,8 @@ package org.mifos.connector.channel.gsma_api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.camunda.zeebe.client.api.command.ClientStatusException;
+import io.grpc.Status;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.mifos.connector.channel.utils.Headers;
@@ -27,6 +29,10 @@ public class GSMADepositAPIController implements GSMADepositAPI {
         Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(), headers,
                 objectMapper.writeValueAsString(requestBody));
         producerTemplate.send("direct:post-gsma-deposit", exchange);
+        Exception cause = exchange.getProperty(Exchange.EXCEPTION_CAUGHT, Exception.class);
+        if (cause instanceof ClientStatusException) {
+            throw new ClientStatusException(Status.FAILED_PRECONDITION, cause);
+        }
 
         String body = exchange.getIn().getBody(String.class);
         return objectMapper.readValue(body, RequestStateDTO.class);

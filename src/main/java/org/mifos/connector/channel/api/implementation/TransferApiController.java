@@ -6,6 +6,8 @@ import static org.mifos.connector.channel.camel.config.CamelProperties.REGISTERI
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.camunda.zeebe.client.api.command.ClientStatusException;
+import io.grpc.Status;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.mifos.connector.channel.api.definition.TransferApi;
@@ -40,6 +42,11 @@ public class TransferApiController implements TransferApi {
         logger.info("Client correlation id: " + correlationId);
         logger.info("Batch id: " + batchId);
         producerTemplate.send("direct:post-transfer", exchange);
+        Exception cause = exchange.getProperty(Exchange.EXCEPTION_CAUGHT, Exception.class);
+        if (cause instanceof ClientStatusException) {
+            throw new ClientStatusException(Status.FAILED_PRECONDITION, cause);
+        }
+
         String responseBody = exchange.getIn().getBody(String.class);
         return objectMapper.readValue(responseBody, GsmaP2PResponseDto.class);
     }

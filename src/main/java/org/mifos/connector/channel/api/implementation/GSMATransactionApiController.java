@@ -2,6 +2,8 @@ package org.mifos.connector.channel.api.implementation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.camunda.zeebe.client.api.command.ClientStatusException;
+import io.grpc.Status;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.mifos.connector.channel.api.definition.GSMATransactionApi;
@@ -32,6 +34,11 @@ public class GSMATransactionApiController implements GSMATransactionApi {
         Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(), headers,
                 objectMapper.writeValueAsString(requestBody));
         producerTemplate.send("direct:post-gsma-transaction", exchange);
+
+        Exception cause = exchange.getProperty(Exchange.EXCEPTION_CAUGHT, Exception.class);
+        if (cause instanceof ClientStatusException) {
+            throw new ClientStatusException(Status.FAILED_PRECONDITION, cause);
+        }
         String body = exchange.getIn().getBody(String.class);
         return objectMapper.readValue(body, GsmaP2PResponseDto.class);
     }

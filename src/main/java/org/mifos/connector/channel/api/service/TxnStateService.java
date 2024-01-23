@@ -1,6 +1,7 @@
 package org.mifos.connector.channel.api.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mifos.connector.channel.camel.config.Client;
@@ -18,8 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.List;
-
 @Service
 public class TxnStateService {
 
@@ -34,8 +33,7 @@ public class TxnStateService {
     @Value("${operations.auth-enabled}")
     private Boolean operationsAuthEnabled;
 
-    public TxnStateResponseDTO getTxnState(Headers headers, String correlationId, String requestType)
-            throws JsonProcessingException {
+    public TxnStateResponseDTO getTxnState(Headers headers, String correlationId, String requestType) throws JsonProcessingException {
         String tenantId = (String) headers.get("Platform-TenantId");
         if (tenantId == null || !dfspIds.contains(tenantId)) {
             throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");

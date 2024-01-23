@@ -356,20 +356,20 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 });
     }
 
-    private ResponseEntity<String> fetchApibyWorkflowKey(HttpEntity<String> entity, long workflowInstanceKey) {
+    public ResponseEntity<String> fetchApibyWorkflowKey(HttpEntity<String> entity, long workflowInstanceKey) {
         return restTemplate.exchange(operationsUrl + "/transfer/" + workflowInstanceKey, HttpMethod.GET, entity, String.class);
     }
 
-    private ResponseEntity<String> callOpsTxnApi(String requestType, String correlationId, HttpEntity<String> entity) {
+    public ResponseEntity<String> callOpsTxnApi(String requestType, String correlationId, HttpEntity<String> entity) {
         return restTemplate.exchange(operationsUrl + requestType + "clientCorrelationId=" + correlationId, HttpMethod.GET, entity,
                 String.class);
     }
 
-    private ResponseEntity<String> callAuthApi(UriComponentsBuilder builder, HttpEntity<String> entity) {
+    public ResponseEntity<String> callAuthApi(UriComponentsBuilder builder, HttpEntity<String> entity) {
         return restTemplate.exchange(builder.toUriString(), HttpMethod.POST, entity, String.class);
     }
 
-    private String getRequestType(String requestType) {
+    public String getRequestType(String requestType) {
         requestType = requestType.isEmpty() ? "transfers" : requestType;
         requestType = requestType.equalsIgnoreCase("transfers") ? transfersEndpoint : transactionEndpoint;
         return requestType;
@@ -677,14 +677,14 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 });
     }
 
-    private String getVariableValue(Iterator<Object> iterator, String variableName) {
+    public String getVariableValue(Iterator<Object> iterator, String variableName) {
         String value = stream(spliteratorUnknownSize(iterator, Spliterator.ORDERED), false).map(v -> (JSONObject) v)
                 .filter(v -> variableName.equals(v.getString("name"))).findFirst().map(v -> v.getString("value")).orElse(null);
         logger.debug("Variable {} found, value: {}", variableName, value);
         return value;
     }
 
-    private TransactionStatusResponseDTO setTxnFound(TransactionStatusResponseDTO response, JSONObject transfer) {
+    public TransactionStatusResponseDTO setTxnFound(TransactionStatusResponseDTO response, JSONObject transfer) {
         String status = transfer.has("status") ? transfer.getString("status") : transfer.getString("state");
         response.setCompletedTimestamp(transfer.isNull("completedAt") ? null
                 : LocalDateTime.ofInstant(Instant.ofEpochMilli(transfer.getLong("completedAt")), ZoneId.systemDefault()));
@@ -693,7 +693,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         return response;
     }
 
-    private TransactionStatusResponseDTO setTxnNotFound(TransactionStatusResponseDTO response, String correlationId) {
+    public TransactionStatusResponseDTO setTxnNotFound(TransactionStatusResponseDTO response, String correlationId) {
         logger.debug("Transaction not found for correlationId: {}", correlationId);
         response.setClientRefId(correlationId);
         response.setCompletedTimestamp(null);
@@ -703,7 +703,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         return response;
     }
 
-    private UriComponentsBuilder buildParams(Client client) {
+    public UriComponentsBuilder buildParams(Client client) {
         HttpsURLConnection.setDefaultHostnameVerifier((restAuthHost, session) -> true);
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(restAuthHost + "/oauth/token")
                 // Add query parameter
@@ -713,7 +713,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         return builder;
     }
 
-    private HttpEntity<String> buildHeader(String tenantId, String token) {
+    public HttpEntity<String> buildHeader(String tenantId, String token) {
         HttpHeaders httpHeaders = new HttpHeaders();
         if (token == null) {
             httpHeaders.add("Platform-TenantId", tenantId);

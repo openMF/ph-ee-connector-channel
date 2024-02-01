@@ -28,12 +28,7 @@ public class TxnStateApiController implements TxnStateApi {
     public TxnStateResponseDTO txnState(String tenant, String correlationId, String requestType) throws JsonProcessingException {
         Headers headers = new Headers.HeaderBuilder().addHeader("Platform-TenantId", tenant).addHeader("requestType", requestType)
                 .addHeader(CLIENTCORRELATIONID, correlationId).build();
-        /*
-         * TODO : Remove this camel route Exchange exchange =
-         * SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(), headers, null);
-         * producerTemplate.send("direct:get-txnState-correlationId", exchange); String body =
-         * exchange.getIn().getBody(String.class); return objectMapper.readValue(body, TxnStateResponseDTO.class);
-         */
+
         TxnStateResponseDTO response = service.getTxnState(headers, correlationId, requestType);
         return response;
     }

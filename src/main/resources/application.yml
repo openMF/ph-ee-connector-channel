@@ -39,8 +39,8 @@ bpmn:
   flows:
     payment-transfer: "PayerFundTransfer-{dfspid}"
     special-payment-transfer: "SpecialPayerFundTransfer-{dfspid}"
-    transaction-request: "PayeeTransactionRequest-{dfspid}"
-    party-registration: "PartyRegistration-{dfspid}"
+    transaction-request: "payee-transaction-request-{dfspid}"
+    party-registration: "party-registration-{dfspid}"
     gsma-base-transaction: "gsma_base_transaction-{dfspid}"
     gsma-int-transfer: "gsma_int_transfer"
     gsma-payee-process: "gsma_payee_process"

@@ -235,7 +235,7 @@ jobs:
               sleep 1
               echo -n "."
             done
-
+            
             export CALLBACK_URL="https://$NGROK_PUBLIC_URL"
             echo -n "Public url ."
             echo $CALLBACK_URL
@@ -261,3 +261,4 @@ workflows:
           context:
               - DOCKER
               - AWS
+

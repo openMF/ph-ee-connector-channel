@@ -1,7 +1,6 @@
 package org.mifos.connector.channel.zeebe;
 
 import io.camunda.zeebe.client.ZeebeClient;
-import io.camunda.zeebe.client.api.command.ClientStatusException;
 import io.camunda.zeebe.client.api.response.ProcessInstanceEvent;
 import java.time.Instant;
 import java.util.HashMap;
@@ -41,15 +40,11 @@ public class ZeebeProcessStarter {
 
         logger.info("starting workflow HERE:");
         // TODO if successful transfer response arrives in X timeout return it otherwise do callback
-        try {
-            ProcessInstanceEvent instance = zeebeClient.newCreateInstanceCommand().bpmnProcessId(workflowId).latestVersion()
-                    .variables(variables).send().join();
-            logger.info("zeebee workflow instance from process {} started with transactionId {}, instance key: {}", workflowId,
-                    transactionId, instance.getProcessInstanceKey());
-        } catch (ClientStatusException ex) {
-            logger.error("ClientStatusException occurred : {}", ex.getMessage());
-            throw ex;
-        }
+        ProcessInstanceEvent instance = zeebeClient.newCreateInstanceCommand().bpmnProcessId(workflowId).latestVersion()
+                .variables(variables).send().join();
+
+        logger.info("zeebee workflow instance from process {} started with transactionId {}, instance key: {}", workflowId, transactionId,
+                instance.getProcessInstanceKey());
         return transactionId;
     }
 
@@ -67,16 +62,11 @@ public class ZeebeProcessStarter {
 
         logger.info("starting workflow HERE:");
         // TODO if successful transfer response arrives in X timeout return it otherwise do callback
-        try {
-            ProcessInstanceEvent instance = zeebeClient.newCreateInstanceCommand().bpmnProcessId(workflowId).latestVersion()
-                    .variables(variables).send().join();
+        ProcessInstanceEvent instance = zeebeClient.newCreateInstanceCommand().bpmnProcessId(workflowId).latestVersion()
+                .variables(variables).send().join();
 
-            logger.info("zeebee workflow instance from process {} started with transactionId {}, instance key: {}", workflowId,
-                    transactionId, instance.getProcessInstanceKey());
-        } catch (ClientStatusException ex) {
-            logger.error("ClientStatusException occurred : {}", ex.getMessage());
-            throw ex;
-        }
+        logger.info("zeebee workflow instance from process {} started with transactionId {}, instance key: {}", workflowId, transactionId,
+                instance.getProcessInstanceKey());
         return transactionId;
     }
 
@@ -115,17 +105,11 @@ public class ZeebeProcessStarter {
         variables.put(ZeebeVariables.ORIGIN_DATE, Instant.now().toEpochMilli());
 
         logger.info("starting workflow HERE:");
-        try {
-            ProcessInstanceEvent instance = zeebeClient.newCreateInstanceCommand().bpmnProcessId(workflowId).latestVersion()
-                    .variables(variables).send().join();
+        ProcessInstanceEvent instance = zeebeClient.newCreateInstanceCommand().bpmnProcessId(workflowId).latestVersion()
+                .variables(variables).send().join();
 
-            logger.info("zeebee workflow instance from process {} started with transactionId {}, instance key: {}", workflowId,
-                    transactionId, instance.getProcessInstanceKey());
-        } catch (ClientStatusException ex) {
-            logger.error("ClientStatusException occurred : {}", ex.getMessage());
-            throw ex;
-        }
-
+        logger.info("zeebee workflow instance from process {} started with transactionId {}, instance key: {}", workflowId, transactionId,
+                instance.getProcessInstanceKey());
         return transactionId;
     }
 }

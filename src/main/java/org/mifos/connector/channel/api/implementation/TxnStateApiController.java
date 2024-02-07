@@ -6,7 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.camel.ProducerTemplate;
 import org.mifos.connector.channel.api.definition.TxnStateApi;
-import org.mifos.connector.channel.api.service.TxnStateService;
+import org.mifos.connector.channel.service.TxnStateService;
 import org.mifos.connector.channel.model.TxnStateResponseDTO;
 import org.mifos.connector.channel.utils.Headers;
 import org.springframework.beans.factory.annotation.Autowired;

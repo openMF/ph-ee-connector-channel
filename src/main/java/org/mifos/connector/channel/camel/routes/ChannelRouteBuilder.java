@@ -28,6 +28,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import io.camunda.zeebe.client.ZeebeClient;
+
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -50,11 +51,13 @@ import org.json.JSONObject;
 import org.mifos.connector.channel.camel.config.Client;
 import org.mifos.connector.channel.camel.config.ClientProperties;
 import org.mifos.connector.channel.gsma_api.GsmaP2PResponseDto;
+import org.mifos.connector.channel.model.OpsTxnResponseDTO;
 import org.mifos.connector.channel.model.ValidationResponseDTO;
 import org.mifos.connector.channel.properties.TenantImplementation;
 import org.mifos.connector.channel.properties.TenantImplementationProperties;
 import org.mifos.connector.channel.utils.AMSProps;
 import org.mifos.connector.channel.utils.AMSUtils;
+import org.mifos.connector.channel.utils.Constants;
 import org.mifos.connector.channel.zeebe.ZeebeProcessStarter;
 import org.mifos.connector.common.camel.AuthProcessor;
 import org.mifos.connector.common.camel.AuthProperties;
@@ -76,6 +79,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
@@ -361,8 +365,24 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
 
     public ResponseEntity<String> callOpsTxnApi(String requestType, String correlationId, HttpEntity<String> entity) {
-        return restTemplate.exchange(operationsUrl + requestType + "clientCorrelationId=" + correlationId, HttpMethod.GET, entity,
-                String.class);
+        String url = String.format("%s%s%s%s%s", operationsUrl, requestType, Constants.CLIENT_CORRELATION_ID, Constants.EQUALS_SIGN, correlationId);
+        return restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+    }
+
+    public ResponseEntity<String> callOpsTxnApiUsingWebClient(String requestType, String correlationId, HttpEntity<String> entity) {
+        String url = String.format("%s%s%s%s%s", operationsUrl, requestType, Constants.CLIENT_CORRELATION_ID, Constants.EQUALS_SIGN, correlationId);
+
+        WebClient webClient = WebClient.create();
+
+        ResponseEntity<String> responseEntity = webClient
+                .method(HttpMethod.GET)
+                .uri(url)
+                .headers(headers -> headers.putAll(entity.getHeaders()))
+                .retrieve()
+                .toEntity(String.class)
+                .block();
+
+        return responseEntity;
     }
 
     public ResponseEntity<String> callAuthApi(UriComponentsBuilder builder, HttpEntity<String> entity) {
@@ -744,4 +764,21 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         }
         return DEFAULT_COLLECTION_PAYMENT_SCHEME;
     }
+
+    public TransactionStatusResponseDTO setTxnFound(TransactionStatusResponseDTO response, OpsTxnResponseDTO txnResponseDTO) {
+        String status = String.valueOf(txnResponseDTO.getStatus());
+
+        response.setCompletedTimestamp(
+                txnResponseDTO.getCompletedAt() == null
+                        ? null
+                        : txnResponseDTO.getCompletedAt().toInstant()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDateTime()
+        );
+
+        response.setTransactionId(txnResponseDTO.getTransactionId());
+        response.setTransferState(Constants.COMPLETED.equals(status) ? TransferState.COMMITTED : TransferState.RECEIVED);
+        return response;
+    }
+
 }

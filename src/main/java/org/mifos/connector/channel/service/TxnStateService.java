@@ -1,10 +1,9 @@
 package org.mifos.connector.channel.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import java.util.List;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mifos.connector.channel.camel.config.Client;
@@ -81,7 +80,7 @@ public class TxnStateService {
     }
 
     private TransactionStatusResponseDTO processContents(String correlationId, OpsTxnResponseDTO txnResponseDTO, HttpEntity<String> entity,
-                                                         ResponseEntity<String> responseEntity) {
+            ResponseEntity<String> responseEntity) {
         TransactionStatusResponseDTO response = new TransactionStatusResponseDTO();
         if (txnResponseDTO == null) {
             response = routeBuilder.setTxnNotFound(response, correlationId);

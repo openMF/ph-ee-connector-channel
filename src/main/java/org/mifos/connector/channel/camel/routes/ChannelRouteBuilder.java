@@ -28,7 +28,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import io.camunda.zeebe.client.ZeebeClient;
-
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -365,22 +364,19 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     }
 
     public ResponseEntity<String> callOpsTxnApi(String requestType, String correlationId, HttpEntity<String> entity) {
-        String url = String.format("%s%s%s%s%s", operationsUrl, requestType, Constants.CLIENT_CORRELATION_ID, Constants.EQUALS_SIGN, correlationId);
+        String url = String.format("%s%s%s%s%s", operationsUrl, requestType, Constants.CLIENT_CORRELATION_ID, Constants.EQUALS_SIGN,
+                correlationId);
         return restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
     }
 
     public ResponseEntity<String> callOpsTxnApiUsingWebClient(String requestType, String correlationId, HttpEntity<String> entity) {
-        String url = String.format("%s%s%s%s%s", operationsUrl, requestType, Constants.CLIENT_CORRELATION_ID, Constants.EQUALS_SIGN, correlationId);
+        String url = String.format("%s%s%s%s%s", operationsUrl, requestType, Constants.CLIENT_CORRELATION_ID, Constants.EQUALS_SIGN,
+                correlationId);
 
         WebClient webClient = WebClient.create();
 
-        ResponseEntity<String> responseEntity = webClient
-                .method(HttpMethod.GET)
-                .uri(url)
-                .headers(headers -> headers.putAll(entity.getHeaders()))
-                .retrieve()
-                .toEntity(String.class)
-                .block();
+        ResponseEntity<String> responseEntity = webClient.method(HttpMethod.GET).uri(url)
+                .headers(headers -> headers.putAll(entity.getHeaders())).retrieve().toEntity(String.class).block();
 
         return responseEntity;
     }
@@ -768,13 +764,8 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
     public TransactionStatusResponseDTO setTxnFound(TransactionStatusResponseDTO response, OpsTxnResponseDTO txnResponseDTO) {
         String status = String.valueOf(txnResponseDTO.getStatus());
 
-        response.setCompletedTimestamp(
-                txnResponseDTO.getCompletedAt() == null
-                        ? null
-                        : txnResponseDTO.getCompletedAt().toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime()
-        );
+        response.setCompletedTimestamp(txnResponseDTO.getCompletedAt() == null ? null
+                : txnResponseDTO.getCompletedAt().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
 
         response.setTransactionId(txnResponseDTO.getTransactionId());
         response.setTransferState(Constants.COMPLETED.equals(status) ? TransferState.COMMITTED : TransferState.RECEIVED);

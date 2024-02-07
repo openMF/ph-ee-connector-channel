@@ -1,15 +1,13 @@
 package org.mifos.connector.channel.model;
 
-
+import java.math.BigDecimal;
+import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.mifos.connector.common.operations.type.TransferStatus;
-
-import java.math.BigDecimal;
-import java.util.Date;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -44,32 +42,11 @@ public class OpsTxnResponseDTO {
     private String batchId;
     private String clientCorrelationId;
 
-    public static OpsTxnResponseDTO createInstance(
-            Long id,
-            Long workflowInstanceKey,
-            String transactionId,
-            Date startedAt,
-            Date completedAt,
-            TransferStatus status,
-            String statusDetail,
-            String payeeDfspId,
-            String payeePartyId,
-            String payeePartyIdType,
-            BigDecimal payeeFee,
-            String payeeFeeCurrency,
-            String payeeQuoteCode,
-            String payerDfspId,
-            String payerPartyId,
-            String payerPartyIdType,
-            BigDecimal payerFee,
-            String payerFeeCurrency,
-            String payerQuoteCode,
-            BigDecimal amount,
-            String currency,
-            String direction,
-            String errorInformation,
-            String batchId,
-            String clientCorrelationId) {
+    public static OpsTxnResponseDTO createInstance(Long id, Long workflowInstanceKey, String transactionId, Date startedAt,
+            Date completedAt, TransferStatus status, String statusDetail, String payeeDfspId, String payeePartyId, String payeePartyIdType,
+            BigDecimal payeeFee, String payeeFeeCurrency, String payeeQuoteCode, String payerDfspId, String payerPartyId,
+            String payerPartyIdType, BigDecimal payerFee, String payerFeeCurrency, String payerQuoteCode, BigDecimal amount,
+            String currency, String direction, String errorInformation, String batchId, String clientCorrelationId) {
 
         OpsTxnResponseDTO response = new OpsTxnResponseDTO();
         response.id = id;

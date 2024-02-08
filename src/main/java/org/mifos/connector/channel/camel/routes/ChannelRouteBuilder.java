@@ -50,11 +50,13 @@ import org.json.JSONObject;
 import org.mifos.connector.channel.camel.config.Client;
 import org.mifos.connector.channel.camel.config.ClientProperties;
 import org.mifos.connector.channel.gsma_api.GsmaP2PResponseDto;
+import org.mifos.connector.channel.model.OpsTxnResponseDTO;
 import org.mifos.connector.channel.model.ValidationResponseDTO;
 import org.mifos.connector.channel.properties.TenantImplementation;
 import org.mifos.connector.channel.properties.TenantImplementationProperties;
 import org.mifos.connector.channel.utils.AMSProps;
 import org.mifos.connector.channel.utils.AMSUtils;
+import org.mifos.connector.channel.utils.Constants;
 import org.mifos.connector.channel.zeebe.ZeebeProcessStarter;
 import org.mifos.connector.common.camel.AuthProcessor;
 import org.mifos.connector.common.camel.AuthProperties;
@@ -76,6 +78,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
@@ -356,20 +359,33 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 });
     }
 
-    private ResponseEntity<String> fetchApibyWorkflowKey(HttpEntity<String> entity, long workflowInstanceKey) {
+    public ResponseEntity<String> fetchApibyWorkflowKey(HttpEntity<String> entity, long workflowInstanceKey) {
         return restTemplate.exchange(operationsUrl + "/transfer/" + workflowInstanceKey, HttpMethod.GET, entity, String.class);
     }
 
-    private ResponseEntity<String> callOpsTxnApi(String requestType, String correlationId, HttpEntity<String> entity) {
-        return restTemplate.exchange(operationsUrl + requestType + "clientCorrelationId=" + correlationId, HttpMethod.GET, entity,
-                String.class);
+    public ResponseEntity<String> callOpsTxnApi(String requestType, String correlationId, HttpEntity<String> entity) {
+        String url = String.format("%s%s%s%s%s", operationsUrl, requestType, Constants.CLIENT_CORRELATION_ID, Constants.EQUALS_SIGN,
+                correlationId);
+        return restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
     }
 
-    private ResponseEntity<String> callAuthApi(UriComponentsBuilder builder, HttpEntity<String> entity) {
+    public ResponseEntity<String> callOpsTxnApiUsingWebClient(String requestType, String correlationId, HttpEntity<String> entity) {
+        String url = String.format("%s%s%s%s%s", operationsUrl, requestType, Constants.CLIENT_CORRELATION_ID, Constants.EQUALS_SIGN,
+                correlationId);
+
+        WebClient webClient = WebClient.create();
+
+        ResponseEntity<String> responseEntity = webClient.method(HttpMethod.GET).uri(url)
+                .headers(headers -> headers.putAll(entity.getHeaders())).retrieve().toEntity(String.class).block();
+
+        return responseEntity;
+    }
+
+    public ResponseEntity<String> callAuthApi(UriComponentsBuilder builder, HttpEntity<String> entity) {
         return restTemplate.exchange(builder.toUriString(), HttpMethod.POST, entity, String.class);
     }
 
-    private String getRequestType(String requestType) {
+    public String getRequestType(String requestType) {
         requestType = requestType.isEmpty() ? "transfers" : requestType;
         requestType = requestType.equalsIgnoreCase("transfers") ? transfersEndpoint : transactionEndpoint;
         return requestType;
@@ -677,14 +693,14 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                 });
     }
 
-    private String getVariableValue(Iterator<Object> iterator, String variableName) {
+    public String getVariableValue(Iterator<Object> iterator, String variableName) {
         String value = stream(spliteratorUnknownSize(iterator, Spliterator.ORDERED), false).map(v -> (JSONObject) v)
                 .filter(v -> variableName.equals(v.getString("name"))).findFirst().map(v -> v.getString("value")).orElse(null);
         logger.debug("Variable {} found, value: {}", variableName, value);
         return value;
     }
 
-    private TransactionStatusResponseDTO setTxnFound(TransactionStatusResponseDTO response, JSONObject transfer) {
+    public TransactionStatusResponseDTO setTxnFound(TransactionStatusResponseDTO response, JSONObject transfer) {
         String status = transfer.has("status") ? transfer.getString("status") : transfer.getString("state");
         response.setCompletedTimestamp(transfer.isNull("completedAt") ? null
                 : LocalDateTime.ofInstant(Instant.ofEpochMilli(transfer.getLong("completedAt")), ZoneId.systemDefault()));
@@ -693,7 +709,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         return response;
     }
 
-    private TransactionStatusResponseDTO setTxnNotFound(TransactionStatusResponseDTO response, String correlationId) {
+    public TransactionStatusResponseDTO setTxnNotFound(TransactionStatusResponseDTO response, String correlationId) {
         logger.debug("Transaction not found for correlationId: {}", correlationId);
         response.setClientRefId(correlationId);
         response.setCompletedTimestamp(null);
@@ -703,7 +719,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         return response;
     }
 
-    private UriComponentsBuilder buildParams(Client client) {
+    public UriComponentsBuilder buildParams(Client client) {
         HttpsURLConnection.setDefaultHostnameVerifier((restAuthHost, session) -> true);
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(restAuthHost + "/oauth/token")
                 // Add query parameter
@@ -713,7 +729,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         return builder;
     }
 
-    private HttpEntity<String> buildHeader(String tenantId, String token) {
+    public HttpEntity<String> buildHeader(String tenantId, String token) {
         HttpHeaders httpHeaders = new HttpHeaders();
         if (token == null) {
             httpHeaders.add("Platform-TenantId", tenantId);
@@ -744,4 +760,16 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
         }
         return DEFAULT_COLLECTION_PAYMENT_SCHEME;
     }
+
+    public TransactionStatusResponseDTO setTxnFound(TransactionStatusResponseDTO response, OpsTxnResponseDTO txnResponseDTO) {
+        String status = String.valueOf(txnResponseDTO.getStatus());
+
+        response.setCompletedTimestamp(txnResponseDTO.getCompletedAt() == null ? null
+                : txnResponseDTO.getCompletedAt().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+
+        response.setTransactionId(txnResponseDTO.getTransactionId());
+        response.setTransferState(Constants.COMPLETED.equals(status) ? TransferState.COMMITTED : TransferState.RECEIVED);
+        return response;
+    }
+
 }

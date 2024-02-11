@@ -1,5 +1,6 @@
 package org.mifos.connector.channel.camel.routes;
 
+import static org.mifos.connector.channel.camel.config.CamelProperties.BATCH_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.GSMA_CHANNEL_REQUEST;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.IS_RTP_REQUEST;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.NOTE;
@@ -131,6 +132,8 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     TransactionChannelRequestDTO channelRequest = new TransactionChannelRequestDTO(); // Fineract Object
                     String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);
+                    String batchIdHeader = exchange.getIn().getHeader(BATCH_ID, String.class);
+                    logger.info("Batch Id from route {}", batchIdHeader);
                     Party payer = partyMapper(gsmaChannelRequest.getDebitParty());
                     Party payee = partyMapper(gsmaChannelRequest.getCreditParty());
                     MoneyData amount = amountMapper(gsmaChannelRequest.getAmount(), gsmaChannelRequest.getCurrency());
@@ -147,6 +150,7 @@ public class GSMAChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     Map<String, Object> extraVariables = new HashMap<>();
                     extraVariables.put(IS_RTP_REQUEST, false);
                     extraVariables.put(TRANSACTION_TYPE, "transfer");
+                    extraVariables.put(BATCH_ID, batchIdHeader);
                     extraVariables.put("initiator", transactionType.getInitiator().name());
                     extraVariables.put("initiatorType", transactionType.getInitiatorType().name());
                     extraVariables.put("scenario", transactionType.getScenario().name());

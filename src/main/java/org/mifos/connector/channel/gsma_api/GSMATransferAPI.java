@@ -1,5 +1,7 @@
 package org.mifos.connector.channel.gsma_api;
 
+import static org.mifos.connector.channel.camel.config.CamelProperties.BATCH_ID_HEADER;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.mifos.connector.common.gsma.dto.GSMATransaction;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +13,8 @@ public interface GSMATransferAPI {
 
     @PostMapping("/channel/gsma/transfer")
     ResponseEntity<Object> gsmatransfer(@RequestHeader(value = "Platform-TenantId") String tenant,
-            @RequestHeader(value = "X-CorrelationID", required = false) String correlationId, @RequestBody GSMATransaction requestBody)
+            @RequestHeader(value = "X-CorrelationID", required = false) String correlationId,
+            @RequestHeader(value = BATCH_ID_HEADER, required = false) String batchId, @RequestBody GSMATransaction requestBody)
             throws JsonProcessingException;
 
 }

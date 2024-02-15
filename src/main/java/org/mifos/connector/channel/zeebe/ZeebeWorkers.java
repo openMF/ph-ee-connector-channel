@@ -3,11 +3,11 @@ package org.mifos.connector.channel.zeebe;
 import static java.util.Comparator.naturalOrder;
 import static org.mifos.connector.channel.camel.config.CamelProperties.BATCH_ID;
 import static org.mifos.connector.channel.camel.config.CamelProperties.CLIENTCORRELATIONID;
+import static org.mifos.connector.channel.camel.config.CamelProperties.PARTY_LOOKUP_FSP_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.CHANNEL_REQUEST;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.ERROR_DESCRIPTION;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.ERROR_INFORMATION;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.SAMPLED_TX_IDS;
-import static org.mifos.connector.channel.zeebe.ZeebeVariables.TENANT_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSACTION_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSACTION_VALID;
 import static org.mifos.connector.channel.zeebe.ZeebeVariables.TRANSFER_CREATE_FAILED;
@@ -104,13 +104,13 @@ public class ZeebeWorkers {
             logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
             Map<String, Object> variables = job.getVariablesAsMap();
             String clientCorrelationId = UUID.randomUUID().toString();
-            Headers headers = new Headers.HeaderBuilder().addHeader("Platform-TenantId", variables.get(TENANT_ID).toString())
+            Headers headers = new Headers.HeaderBuilder().addHeader("Platform-TenantId", variables.get(PARTY_LOOKUP_FSP_ID).toString())
                     .addHeader(CLIENTCORRELATIONID, clientCorrelationId).build();
             variables.put("clientCorrelationId", clientCorrelationId);
 
             PartyIdInfo payer = new PartyIdInfo(IdentifierType.valueOf(String.valueOf(variables.get("payerIdentifierType"))),
                     variables.get("payerIdentifier").toString());
-            PartyIdInfo payee = new PartyIdInfo(IdentifierType.valueOf(String.valueOf(variables.get("payeePartyIdType"))),
+            PartyIdInfo payee = new PartyIdInfo(IdentifierType.valueOf(String.valueOf(variables.get("payerIdentifierType"))),
                     variables.get("payeePartyId").toString());
             TransactionChannelRequestDTO channelRequestDTO = new TransactionChannelRequestDTO();
             Party payeeParty = new Party();

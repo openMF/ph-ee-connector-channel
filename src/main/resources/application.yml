@@ -97,7 +97,7 @@ springdoc:
   writer-with-order-by-keys: true
 
 destination:
-    dfspid: "lion"
+    dfspid: "jupiter"
 
 redis:
   host: "127.0.0.1"

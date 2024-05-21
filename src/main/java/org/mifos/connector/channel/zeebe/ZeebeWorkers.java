@@ -218,6 +218,7 @@ public class ZeebeWorkers {
         zeebeClient.newWorker().jobType("zeebe-consistency-worker").handler((client, job) -> {
             logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
             Map<String, Object> variables = job.getVariablesAsMap();
+            variables.replace("message", "New World");
             variables.put("Worker message", "Hey There");
             client.newCompleteCommand(job.getKey()).variables(variables).send().join();
         }).name("zeebe-consistency-worker").maxJobsActive(workerMaxJobs).open();

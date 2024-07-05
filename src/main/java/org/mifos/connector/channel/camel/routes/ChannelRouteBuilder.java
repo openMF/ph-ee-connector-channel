@@ -313,6 +313,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
                     String payeeDFSPId = exchange.getIn().getHeader("X-PayeeDFSP-ID", String.class);
+                    logger.info("Payee DFSP Id {}", payeeDFSPId);
                     String registeringInstitutionId = exchange.getIn().getHeader("X-Registering-Institution-ID", String.class);
                     String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);
                     logger.info("## CHANNEL Client Correlation Id: " + clientCorrelationId);

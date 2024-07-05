@@ -43,6 +43,7 @@ public class TransferApiController implements TransferApi {
                 objectMapper.writeValueAsString(requestBody));
         logger.info("Client correlation id: " + correlationId);
         logger.info("Batch id: " + batchId);
+        logger.info("Payee DFSP Id: " + payeeDFSPId);
         producerTemplate.send("direct:post-transfer", exchange);
         Exception cause = exchange.getProperty(Exchange.EXCEPTION_CAUGHT, Exception.class);
         if (cause instanceof ClientStatusException) {

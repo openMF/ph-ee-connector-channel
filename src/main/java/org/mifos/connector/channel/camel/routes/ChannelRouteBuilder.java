@@ -6,6 +6,7 @@ import static java.util.stream.StreamSupport.stream;
 import static org.mifos.connector.channel.camel.config.CamelProperties.AUTH_TYPE;
 import static org.mifos.connector.channel.camel.config.CamelProperties.BATCH_ID;
 import static org.mifos.connector.channel.camel.config.CamelProperties.CLIENTCORRELATIONID;
+import static org.mifos.connector.channel.camel.config.CamelProperties.PAYEE_DFSP_ID;
 import static org.mifos.connector.channel.camel.config.CamelProperties.PAYMENT_SCHEME_HEADER;
 import static org.mifos.connector.channel.camel.config.CamelProperties.REGISTERING_INSTITUTION_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
@@ -311,6 +312,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(BATCH_ID, batchIdHeader);
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
+                    String payeeDFSPId = exchange.getIn().getHeader("X-PayeeDFSP-ID", String.class);
                     String registeringInstitutionId = exchange.getIn().getHeader("X-Registering-Institution-ID", String.class);
                     String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);
                     logger.info("## CHANNEL Client Correlation Id: " + clientCorrelationId);
@@ -319,6 +321,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     }
                     extraVariables.put(TENANT_ID, tenantId);
                     extraVariables.put(REGISTERING_INSTITUTION_ID, registeringInstitutionId);
+                    extraVariables.put(PAYEE_DFSP_ID, payeeDFSPId);
 
                     TransactionChannelRequestDTO channelRequest = exchange.getIn().getBody(TransactionChannelRequestDTO.class);
                     TransactionType transactionType = new TransactionType();

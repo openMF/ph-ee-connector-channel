@@ -28,5 +28,6 @@ public final class ZeebeVariables {
     public static final String TRANSFER_CREATE_FAILED = "transferCreateFailed";
     public static final String TRANSACTION_VALID = "isTxnValid";
     public static final String PAYMENT_SCHEME = "paymentScheme";
+    public static final String PAYEE_DFSP_ID = "payeeDFSPId";
 
 }

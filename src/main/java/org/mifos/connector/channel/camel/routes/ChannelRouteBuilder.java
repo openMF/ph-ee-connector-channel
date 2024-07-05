@@ -6,7 +6,6 @@ import static java.util.stream.StreamSupport.stream;
 import static org.mifos.connector.channel.camel.config.CamelProperties.AUTH_TYPE;
 import static org.mifos.connector.channel.camel.config.CamelProperties.BATCH_ID;
 import static org.mifos.connector.channel.camel.config.CamelProperties.CLIENTCORRELATIONID;
-import static org.mifos.connector.channel.camel.config.CamelProperties.PAYEE_DFSP_ID;
 import static org.mifos.connector.channel.camel.config.CamelProperties.PAYMENT_SCHEME_HEADER;
 import static org.mifos.connector.channel.camel.config.CamelProperties.REGISTERING_INSTITUTION_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
@@ -59,6 +58,7 @@ import org.mifos.connector.channel.utils.AMSProps;
 import org.mifos.connector.channel.utils.AMSUtils;
 import org.mifos.connector.channel.utils.Constants;
 import org.mifos.connector.channel.zeebe.ZeebeProcessStarter;
+import org.mifos.connector.channel.zeebe.ZeebeVariables;
 import org.mifos.connector.common.camel.AuthProcessor;
 import org.mifos.connector.common.camel.AuthProperties;
 import org.mifos.connector.common.camel.ErrorHandlerRouteBuilder;
@@ -322,7 +322,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     }
                     extraVariables.put(TENANT_ID, tenantId);
                     extraVariables.put(REGISTERING_INSTITUTION_ID, registeringInstitutionId);
-                    extraVariables.put(PAYEE_DFSP_ID, payeeDFSPId);
+                    extraVariables.put(ZeebeVariables.PAYEE_DFSP_ID, payeeDFSPId);
 
                     TransactionChannelRequestDTO channelRequest = exchange.getIn().getBody(TransactionChannelRequestDTO.class);
                     TransactionType transactionType = new TransactionType();
@@ -331,6 +331,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     transactionType.setScenario(TRANSFER);
                     channelRequest.setTransactionType(transactionType);
                     channelRequest.getPayer().getPartyIdInfo().setFspId(destinationDfspId);
+                    channelRequest.getPayee().getPartyIdInfo().setFspId(payeeDFSPId);
                     String customDataString = String.valueOf(channelRequest.getCustomData());
                     String currency = channelRequest.getAmount().getCurrency();
 

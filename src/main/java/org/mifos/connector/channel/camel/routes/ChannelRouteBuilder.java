@@ -311,6 +311,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(BATCH_ID, batchIdHeader);
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
+                    String payeeDfspId = exchange.getIn().getHeader("payeeDfspId", String.class);
                     String registeringInstitutionId = exchange.getIn().getHeader("X-Registering-Institution-ID", String.class);
                     String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);
                     logger.info("## CHANNEL Client Correlation Id: " + clientCorrelationId);
@@ -326,7 +327,12 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     transactionType.setInitiatorType(CONSUMER);
                     transactionType.setScenario(TRANSFER);
                     channelRequest.setTransactionType(transactionType);
-                    channelRequest.getPayer().getPartyIdInfo().setFspId(destinationDfspId);
+                    if(payeeDfspId == null) {
+                        channelRequest.getPayer().getPartyIdInfo().setFspId(destinationDfspId);
+                    }
+                    else {
+                        channelRequest.getPayer().getPartyIdInfo().setFspId(payeeDfspId);
+                    }
                     String customDataString = String.valueOf(channelRequest.getCustomData());
                     String currency = channelRequest.getAmount().getCurrency();
 

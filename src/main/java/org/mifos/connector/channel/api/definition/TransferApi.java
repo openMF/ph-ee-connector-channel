@@ -21,6 +21,7 @@ public interface TransferApi {
             @RequestHeader(value = BATCH_ID_HEADER, required = false) String batchId,
             @RequestHeader(value = CLIENTCORRELATIONID, required = false) String correlationId,
             @RequestHeader(value = REGISTERING_INSTITUTION_ID, required = false) String registeringInstitutionId,
+            @RequestHeader(value = "payeeDfspId", required = false) String payeeDfspId,
             @RequestBody TransactionChannelRequestDTO requestBody) throws JsonProcessingException;
 
     @GetMapping("/channel/transfer/{transactionId}")

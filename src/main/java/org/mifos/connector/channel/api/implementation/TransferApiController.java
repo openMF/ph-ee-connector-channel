@@ -33,10 +33,11 @@ public class TransferApiController implements TransferApi {
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
-    public GsmaP2PResponseDto transfer(String tenant, String batchId, String correlationId, String registeringInstitutionId,
+    public GsmaP2PResponseDto transfer(String tenant, String batchId, String correlationId, String registeringInstitutionId, String payeeDfspId,
             TransactionChannelRequestDTO requestBody) throws JsonProcessingException {
         Headers headers = new Headers.HeaderBuilder().addHeader("Platform-TenantId", tenant).addHeader(BATCH_ID, batchId)
-                .addHeader(CLIENTCORRELATIONID, correlationId).addHeader(REGISTERING_INSTITUTION_ID, registeringInstitutionId).build();
+                .addHeader(CLIENTCORRELATIONID, correlationId).addHeader(REGISTERING_INSTITUTION_ID, registeringInstitutionId)
+                .addHeader("payeeDfspId", payeeDfspId).build();
         Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(), headers,
                 objectMapper.writeValueAsString(requestBody));
         logger.info("Client correlation id: " + correlationId);

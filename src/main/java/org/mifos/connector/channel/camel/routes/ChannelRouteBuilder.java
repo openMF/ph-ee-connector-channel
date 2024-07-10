@@ -6,6 +6,7 @@ import static java.util.stream.StreamSupport.stream;
 import static org.mifos.connector.channel.camel.config.CamelProperties.AUTH_TYPE;
 import static org.mifos.connector.channel.camel.config.CamelProperties.BATCH_ID;
 import static org.mifos.connector.channel.camel.config.CamelProperties.CLIENTCORRELATIONID;
+import static org.mifos.connector.channel.camel.config.CamelProperties.PAYEE_DFSP_ID;
 import static org.mifos.connector.channel.camel.config.CamelProperties.PAYMENT_SCHEME_HEADER;
 import static org.mifos.connector.channel.camel.config.CamelProperties.REGISTERING_INSTITUTION_ID;
 import static org.mifos.connector.channel.zeebe.ZeebeMessages.OPERATOR_MANUAL_RECOVERY;
@@ -311,9 +312,10 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     extraVariables.put(BATCH_ID, batchIdHeader);
 
                     String tenantId = exchange.getIn().getHeader("Platform-TenantId", String.class);
+                    String payeeDfspId = exchange.getIn().getHeader(PAYEE_DFSP_ID, String.class);
                     String registeringInstitutionId = exchange.getIn().getHeader("X-Registering-Institution-ID", String.class);
                     String clientCorrelationId = exchange.getIn().getHeader("X-CorrelationID", String.class);
-                    logger.info("## CHANNEL Client Correlation Id: " + clientCorrelationId);
+                    logger.info("## CHANNEL Client Correlation Id: {}", clientCorrelationId);
                     if (tenantId == null || !dfspIds.contains(tenantId)) {
                         throw new RuntimeException("Requested tenant " + tenantId + " not configured in the connector!");
                     }
@@ -326,7 +328,12 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     transactionType.setInitiatorType(CONSUMER);
                     transactionType.setScenario(TRANSFER);
                     channelRequest.setTransactionType(transactionType);
-                    channelRequest.getPayer().getPartyIdInfo().setFspId(destinationDfspId);
+                    channelRequest.getPayer().getPartyIdInfo().setFspId(tenantId);
+                    if (payeeDfspId == null || payeeDfspId.isBlank()) {
+                        channelRequest.getPayee().getPartyIdInfo().setFspId(destinationDfspId);
+                    } else {
+                        channelRequest.getPayee().getPartyIdInfo().setFspId(payeeDfspId);
+                    }
                     String customDataString = String.valueOf(channelRequest.getCustomData());
                     String currency = channelRequest.getAmount().getCurrency();
 
@@ -339,6 +346,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                             new FspMoneyData(channelRequest.getAmount().getAmountDecimal(), channelRequest.getAmount().getCurrency()));
                     extraVariables.put("clientCorrelationId", clientCorrelationId);
                     extraVariables.put("initiatorFspId", channelRequest.getPayer().getPartyIdInfo().getFspId());
+                    extraVariables.put("destinationFspId", channelRequest.getPayee().getPartyIdInfo().getFspId());
                     String tenantSpecificBpmn;
                     String bpmn = getWorkflowForTenant(tenantId, "payment-transfer");
                     if (channelRequest.getPayer().getPartyIdInfo().getPartyIdentifier().startsWith("6666")) {

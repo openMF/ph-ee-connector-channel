@@ -684,7 +684,7 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     String callbackURL = e.getIn().getHeader("X-CallbackURL").toString();
                     String tenantId = (String) e.getIn().getHeader("Platform-TenantId");
                     Map<String, Object> variables = amsUtils.setZeebeVariables(gsmaTranfer.getCustomData(), timer);
-                    if (tenantId != null) {
+                    if (tenantId != null && !tenantId.isEmpty()) {
                         variables.put(TENANT_ID, tenantId);
                     } else {
                         variables.put(TENANT_ID, accountHoldingInstitutionId);

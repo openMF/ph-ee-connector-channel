@@ -682,14 +682,21 @@ public class ChannelRouteBuilder extends ErrorHandlerRouteBuilder {
                     String accountHoldingInstitutionId = e.getIn().getHeader("accountHoldingInstitutionId").toString();
                     String clientCorrelationId = e.getIn().getHeader("X-CorrelationID", String.class);
                     String callbackURL = e.getIn().getHeader("X-CallbackURL").toString();
-                    // inbound-transfer-mifos-lion
+                    String tenantId = (String) e.getIn().getHeader("Platform-TenantId");
                     Map<String, Object> variables = amsUtils.setZeebeVariables(gsmaTranfer.getCustomData(), timer);
-                    variables.put(TENANT_ID, accountHoldingInstitutionId);
+                    if (tenantId != null && !tenantId.isEmpty()) {
+                        variables.put(TENANT_ID, tenantId);
+                    } else {
+                        variables.put(TENANT_ID, accountHoldingInstitutionId);
+                        tenantId = accountHoldingInstitutionId;
+                    }
+                    variables.put("accountHoldingInstitutionId", accountHoldingInstitutionId);
                     variables.put(CHANNEL_REQUEST, objectMapper.writeValueAsString(gsmaTranfer));
                     variables.put("clientCorrelationId", clientCorrelationId);
                     variables.put("X-CallbackURL", callbackURL);
+                    // tenantId in workflowName should be changed to accountHoldingInstitutionId;
                     String workflowName = new StringBuilder().append(subtype).append("_").append(type).append("_").append(amsName)
-                            .append("-").append(accountHoldingInstitutionId).toString();
+                            .append("-").append(tenantId).toString();
                     logger.info("Workflow Name:{}", workflowName);
                     String transactionId = zeebeProcessStarter.startZeebeWorkflowC2B(workflowName, variables);
                     GsmaP2PResponseDto responseDto = new GsmaP2PResponseDto();

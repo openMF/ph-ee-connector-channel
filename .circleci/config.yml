@@ -59,11 +59,7 @@ jobs:
       # Install Docker to build and push the image
       - setup_remote_docker:
           version: 20.10.24
-      - kubernetes/install-kubectl
       - checkout
-      - aws-eks/update-kubeconfig-with-authenticator:
-          cluster-name: "sit"
-          aws-region: "$REGION"
       # Build the Docker image
       - run:
           name: Build Docker image

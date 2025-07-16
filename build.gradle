@@ -301,7 +301,7 @@ checkstyle {
 
 
 group = 'org.mifos'
-version = '1.0.0-SNAPSHOT'
+version = 'gazelle-1.1.0'
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 

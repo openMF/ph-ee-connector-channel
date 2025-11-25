@@ -4,6 +4,9 @@ import static org.apache.camel.Exchange.CONTENT_TYPE;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.mifos.connector.channel.api.definition.ValidationApi;
@@ -15,7 +18,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
+//import lombok.extern.slf4j.Slf4j;
 
+//@Slf4j
 @RestController
 public class ValidationApiController implements ValidationApi {
 
@@ -33,6 +38,7 @@ public class ValidationApiController implements ValidationApi {
             throws JsonProcessingException {
         Headers headers = new Headers.HeaderBuilder().addHeader("amsUrl", amsUrl).addHeader("amsName", amsName)
                 .addHeader("accountHoldingInstitutionId", accountHoldingInstitutionId).addHeader(CONTENT_TYPE, contentTypeVal).build();
+        logger.info("TDDEBUG> Inside validation API controller with headers: " + headers.toString());
 
         Exchange exchange = SpringWrapperUtil.getDefaultWrappedExchange(producerTemplate.getCamelContext(), headers,
                 objectMapper.writeValueAsString(validationRequestDTO));

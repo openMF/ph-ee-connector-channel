@@ -77,7 +77,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test:2.6.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
-    implementation 'javax.servlet:javax.servlet-api:3.1.0'
+    // not needed and causes errors for SpringBoot 2.6.2 implementation 'javax.servlet:javax.servlet-api:3.1.0'
     implementation 'commons-codec:commons-codec:1.15'
     implementation 'commons-io:commons-io:2.11.0'
     implementation ("org.apache.camel:camel-spring-redis:3.12.0")

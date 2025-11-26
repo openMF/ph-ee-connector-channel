@@ -76,8 +76,10 @@ rest:
     header: "Basic Y2xpZW50Og=="
 
 management:
-#  server:
-#    port: 8443
+  server:
+    port: 8080
+    ssl:
+      enabled: false
   endpoint:
     health:
       probes:

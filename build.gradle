@@ -299,11 +299,13 @@ checkstyle {
 }
 
 
-
-group = 'org.mifos'
-version = 'gazelle-1.1.0'
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
+// The 'java' block uses the java.version property implicitly, 
+// but we explicitly set the compatibility here for clarity.
+java {
+    // Reads the value of java.version (which is '17') from gradle.properties
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
 
 test {
     useJUnitPlatform()

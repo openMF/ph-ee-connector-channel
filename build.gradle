@@ -53,10 +53,20 @@ ext {
     springBootVersion = '2.6.2'
 }
 
+configurations.all {
+    resolutionStrategy {
+        force 'org.springframework.boot:spring-boot:2.6.2'
+        force 'org.springframework.boot:spring-boot-autoconfigure:2.6.2'
+    }
+    exclude group: 'javax.servlet', module: 'javax.servlet-api'
+}
+
 dependencies {
     implementation 'com.google.code.gson:gson:2.8.9'
     // implementation 'org.mifos:ph-ee-connector-common:1.4.1-SNAPSHOT'
-    implementation 'org.mifos:ph-ee-connector-common:1.4.1-gazelle'
+    implementation('org.mifos:ph-ee-connector-common:1.4.1-gazelle') {
+        exclude group: 'org.springframework.boot'
+    }
     implementation 'org.apache.camel.springboot:camel-spring-boot-starter:3.12.0'
     implementation "org.springframework.boot:spring-boot-starter:$springBootVersion"
     implementation "org.springframework.boot:spring-boot-starter-web:$springBootVersion"

@@ -4,7 +4,7 @@ orbs:
 executors:
   docker-executor:
     docker:
-      - image: circleci/openjdk:17-buster-node-browsers-legacy
+      - image: eclipse-temurin:17
 jobs:
   build_and_push_tag_image:
     executor: docker-executor

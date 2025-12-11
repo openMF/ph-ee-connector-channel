@@ -20,7 +20,7 @@ repositories {
     }
     maven {
         url = uri('https://mifos.jfrog.io/artifactory/phee-gradle-local')
-    }    
+    }
     maven {
         url = uri('https://mifos.jfrog.io/artifactory/mifosx-gradle-local')
     }
@@ -309,7 +309,7 @@ checkstyle {
 }
 
 
-// The 'java' block uses the java.version property implicitly, 
+// The 'java' block uses the java.version property implicitly,
 // but we explicitly set the compatibility here for clarity.
 java {
     // Reads the value of java.version (which is '17') from gradle.properties

@@ -88,7 +88,7 @@ management:
         enabled: true
       readiness:
         enabled: true
-#      show-details: 
+#      show-details:
 
 logging:
   level:

@@ -88,7 +88,7 @@ management:
         enabled: true
       readiness:
         enabled: true
-#      show-details: 
+#      show-details:
 
 logging:
   level:
@@ -112,3 +112,18 @@ redis:
     enabled: true
     keyFormat: "clientCorrelationId_tenant_api"
     apiList: "/channel/transfer,/channel/collection,/channel/gsma/transaction,/channel/transactionRequest"
+
+bpmns:
+  tenants:
+    - id: "greenbank"
+      flows:
+        payment-transfer: "PayerFundTransfer-{dfspid}"
+        outbound-transfer-request: "{ps}_flow_{ams}-{dfspid}"
+    - id: "redbank"
+      flows:
+        payment-transfer: "minimal_mock_fund_transfer-{dfspid}"
+        outbound-transfer-request: "minimal_mock_transfer_request-{dfspid}"
+    - id: "bluebank"
+      flows:
+        payment-transfer: "minimal_mock_fund_transfer-{dfspid}"
+        outbound-transfer-request: "minimal_mock_transfer_request-{dfspid}"

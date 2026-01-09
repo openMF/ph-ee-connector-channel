@@ -4,7 +4,7 @@ orbs:
 executors:
   docker-executor:
     docker:
-      - image: circleci/openjdk:17-buster-node-browsers-legacy
+      - image: eclipse-temurin:17-jdk
 jobs:
   build_and_push_tag_image:
     executor: docker-executor
@@ -23,6 +23,18 @@ jobs:
             echo "export DOCKER_REPO_LOWER=$(echo $CIRCLE_PROJECT_REPONAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
             echo "Using Docker Namespace: $DOCKER_ORG_LOWER"
             echo "Using Docker Repository: $DOCKER_REPO_LOWER"
+      - run:
+          name: Install Docker CLI
+          command: |
+            apt-get update
+            apt-get install -y curl ca-certificates gnupg
+            install -m 0755 -d /etc/apt/keyrings
+            curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+            chmod a+r /etc/apt/keyrings/docker.asc
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian bullseye stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+            apt-get update
+            apt-cache madison docker-ce-cli | grep 20.10
+            apt-get install -y docker-ce-cli=5:20.10.24~3-0~debian-bullseye
       - docker-buildx/install
       - run:
           name: Check if Docker image tag exists
@@ -64,6 +76,18 @@ jobs:
             echo "export DOCKER_REPO_LOWER=$(echo $CIRCLE_PROJECT_REPONAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
             echo "Using Docker Namespace: $DOCKER_ORG_LOWER"
             echo "Using Docker Repository: $DOCKER_REPO_LOWER"
+      - run:
+          name: Install Docker CLI
+          command: |
+            apt-get update
+            apt-get install -y curl ca-certificates gnupg
+            install -m 0755 -d /etc/apt/keyrings
+            curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+            chmod a+r /etc/apt/keyrings/docker.asc
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian bullseye stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+            apt-get update
+            apt-cache madison docker-ce-cli | grep 20.10
+            apt-get install -y docker-ce-cli=5:20.10.24~3-0~debian-bullseye
       - docker-buildx/install
       - run:
           name: Build Application
@@ -101,6 +125,18 @@ jobs:
             echo "export DOCKER_REPO_LOWER=$(echo $CIRCLE_PROJECT_REPONAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
             echo "Using Docker Namespace: $DOCKER_ORG_LOWER"
             echo "Using Docker Repository: $DOCKER_REPO_LOWER"
+      - run:
+          name: Install Docker CLI
+          command: |
+            apt-get update
+            apt-get install -y curl ca-certificates gnupg
+            install -m 0755 -d /etc/apt/keyrings
+            curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+            chmod a+r /etc/apt/keyrings/docker.asc
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian bullseye stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+            apt-get update
+            apt-cache madison docker-ce-cli | grep 20.10
+            apt-get install -y docker-ce-cli=5:20.10.24~3-0~debian-bullseye
       - docker-buildx/install
       - run:
           name: Build Application

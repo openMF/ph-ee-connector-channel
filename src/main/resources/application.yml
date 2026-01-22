@@ -22,10 +22,10 @@ timer: "PT45S"
 server:
   ssl:
     key-alias: "tomcat-https"
-    key-store: "classpath:keystore.jks"
+    key-store: "file:/tls/keystore.jks"
     key-store-type: JKS
-    key-password: "<replace-with-password>"
-    key-store-password: "<replace-with-password>"
+    key-password: "changeit"
+    key-store-password: "changeit"
   port: 8443
 
 operations:

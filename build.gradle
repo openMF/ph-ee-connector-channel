@@ -321,6 +321,11 @@ test {
     useJUnitPlatform()
 }
 
+group = 'org.mifos'
+version = '2.0.0.mifos-SNAPSHOT'
+description = 'ph-ee-connector-channel'
+java.sourceCompatibility = "17"
+
 publishing {
     publications {
         maven(MavenPublication) {

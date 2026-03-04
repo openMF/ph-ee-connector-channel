@@ -8,20 +8,56 @@ camel:
 
 dfspids: "DFSPID"
 
+transaction-id-length: -1
+
+mpesa:
+  notification:
+    success:
+      enabled: false
+    failure:
+      enabled: true
+
+timer: "PT45S"
+
+server:
+  ssl:
+    key-alias: "tomcat-https"
+    key-store: "file:/tls/keystore.p12"
+    key-store-type: PKCS12
+    key-password: "changeit"
+    key-store-password: "changeit"
+  port: 8443
+
+operations:
+  url: "http://bb-operations.mifos.io/api/v1"
+  auth-enabled: false
+  endpoint:
+    transfers: "/transfers?page=0&size=1&"
+    transactionReq: "/transactionRequests/?"
+
 bpmn:
   flows:
     payment-transfer: "PayerFundTransfer-{dfspid}"
     special-payment-transfer: "SpecialPayerFundTransfer-{dfspid}"
-    transaction-request: "PayeeTransactionRequest-{dfspid}"
-    party-registration: "PartyRegistration-{dfspid}"
-    gsma-base-transaction: "gsma_base_transaction"
+    transaction-request: "payee-transaction-request-{dfspid}"
+    party-registration: "party-registration-{dfspid}"
+    gsma-base-transaction: "gsma_base_transaction-{dfspid}"
     gsma-int-transfer: "gsma_int_transfer"
     gsma-payee-process: "gsma_payee_process"
     gsma-bill-payment: "gsma_bill_payment"
     gsma-link-based-payment: "gsma_link_transfer"
-    international-remittance-payee: "international-remittance-payee-process-{dfspid}"
-    international-remittance-payer: "international-remittance-payer-process-{dfspid}"
-    mpesa-flow: "mpesa-flow-v3"
+    international-remittance-payee: "international_remittance_payee_process-{dfspid}"
+    international-remittance-payer: "international_remittance_payer_process-{dfspid}"
+    inboundTransactionReq-flow: "{ps}_flow_{ams}-{dfspid}"
+
+ams:
+  groups:
+    - identifier: "accountid"
+      value: "roster"
+    - identifier: "foundationalid"
+      value: "paygops"
+    - identifier: "default"
+      value : "paygops"
 
 zeebe:
   client:
@@ -37,3 +73,57 @@ rest:
   authorization:
     enabled: false
     host: http://localhost:8080
+    header: "Basic Y2xpZW50Og=="
+
+management:
+  server:
+    port: 8080
+    ssl:
+      enabled: false
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      liveness:
+        enabled: true
+      readiness:
+        enabled: true
+#      show-details:
+
+logging:
+  level:
+    root: INFO
+  pattern:
+    console: "%clr(%d{dd-MM-yyyy HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr([%35.35t]){faint} %clr(%-28.28logger{28}){cyan} %clr(:){faint}%X{BUSINESS-LOG} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"
+
+springdoc:
+  writer-with-order-by-keys: true
+
+destination:
+    dfspid: "greenbank"
+
+redis:
+  host: "127.0.0.1"
+  port: 6379
+  password: "RHVViU1ip9"
+  database: 1
+  cacheRetencyDuration: 30 # in days
+  idempotency:
+    enabled: true
+    keyFormat: "clientCorrelationId_tenant_api"
+    apiList: "/channel/transfer,/channel/collection,/channel/gsma/transaction,/channel/transactionRequest"
+
+bpmns:
+  tenants:
+    - id: "greenbank"
+      flows:
+        payment-transfer: "PayerFundTransfer-{dfspid}"
+        outbound-transfer-request: "{ps}_flow_{ams}-{dfspid}"
+    - id: "redbank"
+      flows:
+        payment-transfer: "minimal_mock_fund_transfer-{dfspid}"
+        outbound-transfer-request: "minimal_mock_transfer_request-{dfspid}"
+    - id: "bluebank"
+      flows:
+        payment-transfer: "minimal_mock_fund_transfer-{dfspid}"
+        outbound-transfer-request: "minimal_mock_transfer_request-{dfspid}"

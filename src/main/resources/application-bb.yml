@@ -4,9 +4,9 @@ operations:
 identity:
   channel:
     clients:
-      - clientId: channel-tn03
-        clientSecret: p1234
-        tenant: tn03
-      - clientId: channel-tn04
-        clientSecret: p1234
-        tenant: tn04
+      - clientId: ${CHANNEL_TENANTPRIMARY_CLIENTID:channel-tn03}
+        clientSecret: ${CHANNEL_TENANTPRIMARY_CLIENTSECRET:p1234}
+        tenant: ${CHANNEL_TENANTPRIMARY_TENANT:tn03}
+      - clientId: ${CHANNEL_TENANTSECONDARY_CLIENTID:channel-tn04}
+        clientSecret: ${CHANNEL_TENANTSECONDARY_CLIENTSECRET:p1234}
+        tenant: ${CHANNEL_TENANTSECONDARY_TENANT:tn04}

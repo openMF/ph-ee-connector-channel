@@ -28,3 +28,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### MAC
+.DS_Store
+
+# Certificate files (use K8s secrets instead)
+*.jks
+*.p12
+*.keystore

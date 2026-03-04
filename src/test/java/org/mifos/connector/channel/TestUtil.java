@@ -1,13 +1,16 @@
 package org.mifos.connector.channel;
 
-import org.junit.jupiter.api.Test;
-
 import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestUtil {
 
+    private Logger log = LoggerFactory.getLogger(TestUtil.class);
+
     @Test
     public void test1() {
-        System.out.println(UUID.randomUUID().toString());
+        log.debug(" {}", UUID.randomUUID().toString());
     }
 }

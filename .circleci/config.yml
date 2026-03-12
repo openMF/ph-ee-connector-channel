@@ -1,155 +1,119 @@
 version: 2.1
-orbs:
-  docker-buildx: devarsh/docker-buildx-orb@0.1.1
+
+# Master CircleCI config template for PHEE Java components.
+# Distributed to all repos by java_version_config_updater.py.
+# Template variables substituted by the script:
+#   cimg/openjdk:17.0.17  - e.g. cimg/openjdk:17.0
+#   ./gradlew checkstyleMain         - ./gradlew checkstyleMain (present or commented out)
+
 executors:
-  docker-executor:
+  java-executor:
+    # cimg/openjdk is built on cimg/base which includes Docker CLI.
+    # No separate Docker CLI install step needed.
+    # The executor JDK is only used to compile the JAR — the final Docker
+    # image base is set independently in each repo's Dockerfile.
     docker:
-      - image: eclipse-temurin:17-jdk
+      - image: cimg/openjdk:17.0.17
+    environment:
+      JVM_OPTS: -Xmx512m
+      TERM: dumb
+
+commands:
+  common-setup:
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.24
+      - run:
+          name: Set lowercase image name vars
+          # tr used for POSIX compatibility; Bash 4+ alternative: ${VAR,,}
+          command: |
+            echo "export DOCKER_ORG_LOWER=$(echo $CIRCLE_PROJECT_USERNAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
+            echo "export DOCKER_REPO_LOWER=$(echo $CIRCLE_PROJECT_REPONAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
+      - run:
+          name: Install Docker Buildx
+          command: |
+            BUILDX_VERSION="v0.14.1"
+            if docker buildx version 2>/dev/null | grep -q "$BUILDX_VERSION"; then
+              echo "Docker Buildx $BUILDX_VERSION already present"
+            else
+              mkdir -vp ~/.docker/cli-plugins/
+              curl --silent -L \
+                "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-amd64" \
+                -o ~/.docker/cli-plugins/docker-buildx
+              chmod a+x ~/.docker/cli-plugins/docker-buildx
+              docker buildx version
+            fi
+            docker context create buildcontext 2>/dev/null || true
+            docker buildx create --name multiarch --driver docker-container --use buildcontext 2>/dev/null \
+              || docker buildx use multiarch
+            docker buildx inspect --bootstrap
+
 jobs:
   build_and_push_tag_image:
-    executor: docker-executor
-    environment:
-      JVM_OPTS: -Xmx512m
-      TERM: dumb
+    executor: java-executor
     steps:
-      - checkout
-      - setup_remote_docker:
-          version: 20.10.24
+      - common-setup
       - run:
-          name: Set Lowercase Docker Image Vars
-          # Using tr for POSIX compatibility, could use ${VAR,,} with Bash 4+
-          command: |
-            echo "export DOCKER_ORG_LOWER=$(echo $CIRCLE_PROJECT_USERNAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
-            echo "export DOCKER_REPO_LOWER=$(echo $CIRCLE_PROJECT_REPONAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
-            echo "Using Docker Namespace: $DOCKER_ORG_LOWER"
-            echo "Using Docker Repository: $DOCKER_REPO_LOWER"
-      - run:
-          name: Install Docker CLI
-          command: |
-            apt-get update
-            apt-get install -y curl ca-certificates gnupg
-            install -m 0755 -d /etc/apt/keyrings
-            curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-            chmod a+r /etc/apt/keyrings/docker.asc
-            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian bullseye stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-            apt-get update
-            apt-cache madison docker-ce-cli | grep 20.10
-            apt-get install -y docker-ce-cli=5:20.10.24~3-0~debian-bullseye
-      - docker-buildx/install
-      - run:
-          name: Check if Docker image tag exists
-          command: |
-            IMAGE_TAG=$CIRCLE_TAG
-            # Using lowercase variables defined above
-            IMAGE_NAME="$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER"
-            echo "Checking for Docker image: $IMAGE_NAME:$IMAGE_TAG"
-            # Ensure DOCKERHUB_USERNAME and DOCKERHUB_PASSWORD are set in your CircleCI Context or Project Environment Variables
-            if curl -s -f -u "$DOCKERHUB_USERNAME":"$DOCKERHUB_PASSWORD" "https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/$IMAGE_TAG" > /dev/null; then
-              echo "Skipping the build and push as the tag $IMAGE_TAG already exists in Docker Hub for image $IMAGE_NAME."
-              circleci-agent step halt
-            else
-              echo "Tag $IMAGE_TAG does not exist for image $IMAGE_NAME. Proceeding with build."
-            fi
-      - run:
-          name: Build Application
+          name: Build application
           command: ./gradlew bootJar
-      - docker-buildx/build-and-push:
-          # Using lowercase variables defined above
-          image-name: "$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER"
-          tag: "$CIRCLE_TAG"
-          # Add dockerhub credentials if needed
-          # dockerhub-username: "$DOCKERHUB_USERNAME"
-          # dockerhub-password: "$DOCKERHUB_PASSWORD"
+      - run:
+          name: Build and push multi-arch image (linux/amd64 + linux/arm64)
+          command: |
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker buildx build \
+              --push \
+              --platform linux/amd64,linux/arm64 \
+              -t "$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER:$CIRCLE_TAG" \
+              .
+
   build_and_push_branch_image:
-    executor: docker-executor
-    environment:
-      JVM_OPTS: -Xmx512m
-      TERM: dumb
+    executor: java-executor
     steps:
-      - checkout
-      - setup_remote_docker:
-          version: 20.10.24
+      - common-setup
       - run:
-          name: Set Lowercase Docker Image Vars
-          command: |
-            echo "export DOCKER_ORG_LOWER=$(echo $CIRCLE_PROJECT_USERNAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
-            echo "export DOCKER_REPO_LOWER=$(echo $CIRCLE_PROJECT_REPONAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
-            echo "Using Docker Namespace: $DOCKER_ORG_LOWER"
-            echo "Using Docker Repository: $DOCKER_REPO_LOWER"
-      - run:
-          name: Install Docker CLI
-          command: |
-            apt-get update
-            apt-get install -y curl ca-certificates gnupg
-            install -m 0755 -d /etc/apt/keyrings
-            curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-            chmod a+r /etc/apt/keyrings/docker.asc
-            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian bullseye stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-            apt-get update
-            apt-cache madison docker-ce-cli | grep 20.10
-            apt-get install -y docker-ce-cli=5:20.10.24~3-0~debian-bullseye
-      - docker-buildx/install
-      - run:
-          name: Build Application
+          name: Build application
           command: |
             ./gradlew checkstyleMain
             ./gradlew clean bootJar
       - run:
-          name: Sanitize Branch Name
+          name: Sanitize branch name and set commit tag
           command: |
-            echo "export SANITIZED_BRANCH=$(echo $CIRCLE_BRANCH | sed 's/[^a-zA-Z0-9.-]/-/g' | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV # Also ensure branch tag is lowercase
-      # First build and push with branch-latest tag
-      - docker-buildx/build-and-push:
-          image-name: "$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER"
-          tag: "${SANITIZED_BRANCH}-latest"
-      # Then build and push with branch-version tag
-      - docker-buildx/build-and-push:
-          image-name: "$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER"
-          tag: "${SANITIZED_BRANCH}"
-          # Add dockerhub credentials if needed
-          # dockerhub-username: "$DOCKERHUB_USERNAME"
-          # dockerhub-password: "$DOCKERHUB_PASSWORD"
+            echo "export SANITIZED_BRANCH=$(echo $CIRCLE_BRANCH | sed 's/[^a-zA-Z0-9.-]/-/g' | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
+            echo "export SHORT_SHA=$(echo $CIRCLE_SHA1 | cut -c1-7)" >> $BASH_ENV
+      - run:
+          name: Build and push multi-arch image (linux/amd64 + linux/arm64)
+          command: |
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            # Two tags per build:
+            #   branch-latest  — mutable, always the most recent build on this branch
+            #   branch-SHA     — immutable, traceable to a specific commit
+            docker buildx build \
+              --push \
+              --platform linux/amd64,linux/arm64 \
+              -t "$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER:${SANITIZED_BRANCH}-latest" \
+              -t "$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER:${SANITIZED_BRANCH}-${SHORT_SHA}" \
+              .
+
   build_and_push_latest_image:
-    executor: docker-executor
-    environment:
-      JVM_OPTS: -Xmx512m
-      TERM: dumb
+    executor: java-executor
     steps:
-      - checkout
-      - setup_remote_docker:
-          version: 20.10.24
+      - common-setup
       - run:
-          name: Set Lowercase Docker Image Vars
-          command: |
-            echo "export DOCKER_ORG_LOWER=$(echo $CIRCLE_PROJECT_USERNAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
-            echo "export DOCKER_REPO_LOWER=$(echo $CIRCLE_PROJECT_REPONAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
-            echo "Using Docker Namespace: $DOCKER_ORG_LOWER"
-            echo "Using Docker Repository: $DOCKER_REPO_LOWER"
-      - run:
-          name: Install Docker CLI
-          command: |
-            apt-get update
-            apt-get install -y curl ca-certificates gnupg
-            install -m 0755 -d /etc/apt/keyrings
-            curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-            chmod a+r /etc/apt/keyrings/docker.asc
-            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian bullseye stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-            apt-get update
-            apt-cache madison docker-ce-cli | grep 20.10
-            apt-get install -y docker-ce-cli=5:20.10.24~3-0~debian-bullseye
-      - docker-buildx/install
-      - run:
-          name: Build Application
+          name: Build application
           command: |
             ./gradlew checkstyleMain
             ./gradlew clean bootJar
-      - docker-buildx/build-and-push:
-          # Using lowercase variables defined above
-          image-name: "$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER"
-          tag: "latest"
-          # Add dockerhub credentials if needed
-          # dockerhub-username: "$DOCKERHUB_USERNAME"
-          # dockerhub-password: "$DOCKERHUB_PASSWORD"
+      - run:
+          name: Build and push multi-arch image (linux/amd64 + linux/arm64)
+          command: |
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker buildx build \
+              --push \
+              --platform linux/amd64,linux/arm64 \
+              -t "$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER:latest" \
+              .
+
 workflows:
   version: 2
   build-and-push-pipeline:
@@ -163,16 +127,16 @@ workflows:
               ignore: /.*/
           context:
             - DOCKER
-      # Build any branch commit (except tags)
+      # Build any branch commit (except config-propagator update branches)
       - build_and_push_branch_image:
           filters:
             tags:
               ignore: /.*/
             branches:
-              only: /.*/
+              ignore: /^ci\/mt-.*/
           context:
             - DOCKER
-      # Build 'latest' only when the branch image succeeds AND it's the main/master branch
+      # Build 'latest' only on main/master, after branch image succeeds
       - build_and_push_latest_image:
           requires:
             - build_and_push_branch_image
@@ -181,6 +145,7 @@ workflows:
               ignore: /.*/
             branches:
               only:
-                - main # Or your primary branch name like 'master'
+                - main
+                - master
           context:
             - DOCKER

@@ -11,7 +11,7 @@ import java.util.Objects;
  */
 @Schema(description = "In some cases, a single reference is not sufficient to identify a bill. This key-value collection enables further reference information to be supplied.")
 @Validated
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
+@jakarta.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 
 
 public class SupplementaryBillReferenceDetailsArray extends ArrayList<SupplementaryBillReferenceDetails>  {

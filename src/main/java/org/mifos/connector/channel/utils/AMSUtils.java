@@ -2,10 +2,10 @@ package org.mifos.connector.channel.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.PostConstruct;
 import org.json.JSONObject;
 import org.mifos.connector.common.gsma.dto.CustomData;
 import org.slf4j.Logger;

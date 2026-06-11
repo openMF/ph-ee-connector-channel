@@ -7,7 +7,8 @@ plugins {
     id 'maven-publish'
     id 'eclipse'
     id 'checkstyle'
-    id 'org.springframework.boot' version '2.6.2'
+    id 'org.springframework.boot' version '3.4.4'
+    id 'io.spring.dependency-management' version '1.1.6'
     id 'com.diffplug.spotless' version '6.19.0'
     id 'net.ltgt.errorprone' version '3.1.0'
 }
@@ -25,6 +26,20 @@ repositories {
         url = uri('https://mifos.jfrog.io/artifactory/mifosx-gradle-local')
     }
     mavenCentral()
+
+    // Mifos Platform BOM + ph-ee-connector-common 2.0.0-SNAPSHOT are consumed
+    // from the local JFrog Artifactory sandbox (Docker Compose in
+    // proposal/local-jfrog/). Swap this host for the production Mifos JFrog
+    // when the official BOM is ready.
+    maven {
+        name = 'LocalJFrog'
+        url = uri('http://localhost:8081/artifactory/mifos-platform-snapshot')
+        allowInsecureProtocol = true
+        credentials {
+            username = findProperty('localJfrog.user') ?: System.getenv('LOCAL_JFROG_USER')
+            password = findProperty('localJfrog.key') ?: System.getenv('LOCAL_JFROG_KEY')
+        }
+    }
 }
 
 apply plugin:'com.diffplug.spotless'
@@ -49,60 +64,52 @@ spotless {
     lineEndings 'UNIX'
 }
 
-ext {
-    springBootVersion = '2.6.2'
-}
-
 configurations.all {
-    resolutionStrategy {
-        force 'org.springframework.boot:spring-boot:2.6.2'
-        force 'org.springframework.boot:spring-boot-autoconfigure:2.6.2'
-    }
+    // Legacy guard: keep the old javax servlet API off the classpath if any
+    // stale transitive dependency still drags it in.
     exclude group: 'javax.servlet', module: 'javax.servlet-api'
 }
 
 dependencies {
-    implementation 'com.google.code.gson:gson:2.8.9'
-    // implementation 'org.mifos:ph-ee-connector-common:1.4.1-SNAPSHOT'
-    implementation('org.mifos:ph-ee-connector-common:1.4.1-gazelle') {
-        exclude group: 'org.springframework.boot'
-    }
-    implementation 'org.apache.camel.springboot:camel-spring-boot-starter:3.12.0'
-    implementation "org.springframework.boot:spring-boot-starter:$springBootVersion"
-    implementation "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
-    implementation "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion"
-    implementation 'org.apache.camel:camel-endpointdsl:3.12.0'
-    implementation 'org.apache.camel:camel-jetty:3.12.0'
-    implementation 'org.apache.camel:camel-http:3.12.0'
-    implementation 'org.springframework:spring-web:5.3.15'
-    implementation 'org.apache.camel:camel-bean-validator:3.12.0'
-    implementation 'org.apache.camel:camel-undertow:3.12.0'
-    implementation 'org.apache.camel.springboot:camel-jackson-starter:3.12.0'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.1'
-    implementation 'org.json:json:20211205'
-    implementation 'io.camunda:zeebe-client-java:8.1.1'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test:2.6.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test:2.6.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
-    // not needed and causes errors for SpringBoot 2.6.2 implementation 'javax.servlet:javax.servlet-api:3.1.0'
-    implementation 'commons-codec:commons-codec:1.15'
-    implementation 'commons-io:commons-io:2.11.0'
-    implementation ("org.apache.camel:camel-spring-redis:3.12.0")
-    implementation "org.springframework.boot:spring-boot-starter-data-redis:2.6.2"
-    implementation 'io.springfox:springfox-swagger-ui:3.0.0'
-    implementation 'io.springfox:springfox-oas:3.0.0'
+    // Mifos Platform BOM pins Spring Boot 3.4, Camel 4, Zeebe 8, Jakarta EE 10
+    // and every other shared library version. Do NOT hardcode managed versions.
+    // This is a deployable application (leaf node), so use enforcedPlatform().
+    implementation enforcedPlatform('org.mifos.platform:mifos-platform-bom:1.0.0-SNAPSHOT')
+
+    implementation 'com.google.code.gson:gson'
+    // The old exclude of org.springframework.boot from connector-common is gone:
+    // common 2.0.0 aligns on the same BOM, no version conflict to work around.
+    implementation 'org.mifos:ph-ee-connector-common:2.0.0-SNAPSHOT'
+    implementation 'org.apache.camel.springboot:camel-spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.apache.camel:camel-endpointdsl'
+    implementation 'org.apache.camel:camel-jetty'
+    implementation 'org.apache.camel:camel-http'
+    implementation 'org.springframework:spring-web'
+    implementation 'org.apache.camel:camel-bean-validator'
+    implementation 'org.apache.camel:camel-undertow'
+    implementation 'org.apache.camel.springboot:camel-jackson-starter'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation 'org.json:json'
+    implementation 'io.camunda:zeebe-client-java'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine'
+    implementation 'commons-codec:commons-codec'
+    implementation 'commons-io:commons-io'
+    implementation 'org.apache.camel:camel-spring-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    // springfox removed: incompatible with Spring Boot 3; the only code
+    // reference was an unused wildcard import. springdoc serves the OpenAPI UI.
     implementation 'com.github.joschi.jackson:jackson-datatype-threetenbp:2.6.4'
-    implementation "org.springdoc:springdoc-openapi-ui:1.6.11"
-    implementation 'org.projectlombok:lombok:1.18.22'
-    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui'
+    implementation 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
     checkstyle 'com.puppycrawl.tools:checkstyle:10.9.3'
     checkstyle 'com.github.sevntu-checkstyle:sevntu-checks:1.44.1'
-    implementation 'com.diffplug.gradle.spotless:spotless:2.4.1'
-    implementation 'com.diffplug.spotless:spotless-plugin-gradle:6.17.0'
-    implementation "org.springframework.boot:spring-boot-starter-webflux:$springBootVersion"
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 }
 
 configure(this) {
@@ -312,9 +319,8 @@ checkstyle {
 // The 'java' block uses the java.version property implicitly,
 // but we explicitly set the compatibility here for clarity.
 java {
-    // Reads the value of java.version (which is '17') from gradle.properties
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 test {
@@ -324,7 +330,7 @@ test {
 group = 'org.mifos'
 version = '2.0.0.mifos-SNAPSHOT'
 description = 'ph-ee-connector-channel'
-java.sourceCompatibility = "17"
+java.sourceCompatibility = JavaVersion.VERSION_21
 
 publishing {
     publications {

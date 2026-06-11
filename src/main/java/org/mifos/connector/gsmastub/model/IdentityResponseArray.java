@@ -11,7 +11,7 @@ import java.util.Objects;
  */
 @Schema(description = "An array containing the details of each identity associated with an account.")
 @Validated
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
+@jakarta.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 
 
 public class IdentityResponseArray extends ArrayList<IdentityResponse>  {

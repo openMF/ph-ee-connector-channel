@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jdk
+FROM eclipse-temurin:21-jre
 EXPOSE 8080
 
 # Copy only the bootable JAR, not the -plain.jar

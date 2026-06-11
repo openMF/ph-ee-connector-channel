@@ -11,7 +11,7 @@ import java.util.Objects;
  */
 @Schema(description = "Returns all fees that are applicable to the object.")
 @Validated
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
+@jakarta.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 
 
 public class FeesArray extends ArrayList<Fees>  {

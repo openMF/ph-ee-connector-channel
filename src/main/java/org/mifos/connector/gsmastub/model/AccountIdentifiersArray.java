@@ -8,7 +8,7 @@ import java.util.Objects;
  * A collection of key/value pairs that enable the account to be identified. Keys include MSISDN and Wallet Identifier.
  */
 @Validated
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
+@jakarta.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-09-27T11:46:46.417Z[GMT]")
 
 
 public class AccountIdentifiersArray extends ArrayList<Party>  {

@@ -1,259 +1,151 @@
 version: 2.1
-orbs:
-  slack: circleci/slack@4.12.5
-  aws-ecr: circleci/aws-ecr@8.2.1
-  helm: circleci/helm@2.0.1
-  aws-eks: circleci/aws-eks@2.2.0
-  kubernetes: circleci/kubernetes@1.3
-  mifos-orb: mifos/docker-image-availability-check-and-upgrade@1.0.0
+
+# Master CircleCI config template for PHEE Java components.
+# Distributed to all repos by java_version_config_updater.py.
+# Template variables substituted by the script:
+#   cimg/openjdk:17.0.17  - e.g. cimg/openjdk:17.0
+#   ./gradlew checkstyleMain         - ./gradlew checkstyleMain (present or commented out)
+
 executors:
-  docker-executor:
+  java-executor:
+    # cimg/openjdk is built on cimg/base which includes Docker CLI.
+    # No separate Docker CLI install step needed.
+    # The executor JDK is only used to compile the JAR — the final Docker
+    # image base is set independently in each repo's Dockerfile.
     docker:
-      - image: circleci/openjdk:17-buster-node-browsers-legacy
-        auth:
-          username: $DOCKERHUB_USERNAME
-          password: $DOCKERHUB_PASSWORD
+      - image: cimg/openjdk:17.0.17
+    environment:
+      JVM_OPTS: -Xmx512m
+      TERM: dumb
+
+commands:
+  common-setup:
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.24
+      - run:
+          name: Set lowercase image name vars
+          # tr used for POSIX compatibility; Bash 4+ alternative: ${VAR,,}
+          command: |
+            echo "export DOCKER_ORG_LOWER=$(echo $CIRCLE_PROJECT_USERNAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
+            echo "export DOCKER_REPO_LOWER=$(echo $CIRCLE_PROJECT_REPONAME | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
+      - run:
+          name: Install Docker Buildx
+          command: |
+            BUILDX_VERSION="v0.14.1"
+            if docker buildx version 2>/dev/null | grep -q "$BUILDX_VERSION"; then
+              echo "Docker Buildx $BUILDX_VERSION already present"
+            else
+              mkdir -vp ~/.docker/cli-plugins/
+              curl --silent -L \
+                "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-amd64" \
+                -o ~/.docker/cli-plugins/docker-buildx
+              chmod a+x ~/.docker/cli-plugins/docker-buildx
+              docker buildx version
+            fi
+            docker context create buildcontext 2>/dev/null || true
+            docker buildx create --name multiarch --driver docker-container --use buildcontext 2>/dev/null \
+              || docker buildx use multiarch
+            docker buildx inspect --bootstrap
 
 jobs:
   build_and_push_tag_image:
-    executor: docker-executor
-    environment:
-      JVM_OPTS: -Xmx512m
-      TERM: dumb
-      GITHUB_TOKEN: ${GITHUB_TOKEN}  # Add the GitHub token as an environment variable
-
+    executor: java-executor
     steps:
-      - checkout
-      - setup_remote_docker:
-          version: 20.10.24
+      - common-setup
       - run:
-          name: Build and Push Docker tag Image
+          name: Build application
+          command: ./gradlew bootJar
+      - run:
+          name: Build and push multi-arch image (linux/amd64 + linux/arm64)
           command: |
-            # Set environment variables
-            IMAGE_TAG=$CIRCLE_TAG
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker buildx build \
+              --push \
+              --platform linux/amd64,linux/arm64 \
+              -t "$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER:$CIRCLE_TAG" \
+              .
 
-            # Check if the Docker image with the same tag already exists in Docker Hub
-            if curl -s -f -u "$DOCKERHUB_USERNAME":"$DOCKERHUB_PASSWORD" "https://hub.docker.com/v2/repositories/openmf/ph-ee-connector-channel/tags/$IMAGE_TAG" > /dev/null; then
-              echo "Skipping the build and push as the tag $IMAGE_TAG already exists in Docker Hub."
-              exit 0
-            fi
-
-            # Build and tag the Docker image
-            ./gradlew bootJar
-            docker build -t "openmf/ph-ee-connector-channel:$IMAGE_TAG" .
-
-            # Push the Docker image to Docker Hub
-            docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
-            docker push "openmf/ph-ee-connector-channel:$IMAGE_TAG"
-
-          # when: always  # The job will be executed even if there's no match for the tag filter
-
-  build_and_push_latest_image:
-    executor: docker-executor
-    environment:
-      JVM_OPTS: -Xmx512m
-      TERM: dumb
-
+  build_and_push_branch_image:
+    executor: java-executor
     steps:
-      - checkout
-      # Install Docker to build and push the image
-      - setup_remote_docker:
-          version: 20.10.24
-      - checkout
-      # Build the Docker image
+      - common-setup
       - run:
-          name: Build Docker image
+          name: Build application
           command: |
-            #Check for PR title Validity
             ./gradlew checkstyleMain
             ./gradlew clean bootJar
-            docker build -t openmf/ph-ee-connector-channel:latest .
-            if [ "$CIRCLE_BRANCH" != "master" ]; then
-              PR_NUMBER=$(basename $CIRCLE_PULL_REQUEST)
-              PR_TITLE=$(curl -sSL "https://api.github.com/repos/openmf/$CIRCLE_PR_REPONAME/pulls/$PR_NUMBER" | jq -r '.title')
-              JIRA_STORY=$(echo $PR_TITLE | cut -d "[" -f2 | cut -d "]" -f1 | tr '[A-Z]' '[a-z]')
-              if [ -z "$JIRA_STORY" ]; then echo "Invalid PR title" && exit 1; else echo "Ticket NO: $JIRA_STORY"; fi
-              docker image tag openmf/$CIRCLE_PR_REPONAME:latest openmf/$CIRCLE_PR_REPONAME:$JIRA_STORY
-            fi
-      # Log in to DockerHub using environment variables
       - run:
-          name: Login to DockerHub
-          command: echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
-
-      # Push the Docker image to DockerHub
-      - run:
-          name: Push Docker image to DockerHub
+          name: Sanitize branch name and set commit tag
           command: |
-            if [ "$CIRCLE_BRANCH" = "master" ]; then
-            docker push openmf/ph-ee-connector-channel:latest
-            fi
-            if [ "$CIRCLE_BRANCH" != "master" ]; then
-            PR_NUMBER=$(basename $CIRCLE_PULL_REQUEST)
-            PR_TITLE=$(curl -sSL "https://api.github.com/repos/openmf/$CIRCLE_PR_REPONAME/pulls/$PR_NUMBER" | jq -r '.title')
-            JIRA_STORY=$(echo $PR_TITLE | cut -d "[" -f2 | cut -d "]" -f1 | tr '[A-Z]' '[a-z]')
-            docker push openmf/$CIRCLE_PR_REPONAME:${JIRA_STORY}
-            fi
-  docker-image-availability-check-and-upgrade:
-    docker:
-      - image: cimg/python:3.10
-    steps:
-      - mifos-orb/docker-image-availability-check-and-upgrade:
-          namespace: paymenthub
-          chart-base-url: https://fynarfin.io/images
-          chart-name: ph-ee-g2psandbox-fynarfin
-          chart-version: 0.2.0
-          release-name: g2p-sandbox
-          cluster-name: "sit"
-          aws-region: "$REGION"
-          service-file-path: https://raw.githubusercontent.com/openMF/ph-ee-env-labs/master/.circleci/services.txt
-  build-and-host-engine:
-    docker:
-      - image: cimg/python:3.10
-    working_directory: ~/repo
-    environment:
-      TERM: dumb
-    steps:
-      - run: git clone https://github.com/openMF/ph-ee-env-template
-      - run: rm -f helm/ph-ee-engine/Chart.lock helm/ph-ee-engine/requirements.lock helm/ph-ee-engine/charts/*
-      - helm/install-helm-client:
-          version: "v3.8.2"
-#      - run: "sed -i '2s/.*/appVersion: 0.0.0/' helm/ph-ee-engine/Chart.yaml"
-#      - run: "sed -i '5s/.*/version: 0.0.0-SNAPSHOT/' helm/ph-ee-engine/Chart.yaml"
-      - run: helm dep up ph-ee-env-template/helm/ph-ee-engine
-      - run: helm package ph-ee-env-template/helm/ph-ee-engine
-      - run: helm repo index .
-      - run: echo "$CERT_FILE" | base64 --decode > b64encoded.pem
-      - run: chmod 400 b64encoded.pem
-      - run: scp -o StrictHostKeyChecking=No -i b64encoded.pem index.yaml ph-ee-engine-0.0.0-SNAPSHOT.tgz ec2-user@13.233.68.128:~/
-      - run: ssh -i b64encoded.pem -o StrictHostKeyChecking=No ec2-user@13.233.68.128 sudo cp -t /apps/apache-tomcat-7.0.82/webapps/ROOT/images/ph-ee-engine-0.0.0-SNAPSHOT index.yaml ph-ee-engine-0.0.0-SNAPSHOT.tgz
-
-  build-and-host-g2p-sandbox:
-    docker:
-      - image: cimg/python:3.10
-    working_directory: ~/repo
-    environment:
-      TERM: dumb
-    steps:
-      - run: git clone https://github.com/openMF/ph-ee-env-template
-      - run: rm -f ph-ee-env-template/helm/g2p-sandbox/Chart.lock ph-ee-env-template/helm/g2p-sandbox/requirements.lock ph-ee-env-template/helm/g2p-sandbox/charts/*
-      - helm/install-helm-client:
-          version: "v3.8.2"
-#      - run: "sed -i '6s/.*/appVersion: 0.0.0/' helm/g2p-sandbox/Chart.yaml"
-#      - run: "sed -i '7s/.*/version: 0.0.0/' helm/g2p-sandbox/Chart.yaml"
-      # - run: "sed -i '4s/.*/version: 0.0.0-SNAPSHOT/' helm/g2p-sandbox/requirements.yaml"
-      # SED & replace dependency with 0.0.0
-      - run: helm dep up ph-ee-env-template/helm/g2p-sandbox
-      - run: helm package ph-ee-env-template/helm/g2p-sandbox
-      - run: helm repo index .
-      - run: echo "$CERT_FILE" | base64 --decode > b64encoded.pem
-      - run: chmod 400 b64encoded.pem
-      - run: scp -o StrictHostKeyChecking=No -i b64encoded.pem index.yaml ph-ee-g2psandbox-0.0.0.tgz ec2-user@13.233.68.128:~/
-      - run: ssh -i b64encoded.pem -o StrictHostKeyChecking=No ec2-user@13.233.68.128 sudo cp -t /apps/apache-tomcat-7.0.82/webapps/ROOT/images/ph-ee-g2psandbox-0.0.0 index.yaml ph-ee-g2psandbox-0.0.0.tgz
-
-  build-host-g2p-fyn-chart:
-    docker:
-      - image: cimg/python:3.10
-    working_directory: ~/repo
-    environment:
-      TERM: dumb
-    steps:
-      - run: git clone https://github.com/openmf/ph-ee-env-labs
-      - run: rm -f ph-ee-env-labs/helm/g2p-sandbox-fynarfin-SIT/Chart.lock ph-ee-env-labs/helm/g2p-sandbox-fynarfin-SIT/requirements.lock ph-ee-env-labs/helm/g2p-sandbox-fynarfin-SIT/charts/*
-      - helm/install-helm-client:
-          version: "v3.8.2"
-      # - run: "sed -i '12s/.*/version: 0.0.0/' helm/g2p-sandbox-fynarfin-SIT/Chart.yaml"
-      - run: cat ph-ee-env-labs/helm/g2p-sandbox-fynarfin-SIT/Chart.yaml
-      - run: helm dep up ph-ee-env-labs/helm/g2p-sandbox-fynarfin-SIT
-      - run: helm package ph-ee-env-labs/helm/g2p-sandbox-fynarfin-SIT
-      - run: helm repo index .
-      - run: echo "$CERT_FILE" | base64 --decode > b64encoded.pem
-      - run: chmod 400 b64encoded.pem
-      - run: scp -o StrictHostKeyChecking=No -i b64encoded.pem index.yaml ph-ee-g2psandbox-fynarfin-0.2.0.tgz ec2-user@13.233.68.128:~/
-      - run: ssh -i b64encoded.pem -o StrictHostKeyChecking=No ec2-user@13.233.68.128 sudo mv -t /apps/apache-tomcat-7.0.82/webapps/ROOT/images/ph-ee-g2psandbox-fynarfin index.yaml ph-ee-g2psandbox-fynarfin-0.2.0.tgz
-
-
-  test-chart-gov:
-    docker:
-      - image: cimg/openjdk:17.0.0
-    steps:
-      - run: git clone https://github.com/openmf/ph-ee-integration-test
+            echo "export SANITIZED_BRANCH=$(echo $CIRCLE_BRANCH | sed 's/[^a-zA-Z0-9.-]/-/g' | tr '[:upper:]' '[:lower:]')" >> $BASH_ENV
+            echo "export SHORT_SHA=$(echo $CIRCLE_SHA1 | cut -c1-7)" >> $BASH_ENV
       - run:
-          name: Ngrok setup
-          command: curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list && sudo apt update && sudo apt install ngrok
-      - run:
-          name: Test execution
+          name: Build and push multi-arch image (linux/amd64 + linux/arm64)
           command: |
-            ngrok config add-authtoken $AUTH_TOKEN
-            echo "web_addr: $LOCAL_PORT" >> /home/circleci/.config/ngrok/ngrok.yml
-            ngrok http 53013 > /dev/null &
-            echo -n "Extracting ngrok public url ."
-            NGROK_PUBLIC_URL=""
-            while [ -z "$NGROK_PUBLIC_URL" ]; do
-              # Run 'curl' against ngrok API and extract public (using 'sed' command)
-              export NGROK_PUBLIC_URL=$(curl --silent --max-time 10 --connect-timeout 5 \
-                                        --show-error http://127.0.0.1:$LOCAL_PORT/api/tunnels | \
-                                        sed -nE 's/.*public_url":"https:..([^"]*).*/\1/p')
-              sleep 1
-              echo -n "."
-            done
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            # Two tags per build:
+            #   branch-latest  — mutable, always the most recent build on this branch
+            #   branch-SHA     — immutable, traceable to a specific commit
+            docker buildx build \
+              --push \
+              --platform linux/amd64,linux/arm64 \
+              -t "$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER:${SANITIZED_BRANCH}-latest" \
+              -t "$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER:${SANITIZED_BRANCH}-${SHORT_SHA}" \
+              .
 
-            export CALLBACK_URL="https://$NGROK_PUBLIC_URL"
-            echo -n "Public url ."
-            echo $CALLBACK_URL
-            cd ph-ee-integration-test && ./gradlew test -Dcucumber.filter.tags="@gov"
-            echo -n "Test execution is completed, kill ngrok"
-            pkill ngrok
-      - store_test_results:
-          path: ph-ee-integration-test/build/cucumber.xml
-      - store_artifacts:
-          path: ph-ee-integration-test/build/reports/tests/test
-  test-chart-ams:
-    docker:
-      - image: cimg/openjdk:17.0.0
+  build_and_push_latest_image:
+    executor: java-executor
     steps:
-      - run: git clone https://github.com/openmf/ph-ee-integration-test
+      - common-setup
       - run:
-          name: Ngrok setup
-          command: curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list && sudo apt update && sudo apt install ngrok
-      - run:
-          name: Test execution
+          name: Build application
           command: |
-            ngrok config add-authtoken $AUTH_TOKEN
-            echo "web_addr: $LOCAL_PORT" >> /home/circleci/.config/ngrok/ngrok.yml
-            ngrok http 53013 > /dev/null &
-            echo -n "Extracting ngrok public url ."
-            NGROK_PUBLIC_URL=""
-            while [ -z "$NGROK_PUBLIC_URL" ]; do
-              # Run 'curl' against ngrok API and extract public (using 'sed' command)
-              export NGROK_PUBLIC_URL=$(curl --silent --max-time 10 --connect-timeout 5 \
-                                        --show-error http://127.0.0.1:$LOCAL_PORT/api/tunnels | \
-                                        sed -nE 's/.*public_url":"https:..([^"]*).*/\1/p')
-              sleep 1
-              echo -n "."
-            done
-
-            export CALLBACK_URL="https://$NGROK_PUBLIC_URL"
-            echo -n "Public url ."
-            echo $CALLBACK_URL
-            cd ph-ee-integration-test && ./gradlew test -Dcucumber.filter.tags="@amsIntegration"
-            echo -n "Test execution is completed, kill ngrok"
-            pkill ngrok
-      - store_test_results:
-          path: ph-ee-integration-test/build/cucumber.xml
-      - store_artifacts:
-          path: ph-ee-integration-test/build/reports/tests/test
+            ./gradlew checkstyleMain
+            ./gradlew clean bootJar
+      - run:
+          name: Build and push multi-arch image (linux/amd64 + linux/arm64)
+          command: |
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker buildx build \
+              --push \
+              --platform linux/amd64,linux/arm64 \
+              -t "$DOCKER_ORG_LOWER/$DOCKER_REPO_LOWER:latest" \
+              .
 
 workflows:
   version: 2
-  build-and-push:
+  build-and-push-pipeline:
     jobs:
+      # Build tags matching vX.Y.Z format
       - build_and_push_tag_image:
           filters:
             tags:
-              only: /^v\d+\.\d+\.\d+([-rc.0-9]+)*?$/  # Match tags in the format v1.2.3
+              only: /^v\d+\.\d+\.\d+$/
+            branches:
+              ignore: /.*/
           context:
             - DOCKER
-      - build_and_push_latest_image:
+      # Build any branch commit (except config-propagator update branches)
+      - build_and_push_branch_image:
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              ignore: /^ci\/mt-.*/
           context:
-              - DOCKER
-              - AWS
+            - DOCKER
+      # Build 'latest' only on main/master, after branch image succeeds
+      - build_and_push_latest_image:
+          requires:
+            - build_and_push_branch_image
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only:
+                - main
+                - master
+          context:
+            - DOCKER

@@ -12,15 +12,19 @@ plugins {
     id 'net.ltgt.errorprone' version '3.1.0'
 }
 
+
 repositories {
     mavenLocal()
     maven {
-        url = uri('https://repo.maven.apache.org/maven2')
+        url = uri('https://repo.maven.apache.org/maven2/')
     }
-
     maven {
-        url = uri('https://jfrog.sandbox.fynarfin.io/artifactory/fyn-libs-snapshot')
+        url = uri('https://mifos.jfrog.io/artifactory/phee-gradle-local')
     }
+    maven {
+        url = uri('https://mifos.jfrog.io/artifactory/mifosx-gradle-local')
+    }
+    mavenCentral()
 }
 
 apply plugin:'com.diffplug.spotless'
@@ -49,9 +53,20 @@ ext {
     springBootVersion = '2.6.2'
 }
 
+configurations.all {
+    resolutionStrategy {
+        force 'org.springframework.boot:spring-boot:2.6.2'
+        force 'org.springframework.boot:spring-boot-autoconfigure:2.6.2'
+    }
+    exclude group: 'javax.servlet', module: 'javax.servlet-api'
+}
+
 dependencies {
     implementation 'com.google.code.gson:gson:2.8.9'
-    implementation 'org.mifos:ph-ee-connector-common:1.4.1-SNAPSHOT'
+    // implementation 'org.mifos:ph-ee-connector-common:1.4.1-SNAPSHOT'
+    implementation('org.mifos:ph-ee-connector-common:1.4.1-gazelle') {
+        exclude group: 'org.springframework.boot'
+    }
     implementation 'org.apache.camel.springboot:camel-spring-boot-starter:3.12.0'
     implementation "org.springframework.boot:spring-boot-starter:$springBootVersion"
     implementation "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
@@ -72,7 +87,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test:2.6.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
-    implementation 'javax.servlet:javax.servlet-api:3.1.0'
+    // not needed and causes errors for SpringBoot 2.6.2 implementation 'javax.servlet:javax.servlet-api:3.1.0'
     implementation 'commons-codec:commons-codec:1.15'
     implementation 'commons-io:commons-io:2.11.0'
     implementation ("org.apache.camel:camel-spring-redis:3.12.0")
@@ -87,7 +102,7 @@ dependencies {
     checkstyle 'com.github.sevntu-checkstyle:sevntu-checks:1.44.1'
     implementation 'com.diffplug.gradle.spotless:spotless:2.4.1'
     implementation 'com.diffplug.spotless:spotless-plugin-gradle:6.17.0'
-    implementation 'org.springframework.boot:spring-boot-starter-webflux:2.4.1'
+    implementation "org.springframework.boot:spring-boot-starter-webflux:$springBootVersion"
 }
 
 configure(this) {
@@ -294,15 +309,22 @@ checkstyle {
 }
 
 
-
-group = 'org.mifos'
-version = '1.0.0-SNAPSHOT'
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
+// The 'java' block uses the java.version property implicitly,
+// but we explicitly set the compatibility here for clarity.
+java {
+    // Reads the value of java.version (which is '17') from gradle.properties
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
 
 test {
     useJUnitPlatform()
 }
+
+group = 'org.mifos'
+version = '2.0.0.mifos-SNAPSHOT'
+description = 'ph-ee-connector-channel'
+java.sourceCompatibility = "17"
 
 publishing {
     publications {

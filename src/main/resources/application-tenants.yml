@@ -1,5 +1,11 @@
 bpmns:
   tenants:
+    - id: "greenbank"
+      flows:
+        payment-transfer: "PayerFundTransfer-{dfspid}"  # Mojaloop routing for GovStack G2P
+    - id: "bluebank"
+      flows:
+        payment-transfer: "minimal_mock_fund_transfer-{dfspid}"  # Direct Fineract for closedloop
     - id: "lion"
       flows:
         payment-transfer: "minimal_mock_fund_transfer-{dfspid}"

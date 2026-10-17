@@ -39,7 +39,6 @@ public class ZeebeProcessStarter {
             variables.putAll(extraVariables);
         }
 
-        logger.info("starting workflow HERE:");
         // TODO if successful transfer response arrives in X timeout return it otherwise do callback
         try {
             ProcessInstanceEvent instance = zeebeClient.newCreateInstanceCommand().bpmnProcessId(workflowId).latestVersion()
@@ -65,7 +64,6 @@ public class ZeebeProcessStarter {
             variables.putAll(extraVariables);
         }
 
-        logger.info("starting workflow HERE:");
         // TODO if successful transfer response arrives in X timeout return it otherwise do callback
         try {
             ProcessInstanceEvent instance = zeebeClient.newCreateInstanceCommand().bpmnProcessId(workflowId).latestVersion()

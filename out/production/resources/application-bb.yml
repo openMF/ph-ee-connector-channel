@@ -1,0 +1,12 @@
+operations:
+  url: "http://bb-operations.mifos.io/api/v1"
+
+identity:
+  channel:
+    clients:
+      - clientId: ${CHANNEL_TENANTPRIMARY_CLIENTID:channel-tn03}
+        clientSecret: ${CHANNEL_TENANTPRIMARY_CLIENTSECRET:p1234}
+        tenant: ${CHANNEL_TENANTPRIMARY_TENANT:tn03}
+      - clientId: ${CHANNEL_TENANTSECONDARY_CLIENTID:channel-tn04}
+        clientSecret: ${CHANNEL_TENANTSECONDARY_CLIENTSECRET:p1234}
+        tenant: ${CHANNEL_TENANTSECONDARY_TENANT:tn04}

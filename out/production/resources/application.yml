@@ -1,0 +1,114 @@
+camel:
+  server-port: 5002
+  springboot:
+    main-run-controller: true
+  dataformat:
+    json-jackson:
+      auto-discover-object-mapper: true
+
+dfspids: "DFSPID"
+
+transaction-id-length: -1
+
+mpesa:
+  notification:
+    success:
+      enabled: false
+    failure:
+      enabled: true
+
+timer: "PT45S"
+
+server:
+  ssl:
+    key-alias: "tomcat-https"
+    key-store: "classpath:keystore.jks"
+    key-store-type: JKS
+    key-password: "password"
+    key-store-password: "password"
+  port: 8443
+
+operations:
+  url: "http://bb-operations.mifos.io/api/v1"
+  auth-enabled: false
+  endpoint:
+    transfers: "/transfers?page=0&size=1&"
+    transactionReq: "/transactionRequests/?"
+
+bpmn:
+  flows:
+    payment-transfer: "PayerFundTransfer-{dfspid}"
+    special-payment-transfer: "SpecialPayerFundTransfer-{dfspid}"
+    transaction-request: "payee-transaction-request-{dfspid}"
+    party-registration: "party-registration-{dfspid}"
+    gsma-base-transaction: "gsma_base_transaction-{dfspid}"
+    gsma-int-transfer: "gsma_int_transfer"
+    gsma-payee-process: "gsma_payee_process"
+    gsma-bill-payment: "gsma_bill_payment"
+    gsma-link-based-payment: "gsma_link_transfer"
+    international-remittance-payee: "international_remittance_payee_process-{dfspid}"
+    international-remittance-payer: "international_remittance_payer_process-{dfspid}"
+    inboundTransactionReq-flow: "{ps}_flow_{ams}-{dfspid}"
+
+ams:
+  groups:
+    - identifier: "accountid"
+      value: "roster"
+    - identifier: "foundationalid"
+      value: "paygops"
+    - identifier: "default"
+      value : "paygops"
+
+zeebe:
+  client:
+    max-execution-threads: 1000
+    evenly-allocated-max-jobs: 1000
+#    max-execution-threads: 100
+#    number-of-workers: 5
+#    evenly-allocated-max-jobs: "#{${zeebe.client.max-execution-threads} / ${zeebe.client.number-of-workers}}"
+  broker:
+    contactpoint: "localhost:26500"
+
+rest:
+  authorization:
+    enabled: false
+    host: http://localhost:8080
+    header: "Basic Y2xpZW50Og=="
+  connector-ams:
+      host:"http://localhost:5001"
+      #host: "http://ph-ee-connector-ams-mifos"
+
+management:
+#  server:
+#    port: 8443
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      liveness:
+        enabled: true
+      readiness:
+        enabled: true
+#      show-details: always
+logging:
+  level:
+    root: INFO
+  pattern:
+    console: "%clr(%d{dd-MM-yyyy HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr([%35.35t]){faint} %clr(%-28.28logger{28}){cyan} %clr(:){faint}%X{BUSINESS-LOG} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"
+
+springdoc:
+  writer-with-order-by-keys: true
+
+destination:
+    dfspid: "jupiter"
+
+redis:
+  host: "127.0.0.1"
+  port: 6379
+  password: "RHVViU1ip9"
+  database: 1
+  cacheRetencyDuration: 30 # in days
+  idempotency:
+    enabled: true
+    keyFormat: "clientCorrelationId_tenant_api"
+    apiList: "/channel/transfer,/channel/collection,/channel/gsma/transaction,/channel/transactionRequest"

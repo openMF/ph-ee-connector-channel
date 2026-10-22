@@ -1,5 +1,5 @@
 camel:
-  server-port: 5000
+  server-port: 5002
   springboot:
     main-run-controller: true
   dataformat:
@@ -17,6 +17,24 @@ mpesa:
     failure:
       enabled: true
 
+  account:
+    service:
+      paymentTypeId: 1
+      auth:
+        apiEnabled: "true"
+        api:
+          url: "https://dddf1c57-f879-4696-8e85-27da297ef6af.mock.pstmn.io/oauth2/token"
+          scope: openid
+          userName: "Username"
+          password: "Password"
+        token: "ABDC1234567890"
+      lookup:
+        api:
+          url: "https://dddf1c57-f879-4696-8e85-27da297ef6af.mock.pstmn.io/alerts"
+      credit:
+        api:
+          url: "https://dddf1c57-f879-4696-8e85-27da297ef6af.mock.pstmn.io/alerts"
+
 timer: "PT45S"
 
 server:
@@ -24,8 +42,8 @@ server:
     key-alias: "tomcat-https"
     key-store: "classpath:keystore.jks"
     key-store-type: JKS
-    key-password: "<replace-with-password>"
-    key-store-password: "<replace-with-password>"
+    key-password: "password"
+    key-store-password: "password"
   port: 8443
 
 operations:
@@ -74,6 +92,9 @@ rest:
     enabled: false
     host: http://localhost:8080
     header: "Basic Y2xpZW50Og=="
+  connector-ams:
+      host: "http://localhost:5001"
+      #host: "http://ph-ee-connector-ams-mifos"
 
 management:
 #  server:

@@ -1,7 +1,8 @@
 package org.mifos.connector.channel.api.fineract_api.service;
 
-import lombok.Data;
-import lombok.extern.java.Log;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import org.mifos.connector.channel.api.fineract_api.dto.AccountLookupRequest;
 import org.mifos.connector.channel.api.fineract_api.dto.AccountLookupResponse;
 import org.mifos.connector.channel.api.fineract_api.dto.CreditAmountRequest;
@@ -23,18 +24,13 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
-
-
 /**
- * @author manoj
- * Move this class to mepasa connector
+ * @author manoj Move this class to mepasa connector
  **/
 
 @Service
 public class MpesaConnectorServiceImpl implements MpesaConnectorService {
+
     public static final String TOKEN = "TOKEN";
     public static final String EXPIRES_AT = "EXPIRES_AT";
     private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -66,9 +62,7 @@ public class MpesaConnectorServiceImpl implements MpesaConnectorService {
     @Value("${mpesa.account.service.auth.api.password}")
     private String authPassword;
 
-
     private static final Map<String, Object> statcTokenMap = new HashMap<>();
-
 
     public AccountLookupResponse lookupAccount(AccountLookupRequest requestPayload) {
         try {
@@ -78,12 +72,8 @@ public class MpesaConnectorServiceImpl implements MpesaConnectorService {
 
             HttpEntity<AccountLookupRequest> requestEntity = new HttpEntity<>(requestPayload, headers);
 
-            ResponseEntity<AccountLookupResponse> responseEntity = restTemplate.exchange(
-                    accountLookUpUrl,
-                    HttpMethod.POST,
-                    requestEntity,
-                    AccountLookupResponse.class
-            );
+            ResponseEntity<AccountLookupResponse> responseEntity = restTemplate.exchange(accountLookUpUrl, HttpMethod.POST, requestEntity,
+                    AccountLookupResponse.class);
 
             return responseEntity.getBody();
 
@@ -95,59 +85,47 @@ public class MpesaConnectorServiceImpl implements MpesaConnectorService {
 
     private String getAuthToken() {
         logger.info("Fetching Access TOKEN");
-        if(!"true".equals(authApiEnabled)){
+        if (!"true".equals(authApiEnabled)) {
             logger.info("Fetching Access TOKEN: authApiEnabled {}, setting static token", authApiEnabled);
             return oauthToken;
         }
 
-        if(statcTokenMap.get(TOKEN)!=null && System.currentTimeMillis() < (Long) statcTokenMap.get(EXPIRES_AT)){
+        if (statcTokenMap.get(TOKEN) != null && System.currentTimeMillis() < (Long) statcTokenMap.get(EXPIRES_AT)) {
             logger.info("Fetching Access TOKEN:  setting previous token");
             return (String) statcTokenMap.get(TOKEN);
         }
 
         logger.info("Fetching Access TOKEN:  Fetching new token");
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        // headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         headers.setBasicAuth(authUserName, authPassword);
 
-        URI uri = UriComponentsBuilder.fromHttpUrl(authApiUrl)
-                .queryParam("scope", authScope)
-                .build()
-                .toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(authApiUrl).queryParam("scope", authScope).build().toUri();
 
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("grant_type", "client_credentials");
-        HttpEntity<MultiValueMap<String, String>> requestEntity =
-                new HttpEntity<>(formData, headers);
-        ResponseEntity<OAuthTokenResponse> responseEntity = restTemplate.exchange(
-                uri,
-                HttpMethod.POST,
-                requestEntity,
-                OAuthTokenResponse.class
-        );
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(formData, headers);
+        ResponseEntity<OAuthTokenResponse> responseEntity = restTemplate.exchange(uri, HttpMethod.POST, requestEntity,
+                OAuthTokenResponse.class);
 
         OAuthTokenResponse token = responseEntity.getBody();
         statcTokenMap.put(TOKEN, token.getAccessToken());
-        statcTokenMap.put(EXPIRES_AT, System.currentTimeMillis() + (token.getExpiresIn()*1000));
+        statcTokenMap.put(EXPIRES_AT, System.currentTimeMillis() + (token.getExpiresIn() * 1000));
 
         return (String) statcTokenMap.get(TOKEN);
     }
-
 
     public CreditAmountResponse creditAmount(CreditAmountRequest requestPayload) {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(getAuthToken());  // Or: headers.add("Authorization", OAUTH_TOKEN);
+            headers.setBearerAuth(getAuthToken()); // Or: headers.add("Authorization", OAUTH_TOKEN);
 
             HttpEntity<CreditAmountRequest> requestEntity = new HttpEntity<>(requestPayload, headers);
 
-            ResponseEntity<CreditAmountResponse> responseEntity = restTemplate.exchange(
-                    accountCreditUrl,
-                    HttpMethod.POST,
-                    requestEntity,
-                    CreditAmountResponse.class
-            );
+            ResponseEntity<CreditAmountResponse> responseEntity = restTemplate.exchange(accountCreditUrl, HttpMethod.POST, requestEntity,
+                    CreditAmountResponse.class);
 
             return responseEntity.getBody();
 
@@ -158,26 +136,21 @@ public class MpesaConnectorServiceImpl implements MpesaConnectorService {
     }
 
     @Override
-    public void sendCreditRequest(String tenantId, WithdrawHookRequest request){
+    public void sendCreditRequest(String tenantId, WithdrawHookRequest request) {
 
-        if(!paymentTypeId.equals(String.valueOf(request.getResponse().getChanges().getOrDefault("paymentTypeId","0")))){
+        if (!paymentTypeId.equals(String.valueOf(request.getResponse().getChanges().getOrDefault("paymentTypeId", "0")))) {
             return;
         }
 
-        AccountLookupRequest requestPayload = AccountLookupRequest.builder()
-                .TenantID(tenantId)
-                .AccountNO(request.getResponse().getResourceExternalId())
-                .MSISDN((String) request.getResponse().getChanges().getOrDefault("clientMob", ""))
-                .build();
+        AccountLookupRequest requestPayload = AccountLookupRequest.builder().tenantId(tenantId)
+                .accountNo(request.getResponse().getResourceExternalId())
+                .msisdn((String) request.getResponse().getChanges().getOrDefault("clientMob", "")).build();
         lookupAccount(requestPayload);
 
-        CreditAmountRequest creditAmountRequest = CreditAmountRequest.builder()
-                .Reference(request.getResponse().getResourceId().toString())
-                .Amount(request.getRequest().getTransactionAmount())
-                .MSISDN((String) request.getResponse().getChanges().getOrDefault("clientMob", ""))
-                .TenantID(tenantId)
-                .AccountNO(request.getResponse().getResourceExternalId())
-                .build();
+        CreditAmountRequest creditAmountRequest = CreditAmountRequest.builder().reference(request.getResponse().getResourceId().toString())
+                .amount(request.getRequest().getTransactionAmount())
+                .msisdn((String) request.getResponse().getChanges().getOrDefault("clientMob", "")).tenantId(tenantId)
+                .accountNo(request.getResponse().getResourceExternalId()).build();
         creditAmount(creditAmountRequest);
     }
 

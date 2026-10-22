@@ -1,5 +1,6 @@
 package org.mifos.connector.channel.api.fineract_api.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,7 +13,11 @@ import lombok.Setter;
 @Setter
 @Builder
 public class AccountLookupRequest {
-    private String MSISDN;
-    private String TenantID;
-    private String AccountNO;
+
+    @JsonProperty("MSISDN")
+    private String msisdn;
+    @JsonProperty("TenantID")
+    private String tenantId;
+    @JsonProperty("AccountNO")
+    private String accountNo;
 }

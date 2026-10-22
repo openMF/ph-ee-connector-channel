@@ -10,6 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class HookRequestData {
+
     private String transactionDate;
     private String transactionAmount;
     private int paymentTypeId;

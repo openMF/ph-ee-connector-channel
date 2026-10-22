@@ -1,5 +1,6 @@
 package org.mifos.connector.channel.api.fineract_api.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,7 +11,11 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AccountLookupResponse {
-    private String KYCName;
-    private String ResponseCode;
-    private String ResponseDesc;
+
+    @JsonProperty("KYCName")
+    private String kycName;
+    @JsonProperty("ResponseCode")
+    private String responseCode;
+    @JsonProperty("ResponseDesc")
+    private String responseDesc;
 }

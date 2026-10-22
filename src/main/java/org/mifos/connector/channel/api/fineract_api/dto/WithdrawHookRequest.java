@@ -10,6 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class WithdrawHookRequest {
+
     private String createdByName;
     private HookRequestData request;
     private Long clientId;

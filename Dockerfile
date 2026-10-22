@@ -1,5 +1,5 @@
-FROM openjdk:17
+FROM eclipse-temurin:17-jre
 EXPOSE 8080
 
-COPY build/libs/*.jar ./
-CMD java -jar *.jar
+COPY build/libs/*-SNAPSHOT.jar app.jar
+CMD ["java", "-jar", "app.jar"]

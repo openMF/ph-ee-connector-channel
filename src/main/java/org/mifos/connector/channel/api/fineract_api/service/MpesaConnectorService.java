@@ -6,7 +6,7 @@ import org.mifos.connector.channel.api.fineract_api.dto.WithdrawHookRequest;
  * @author manoj
  **/
 
-
 public interface MpesaConnectorService {
+
     void sendCreditRequest(String tenantId, WithdrawHookRequest request);
 }

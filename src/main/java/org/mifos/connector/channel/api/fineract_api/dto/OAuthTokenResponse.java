@@ -11,6 +11,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class OAuthTokenResponse {
+
     @JsonProperty("access_token")
     private String accessToken;
 

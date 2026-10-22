@@ -1,9 +1,7 @@
 package org.mifos.connector.channel.api.implementation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.camel.ProducerTemplate;
-import org.json.JSONObject;
 import org.mifos.connector.channel.api.definition.AmsApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,32 +31,31 @@ public class AmsApiController implements AmsApi {
     @Override
     public ResponseEntity<String> getStatus(String tenantId, String identifierType, String identifierId) {
 
-        return fetchDetailsFromRestService(tenantId,
-                "/ams/accounts/" + identifierType + "/" + identifierId + "/status");
+        return fetchDetailsFromRestService(tenantId, "/ams/accounts/" + identifierType + "/" + identifierId + "/status");
     }
+
     @Override
     public ResponseEntity<String> getAccountName(String tenantId, String identifierType, String identifierId) {
 
-        return fetchDetailsFromRestService(tenantId,
-                "/ams/accounts/" + identifierType + "/" + identifierId + "/accountname");
+        return fetchDetailsFromRestService(tenantId, "/ams/accounts/" + identifierType + "/" + identifierId + "/accountname");
     }
+
     @Override
     public ResponseEntity<String> getAccountBalance(String tenantId, String identifierType, String identifierId) {
 
-        return fetchDetailsFromRestService(tenantId,
-                "/ams/accounts/" + identifierType + "/" + identifierId + "/balance");
+        return fetchDetailsFromRestService(tenantId, "/ams/accounts/" + identifierType + "/" + identifierId + "/balance");
     }
+
     @Override
     public ResponseEntity<String> getAccountTransactions(String tenantId, String identifierType, String identifierId) {
 
-        return fetchDetailsFromRestService(tenantId,
-                "/ams/accounts/" + identifierType + "/" + identifierId + "/transactions");
+        return fetchDetailsFromRestService(tenantId, "/ams/accounts/" + identifierType + "/" + identifierId + "/transactions");
     }
+
     @Override
     public ResponseEntity<String> getAccountStatemententries(String tenantId, String identifierType, String identifierId) {
 
-        return fetchDetailsFromRestService(tenantId,
-                "/ams/accounts/" + identifierType + "/" + identifierId + "/statemententries");
+        return fetchDetailsFromRestService(tenantId, "/ams/accounts/" + identifierType + "/" + identifierId + "/statemententries");
     }
 
     private ResponseEntity<String> fetchDetailsFromRestService(String tenantId, String url) {

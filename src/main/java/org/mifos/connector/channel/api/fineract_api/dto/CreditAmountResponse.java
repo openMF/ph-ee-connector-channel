@@ -1,5 +1,6 @@
 package org.mifos.connector.channel.api.fineract_api.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,9 +11,15 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CreditAmountResponse {
-    private String Reference;
-    private String RRN;
-    private String ResultCode;
-    private String ResultDesc;
-    private String TenantID;
+
+    @JsonProperty("Reference")
+    private String reference;
+    @JsonProperty("RRN")
+    private String rrn;
+    @JsonProperty("ResultCode")
+    private String resultCode;
+    @JsonProperty("ResultDesc")
+    private String resultDesc;
+    @JsonProperty("TenantID")
+    private String tenantId;
 }

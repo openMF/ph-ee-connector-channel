@@ -1,5 +1,6 @@
-FROM openjdk:17
+FROM eclipse-temurin:17-jdk
 EXPOSE 8080
 
-COPY build/libs/*.jar ./
-CMD java -jar *.jar
+# Copy only the bootable JAR, not the -plain.jar
+COPY build/libs/ph-ee-connector-channel-*.jar app.jar
+CMD java -jar app.jar
